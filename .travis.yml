@@ -1,9 +1,7 @@
 language: python
 
 python:
-  - 2.6
-  - 2.7
-  - pypy-5.3.1
+  - pypy3
   - 3.5
   - 3.6
 
