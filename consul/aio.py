@@ -8,7 +8,6 @@ from consul import base
 
 
 __all__ = ['Consul']
-PY_341 = sys.version_info >= (3, 4, 1)
 
 
 class HTTPClient(base.HTTPClient):
@@ -29,14 +28,6 @@ class HTTPClient(base.HTTPClient):
             raise base.Timeout
         r = base.Response(resp.status, resp.headers, body)
         return callback(r)
-
-    # python prior 3.4.1 does not play nice with __del__ method
-    if PY_341:  # pragma: no branch
-        def __del__(self):
-            if not self._session.closed:
-                warnings.warn("Unclosed connector in aio.Consul.HTTPClient",
-                              ResourceWarning)
-                self.close()
 
     def get(self, callback, path, params=None):
         uri = self.uri(path, params)
