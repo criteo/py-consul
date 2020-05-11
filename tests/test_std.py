@@ -4,7 +4,6 @@ import struct
 import time
 
 import pytest
-import six
 
 import consul
 import consul.std
@@ -28,7 +27,7 @@ class TestConsul:
         assert data is None
         assert c.kv.put('foo', 'bar') is True
         index, data = c.kv.get('foo')
-        assert data['Value'] == six.b('bar')
+        assert data['Value'] == b'bar'
 
     def test_kv_wait(self, consul_port):
         c = consul.Consul(port=consul_port)
@@ -48,7 +47,7 @@ class TestConsul:
         # test unicode
         c.kv.put('foo', u'bar')
         index, data = c.kv.get('foo')
-        assert data['Value'] == six.b('bar')
+        assert data['Value'] == b'bar'
 
         # test empty-string comes back as `None`
         c.kv.put('foo', '')
@@ -72,7 +71,7 @@ class TestConsul:
         assert c.kv.put('foo', 'bar2', cas=data['ModifyIndex']-1) is False
         assert c.kv.put('foo', 'bar2', cas=data['ModifyIndex']) is True
         index, data = c.kv.get('foo')
-        assert data['Value'] == six.b('bar2')
+        assert data['Value'] == b'bar2'
 
     def test_kv_put_flags(self, consul_port):
         c = consul.Consul(port=consul_port)
@@ -100,7 +99,7 @@ class TestConsul:
         assert [x['Key'] for x in data] == [
             'foo/', 'foo/bar1', 'foo/bar2', 'foo/bar3']
         assert [x['Value'] for x in data] == [
-            None, six.b('1'), six.b('2'), six.b('3')]
+            None, b'1', b'2', b'3']
 
     def test_kv_delete(self, consul_port):
         c = consul.Consul(port=consul_port)
@@ -691,7 +690,7 @@ class TestConsul:
         # trying out the behavior
         assert c.kv.put('foo', '1', acquire=s) is True
         index, data = c.kv.get('foo')
-        assert data['Value'] == six.b('1')
+        assert data['Value'] == b'1'
 
         c.session.destroy(s)
         index, data = c.kv.get('foo')
@@ -757,13 +756,13 @@ class TestConsul:
         c.kv.put('foo', 'bar')
         c.kv.put('private/foo', 'bar')
 
-        assert c.kv.get('foo', token=token)[1]['Value'] == six.b('bar')
+        assert c.kv.get('foo', token=token)[1]['Value'] == b'bar'
         pytest.raises(
             consul.ACLPermissionDenied, c.kv.put, 'foo', 'bar2', token=token)
         pytest.raises(
             consul.ACLPermissionDenied, c.kv.delete, 'foo', token=token)
 
-        assert c.kv.get('private/foo')[1]['Value'] == six.b('bar')
+        assert c.kv.get('private/foo')[1]['Value'] == b'bar'
         pytest.raises(
             consul.ACLPermissionDenied,
             c.kv.get, 'private/foo', token=token)
@@ -831,13 +830,13 @@ class TestConsul:
         c.kv.put('private/foo', 'bar')
 
         c_limited = consul.Consul(port=acl_consul.port, token=token)
-        assert c_limited.kv.get('foo')[1]['Value'] == six.b('bar')
+        assert c_limited.kv.get('foo')[1]['Value'] == b'bar'
         pytest.raises(
             consul.ACLPermissionDenied, c_limited.kv.put, 'foo', 'bar2')
         pytest.raises(
             consul.ACLPermissionDenied, c_limited.kv.delete, 'foo')
 
-        assert c.kv.get('private/foo')[1]['Value'] == six.b('bar')
+        assert c.kv.get('private/foo')[1]['Value'] == b'bar'
         pytest.raises(
             consul.ACLPermissionDenied,
             c_limited.kv.get, 'private/foo')

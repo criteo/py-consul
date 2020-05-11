@@ -3,7 +3,6 @@ import struct
 import time
 
 import pytest
-import six
 
 from tornado import ioloop
 from tornado import gen
@@ -39,7 +38,7 @@ class TestConsul:
             response = yield c.kv.put('foo', 'bar')
             assert response is True
             index, data = yield c.kv.get('foo')
-            assert data['Value'] == six.b('bar')
+            assert data['Value'] == b'bar'
             loop.stop()
         loop.run_sync(main)
 
@@ -62,7 +61,7 @@ class TestConsul:
             index, data = yield c.kv.get('foo')
             assert data is None
             index, data = yield c.kv.get('foo', index=index)
-            assert data['Value'] == six.b('bar')
+            assert data['Value'] == b'bar'
             loop.stop()
 
         @gen.coroutine
@@ -116,7 +115,7 @@ class TestConsul:
             index, data = yield c.kv.get('foo')
             assert data is None
             index, data = yield c.kv.get('foo', index=index)
-            assert data['Value'] == six.b('bar')
+            assert data['Value'] == b'bar'
             loop.stop()
 
         @gen.coroutine
@@ -142,7 +141,7 @@ class TestConsul:
             response = yield c.kv.put('foo', u'bar')
             assert response is True
             index, data = yield c.kv.get('foo')
-            assert data['Value'] == six.b('bar')
+            assert data['Value'] == b'bar'
 
             # test empty-string comes back as `None`
             response = yield c.kv.put('foo', '')

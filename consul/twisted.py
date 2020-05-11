@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-from six import b
 # noinspection PyUnresolvedReferences
 from treq.client import HTTPClient as TreqHTTPClient
 from twisted.internet import reactor
@@ -78,7 +77,7 @@ class HTTPClient(base.HTTPClient):
             # python2/3 compatibility
             data = kwargs.pop('data')
             kwargs['data'] = data.encode(encoding='utf-8') \
-                if hasattr(data, 'encode') else b(data)
+                if hasattr(data, 'encode') else bytes(data)
 
         try:
             response = yield self.client.request(method, url, **kwargs)
