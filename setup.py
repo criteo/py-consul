@@ -53,8 +53,10 @@ setup(
     url='https://github.com/cablehead/python-consul',
     license='MIT',
     description=description,
-    long_description=open('README.rst').read() + '\n\n' +
-        open('CHANGELOG.rst').read(),
+    long_description="%s\n\n%s" % (
+        open('README.rst').read(),
+        open('CHANGELOG.rst').read()
+    ),
     py_modules=py_modules,
     install_requires=requirements,
     extras_require={
@@ -69,8 +71,6 @@ setup(
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
