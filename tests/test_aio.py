@@ -1,9 +1,8 @@
+import asyncio
 import base64
 import pytest
 import struct
-import sys
 
-import asyncio
 import consul
 import consul.aio
 
@@ -27,17 +26,16 @@ class TestAsyncioConsul:
 
     def test_kv(self, loop, consul_port):
 
-        @asyncio.coroutine
-        def main():
+        async def main():
             c = consul.aio.Consul(port=consul_port, loop=loop)
             print(c)
-            index, data = yield from c.kv.get('foo')
+            index, data = await c.kv.get('foo')
 
             print(index, data)
             assert data is None
-            response = yield from c.kv.put('foo', 'bar')
+            response = await c.kv.put('foo', 'bar')
             assert response is True
-            index, data = yield from c.kv.get('foo')
+            index, data = await c.kv.get('foo')
             assert data['Value'] == b'bar'
             c.close()
 
@@ -45,12 +43,11 @@ class TestAsyncioConsul:
 
     def test_consul_ctor(self, loop, consul_port):
         # same as previous but with global event loop
-        @asyncio.coroutine
-        def main():
+        async def main():
             c = consul.aio.Consul(port=consul_port)
             assert c._loop is loop
-            yield from c.kv.put('foo', struct.pack('i', 1000))
-            index, data = yield from c.kv.get('foo')
+            await c.kv.put('foo', struct.pack('i', 1000))
+            index, data = await c.kv.get('foo')
             assert struct.unpack('i', data['Value']) == (1000,)
             c.close()
 
@@ -58,11 +55,10 @@ class TestAsyncioConsul:
         loop.run_until_complete(main())
 
     def test_kv_binary(self, loop, consul_port):
-        @asyncio.coroutine
-        def main():
+        async def main():
             c = consul.aio.Consul(port=consul_port, loop=loop)
-            yield from c.kv.put('foo', struct.pack('i', 1000))
-            index, data = yield from c.kv.get('foo')
+            await c.kv.put('foo', struct.pack('i', 1000))
+            index, data = await c.kv.get('foo')
             assert struct.unpack('i', data['Value']) == (1000,)
             c.close()
 
@@ -71,57 +67,53 @@ class TestAsyncioConsul:
     def test_kv_missing(self, loop, consul_port):
         c = consul.aio.Consul(port=consul_port, loop=loop)
 
-        @asyncio.coroutine
-        def main():
-            fut = asyncio.async(put(), loop=loop)
-            yield from c.kv.put('index', 'bump')
-            index, data = yield from c.kv.get('foo')
+        async def main():
+            fut = asyncio.ensure_future(put(), loop=loop)
+            await c.kv.put('index', 'bump')
+            index, data = await c.kv.get('foo')
             assert data is None
-            index, data = yield from c.kv.get('foo', index=index)
+            index, data = await c.kv.get('foo', index=index)
             assert data['Value'] == b'bar'
-            yield from fut
+            await fut
             c.close()
 
-        @asyncio.coroutine
-        def put():
-            yield from asyncio.sleep(2.0/100, loop=loop)
-            yield from c.kv.put('foo', 'bar')
+        async def put():
+            await asyncio.sleep(2.0/100, loop=loop)
+            await c.kv.put('foo', 'bar')
 
         loop.run_until_complete(main())
 
     def test_kv_put_flags(self, loop, consul_port):
-        @asyncio.coroutine
-        def main():
+        async def main():
             c = consul.aio.Consul(port=consul_port, loop=loop)
-            yield from c.kv.put('foo', 'bar')
-            index, data = yield from c.kv.get('foo')
+            await c.kv.put('foo', 'bar')
+            index, data = await c.kv.get('foo')
             assert data['Flags'] == 0
 
-            response = yield from c.kv.put('foo', 'bar', flags=50)
+            response = await c.kv.put('foo', 'bar', flags=50)
             assert response is True
-            index, data = yield from c.kv.get('foo')
+            index, data = await c.kv.get('foo')
             assert data['Flags'] == 50
             c.close()
 
         loop.run_until_complete(main())
 
     def test_kv_delete(self, loop, consul_port):
-        @asyncio.coroutine
-        def main():
+        async def main():
             c = consul.aio.Consul(port=consul_port, loop=loop)
-            yield from c.kv.put('foo1', '1')
-            yield from c.kv.put('foo2', '2')
-            yield from c.kv.put('foo3', '3')
-            index, data = yield from c.kv.get('foo', recurse=True)
+            await c.kv.put('foo1', '1')
+            await c.kv.put('foo2', '2')
+            await c.kv.put('foo3', '3')
+            index, data = await c.kv.get('foo', recurse=True)
             assert [x['Key'] for x in data] == ['foo1', 'foo2', 'foo3']
 
-            response = yield from c.kv.delete('foo2')
+            response = await c.kv.delete('foo2')
             assert response is True
-            index, data = yield from c.kv.get('foo', recurse=True)
+            index, data = await c.kv.get('foo', recurse=True)
             assert [x['Key'] for x in data] == ['foo1', 'foo3']
-            response = yield from c.kv.delete('foo', recurse=True)
+            response = await c.kv.delete('foo', recurse=True)
             assert response is True
-            index, data = yield from c.kv.get('foo', recurse=True)
+            index, data = await c.kv.get('foo', recurse=True)
             assert data is None
             c.close()
 
@@ -130,48 +122,44 @@ class TestAsyncioConsul:
     def test_kv_subscribe(self, loop, consul_port):
         c = consul.aio.Consul(port=consul_port, loop=loop)
 
-        @asyncio.coroutine
-        def get():
-            fut = asyncio.async(put(), loop=loop)
-            index, data = yield from c.kv.get('foo')
+        async def get():
+            fut = asyncio.ensure_future(put(), loop=loop)
+            index, data = await c.kv.get('foo')
             assert data is None
-            index, data = yield from c.kv.get('foo', index=index)
+            index, data = await c.kv.get('foo', index=index)
             assert data['Value'] == b'bar'
-            yield from fut
+            await fut
             c.close()
 
-        @asyncio.coroutine
-        def put():
-            yield from asyncio.sleep(1.0/100, loop=loop)
-            response = yield from c.kv.put('foo', 'bar')
+        async def put():
+            await asyncio.sleep(1.0/100, loop=loop)
+            response = await c.kv.put('foo', 'bar')
             assert response is True
 
         loop.run_until_complete(get())
 
     def test_transaction(self, loop, consul_port):
-        @asyncio.coroutine
-        def main():
+        async def main():
             c = consul.aio.Consul(port=consul_port, loop=loop)
             value = base64.b64encode(b"1").decode("utf8")
             d = {"KV": {"Verb": "set", "Key": "asdf", "Value": value}}
-            r = yield from c.txn.put([d])
+            r = await c.txn.put([d])
             assert r["Errors"] is None
 
             d = {"KV": {"Verb": "get", "Key": "asdf"}}
-            r = yield from c.txn.put([d])
+            r = await c.txn.put([d])
             assert r["Results"][0]["KV"]["Value"] == value
             c.close()
         loop.run_until_complete(main())
 
     def test_agent_services(self, loop, consul_port):
-        @asyncio.coroutine
-        def main():
+        async def main():
             c = consul.aio.Consul(port=consul_port, loop=loop)
-            services = yield from c.agent.services()
+            services = await c.agent.services()
             assert services == {}
-            response = yield from c.agent.service.register('foo')
+            response = await c.agent.service.register('foo')
             assert response is True
-            services = yield from c.agent.services()
+            services = await c.agent.services()
             assert services == {
                 'foo': {
                     'Port': 0,
@@ -183,9 +171,9 @@ class TestAsyncioConsul:
                     'Tags': [],
                     'Meta': {},
                     'Address': ''}, }
-            response = yield from c.agent.service.deregister('foo')
+            response = await c.agent.service.deregister('foo')
             assert response is True
-            services = yield from c.agent.services()
+            services = await c.agent.services()
             assert services == {}
             c.close()
 
@@ -194,30 +182,28 @@ class TestAsyncioConsul:
     def test_catalog(self, loop, consul_port):
         c = consul.aio.Consul(port=consul_port, loop=loop)
 
-        @asyncio.coroutine
-        def nodes():
-            fut = asyncio.async(register(), loop=loop)
-            index, nodes = yield from c.catalog.nodes()
+        async def nodes():
+            fut = asyncio.ensure_future(register(), loop=loop)
+            index, nodes = await c.catalog.nodes()
             assert len(nodes) == 1
             current = nodes[0]
 
-            index, nodes = yield from c.catalog.nodes(index=index)
+            index, nodes = await c.catalog.nodes(index=index)
             nodes.remove(current)
             assert [x['Node'] for x in nodes] == ['n1']
 
-            index, nodes = yield from c.catalog.nodes(index=index)
+            index, nodes = await c.catalog.nodes(index=index)
             nodes.remove(current)
             assert [x['Node'] for x in nodes] == []
-            yield from fut
+            await fut
             c.close()
 
-        @asyncio.coroutine
-        def register():
-            yield from asyncio.sleep(1.0/100, loop=loop)
-            response = yield from c.catalog.register('n1', '10.1.10.11')
+        async def register():
+            await asyncio.sleep(1.0/100, loop=loop)
+            response = await c.catalog.register('n1', '10.1.10.11')
             assert response is True
-            yield from asyncio.sleep(50/1000.0, loop=loop)
-            response = yield from c.catalog.deregister('n1')
+            await asyncio.sleep(50/1000.0, loop=loop)
+            response = await c.catalog.deregister('n1')
             assert response is True
 
         loop.run_until_complete(nodes())
@@ -225,34 +211,31 @@ class TestAsyncioConsul:
     def test_session(self, loop, consul_port):
         c = consul.aio.Consul(port=consul_port, loop=loop)
 
-        @asyncio.coroutine
-        def monitor():
-            fut = asyncio.async(register(), loop=loop)
-            index, services = yield from c.session.list()
+        async def monitor():
+            fut = asyncio.ensure_future(register(), loop=loop)
+            index, services = await c.session.list()
             assert services == []
-            yield from asyncio.sleep(20/1000.0, loop=loop)
+            await asyncio.sleep(20/1000.0, loop=loop)
 
-            index, services = yield from c.session.list(index=index)
+            index, services = await c.session.list(index=index)
             assert len(services)
 
-            index, services = yield from c.session.list(index=index)
+            index, services = await c.session.list(index=index)
             assert services == []
-            yield from fut
+            await fut
             c.close()
 
-        @asyncio.coroutine
-        def register():
-            yield from asyncio.sleep(1.0/100, loop=loop)
-            session_id = yield from c.session.create()
-            yield from asyncio.sleep(50/1000.0, loop=loop)
-            response = yield from c.session.destroy(session_id)
+        async def register():
+            await asyncio.sleep(1.0/100, loop=loop)
+            session_id = await c.session.create()
+            await asyncio.sleep(50/1000.0, loop=loop)
+            response = await c.session.destroy(session_id)
             assert response is True
 
         loop.run_until_complete(monitor())
 
     def test_acl(self, loop, acl_consul):
-        @asyncio.coroutine
-        def main():
+        async def main():
             c = consul.aio.Consul(
                 port=acl_consul.port, token=acl_consul.token, loop=loop)
 
@@ -264,15 +247,15 @@ class TestAsyncioConsul:
                     policy = "deny"
                 }
             """
-            token = yield from c.acl.create(rules=rules)
+            token = await c.acl.create(rules=rules)
 
             try:
-                yield from c.acl.list(token=token)
+                await c.acl.list(token=token)
             except consul.ACLPermissionDenied:
                 raised = True
             assert raised
 
-            destroyed = yield from c.acl.destroy(token)
+            destroyed = await c.acl.destroy(token)
             assert destroyed is True
             c.close()
 
