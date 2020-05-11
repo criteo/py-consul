@@ -1,7 +1,4 @@
-from __future__ import absolute_import
-import sys
 import asyncio
-import warnings
 
 import aiohttp
 from consul import base
@@ -20,10 +17,9 @@ class HTTPClient(base.HTTPClient):
                                          verify_ssl=self.verify)
         self._session = aiohttp.ClientSession(connector=connector)
 
-    @asyncio.coroutine
-    def _request(self, callback, method, uri, data=None):
-        resp = yield from self._session.request(method, uri, data=data)
-        body = yield from resp.text(encoding='utf-8')
+    async def _request(self, callback, method, uri, data=None):
+        resp = await self._session.request(method, uri, data=data)
+        body = await resp.text(encoding='utf-8')
         if resp.status == 599:
             raise base.Timeout
         r = base.Response(resp.status, resp.headers, body)
