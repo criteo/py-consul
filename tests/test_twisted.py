@@ -24,7 +24,7 @@ def sleep(seconds):
     return d
 
 
-class TestConsul(object):
+class TestConsul:
     @pytest_twisted.inlineCallbacks
     def test_kv(self, consul_port):
         c = consul.twisted.Consul(port=consul_port)
@@ -225,7 +225,7 @@ class TestConsul(object):
     def test_health_service_subscribe(self, consul_port):
         c = consul.twisted.Consul(port=consul_port)
 
-        class Config(object):
+        class Config:
             def __init__(self):
                 self.nodes = []
                 self.index = None

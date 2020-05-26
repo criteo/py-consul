@@ -29,7 +29,7 @@ def sleep(loop, s):
     return result
 
 
-class TestConsul(object):
+class TestConsul:
     def test_kv(self, loop, consul_port):
         @gen.coroutine
         def main():
@@ -305,7 +305,7 @@ class TestConsul(object):
     def test_health_service_subscribe(self, loop, consul_port):
         c = consul.tornado.Consul(port=consul_port)
 
-        class Config(object):
+        class Config:
             pass
 
         config = Config()

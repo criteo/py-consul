@@ -13,7 +13,7 @@ Request = collections.namedtuple(
     'Request', ['method', 'path', 'params', 'data'])
 
 
-class HTTPClient(object):
+class HTTPClient:
     def __init__(self, host=None, port=None, scheme=None,
                  verify=True, cert=None):
         pass
@@ -71,7 +71,7 @@ def _should_support_meta(c):
     )
 
 
-class TestIndex(object):
+class TestIndex:
     """
     Tests read requests that should support blocking on an index
     """
@@ -82,7 +82,7 @@ class TestIndex(object):
             assert r(index='5').params == [('index', '5')]
 
 
-class TestConsistency(object):
+class TestConsistency:
     """
     Tests read requests that should support consistency modes
     """
@@ -103,7 +103,7 @@ class TestConsistency(object):
             assert r(consistency='stale').params == [('stale', '1')]
 
 
-class TestNodemeta(object):
+class TestNodemeta:
     """
     Tests read requests that should support node_meta
     """
@@ -116,7 +116,7 @@ class TestNodemeta(object):
                 sorted([('node-meta', 'net:1'), ('node-meta', 'env:prod')])
 
 
-class TestMeta(object):
+class TestMeta:
     """
     Tests read requests that should support meta
     """
@@ -128,7 +128,7 @@ class TestMeta(object):
             assert sorted(d['meta']) == sorted({'env': 'prod', 'net': 1})
 
 
-class TestCB(object):
+class TestCB:
 
     def test_status_200_passes(self):
         response = consul.base.Response(200, None, None)
@@ -170,7 +170,7 @@ class TestCB(object):
             CB._status(response)
 
 
-class TestChecks(object):
+class TestChecks:
     """
     Check constructor helpers return valid check configurations.
     """
