@@ -24,7 +24,7 @@ def loop(request):
     return loop
 
 
-class TestAsyncioConsul(object):
+class TestAsyncioConsul:
 
     def test_kv(self, loop, consul_port):
 

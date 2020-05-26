@@ -13,7 +13,7 @@ import consul.std
 Check = consul.Check
 
 
-class TestHTTPClient(object):
+class TestHTTPClient:
     def test_uri(self):
         http = consul.std.HTTPClient()
         assert http.uri('/v1/kv') == 'http://127.0.0.1:8500/v1/kv'
@@ -21,7 +21,7 @@ class TestHTTPClient(object):
             'http://127.0.0.1:8500/v1/kv?index=1'
 
 
-class TestConsul(object):
+class TestConsul:
     def test_kv(self, consul_port):
         c = consul.Consul(port=consul_port)
         index, data = c.kv.get('foo')

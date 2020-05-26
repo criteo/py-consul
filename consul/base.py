@@ -45,7 +45,7 @@ class ClientError(ConsulException):
 #
 # Convenience to define checks
 
-class Check(object):
+class Check:
     """
     There are three different kinds of checks: script, http and ttl
     """
@@ -168,7 +168,7 @@ Response = collections.namedtuple('Response', ['code', 'headers', 'body'])
 #
 # Conveniences to create consistent callback handlers for endpoints
 
-class CB(object):
+class CB:
     @classmethod
     def _status(klass, response, allow_404=True):
         # status checking
@@ -278,7 +278,7 @@ class HTTPClient(six.with_metaclass(abc.ABCMeta, object)):
         raise NotImplementedError
 
 
-class Consul(object):
+class Consul:
     def __init__(
             self,
             host='127.0.0.1',
@@ -344,7 +344,7 @@ class Consul(object):
         self.coordinate = Consul.Coordinate(self)
         self.operator = Consul.Operator(self)
 
-    class Event(object):
+    class Event:
         """
         The event command provides a mechanism to fire a custom user event to
         an entire datacenter. These events are opaque to Consul, but they can
@@ -459,7 +459,7 @@ class Consul(object):
                 CB.json(index=True, decode='Payload'),
                 '/v1/event/list', params=params)
 
-    class KV(object):
+    class KV:
         """
         The KV endpoint is used to expose a simple key/value store. This can be
         used to store service configurations or other meta data in a simple
@@ -657,7 +657,7 @@ class Consul(object):
             return self.agent.http.delete(
                 CB.json(), '/v1/kv/%s' % key, params=params)
 
-    class Txn(object):
+    class Txn:
         """
         The Transactions endpoints manage updates or fetches of multiple keys
         inside a single, atomic transaction.
@@ -690,7 +690,7 @@ class Consul(object):
             return self.agent.http.put(CB.json(), "/v1/txn",
                                        data=json.dumps(payload))
 
-    class Agent(object):
+    class Agent:
         """
         The Agent endpoints are used to interact with a local Consul agent.
         Usually, services and checks are registered with an agent, which then
@@ -806,7 +806,7 @@ class Consul(object):
             return self.agent.http.put(
                 CB.bool(), '/v1/agent/force-leave/%s' % node)
 
-        class Service(object):
+        class Service:
             def __init__(self, agent):
                 self.agent = agent
 
@@ -942,7 +942,7 @@ class Consul(object):
                     '/v1/agent/service/maintenance/{0}'.format(service_id),
                     params=params)
 
-        class Check(object):
+        class Check:
             def __init__(self, agent):
                 self.agent = agent
 
@@ -1074,7 +1074,7 @@ class Consul(object):
                     '/v1/agent/check/warn/%s' % check_id,
                     params=params)
 
-    class Catalog(object):
+    class Catalog:
         def __init__(self, agent):
             self.agent = agent
 
@@ -1491,7 +1491,7 @@ class Consul(object):
                 '/v1/catalog/service/%s' % service,
                 params=params)
 
-    class Health(object):
+    class Health:
         # TODO: All of the health endpoints support all consistency modes
         def __init__(self, agent):
             self.agent = agent
@@ -1710,7 +1710,7 @@ class Consul(object):
                 '/v1/health/node/%s' % node,
                 params=params)
 
-    class Session(object):
+    class Session:
         def __init__(self, agent):
             self.agent = agent
 
@@ -1935,7 +1935,7 @@ class Consul(object):
                 '/v1/session/renew/%s' % session_id,
                 params=params)
 
-    class ACL(object):
+    class ACL:
         def __init__(self, agent):
             self.agent = agent
 
@@ -2112,7 +2112,7 @@ class Consul(object):
                 '/v1/acl/destroy/%s' % acl_id,
                 params=params)
 
-    class Status(object):
+    class Status:
         """
         The Status endpoints are used to get information about the status
          of the Consul cluster.
@@ -2134,7 +2134,7 @@ class Consul(object):
             """
             return self.agent.http.get(CB.json(), '/v1/status/peers')
 
-    class Query(object):
+    class Query:
         def __init__(self, agent):
             self.agent = agent
 
@@ -2390,7 +2390,7 @@ class Consul(object):
             return self.agent.http.get(
                 CB.json(), '/v1/query/%s/explain' % query, params=params)
 
-    class Coordinate(object):
+    class Coordinate:
         def __init__(self, agent):
             self.agent = agent
 
@@ -2430,7 +2430,7 @@ class Consul(object):
             return self.agent.http.get(
                 CB.json(index=True), '/v1/coordinate/nodes', params=params)
 
-    class Operator(object):
+    class Operator:
         def __init__(self, agent):
             self.agent = agent
 
