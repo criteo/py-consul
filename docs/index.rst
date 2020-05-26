@@ -60,7 +60,7 @@ need to *yield* the result of each API call. This client is available in
     from consul.tornado import Consul
 
 
-    class Config(object):
+    class Config:
         def __init__(self, loop):
             self.foo = None
             loop.add_callback(self.watch)
