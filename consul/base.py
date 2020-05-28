@@ -5,9 +5,7 @@ import logging
 import base64
 import json
 import os
-
-import six
-from six.moves import urllib
+import urllib
 
 
 log = logging.getLogger(__name__)
@@ -55,8 +53,7 @@ class Check:
         Run the script *args* every *interval* (e.g. "10s") to peform health
         check
         """
-        if isinstance(args, six.string_types) \
-                or isinstance(args, six.binary_type):
+        if isinstance(args, (str, bytes)):
             warnings.warn(
                 "Check.script should take a list of args", DeprecationWarning)
             args = ["sh", "-c", args]
@@ -245,7 +242,7 @@ class CB:
         return cb
 
 
-class HTTPClient(six.with_metaclass(abc.ABCMeta, object)):
+class HTTPClient(metaclass=abc.ABCMeta):
     def __init__(self, host='127.0.0.1', port=8500, scheme='http',
                  verify=True, cert=None):
         self.host = host
@@ -598,8 +595,7 @@ class Consul:
             """
             assert not key.startswith('/'), \
                 'keys should not start with a forward slash'
-            assert value is None or \
-                isinstance(value, (six.string_types, six.binary_type)), \
+            assert value is None or isinstance(value, (str, bytes)), \
                 "value should be None or a string / binary data"
 
             params = []
