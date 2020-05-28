@@ -3,7 +3,6 @@ import struct
 
 import pytest_twisted
 
-import six
 from twisted.internet import defer, reactor
 
 import consul
@@ -33,7 +32,7 @@ class TestConsul:
         response = yield c.kv.put('foo', 'bar')
         assert response is True
         index, data = yield c.kv.get('foo')
-        assert data['Value'] == six.b('bar')
+        assert data['Value'] == b'bar'
 
     @pytest_twisted.inlineCallbacks
     def test_kv_binary(self, consul_port):
@@ -50,7 +49,7 @@ class TestConsul:
         index, data = yield c.kv.get('foo')
         assert data is None
         index, data = yield c.kv.get('foo', index=index)
-        assert data['Value'] == six.b('bar')
+        assert data['Value'] == b'bar'
 
     @pytest_twisted.inlineCallbacks
     def test_kv_put_flags(self, consul_port):
@@ -95,7 +94,7 @@ class TestConsul:
         index, data = yield c.kv.get('foo')
         assert data is None
         index, data = yield c.kv.get('foo', index=index)
-        assert data['Value'] == six.b('bar')
+        assert data['Value'] == b'bar'
 
     @pytest_twisted.inlineCallbacks
     def test_transaction(self, consul_port):
