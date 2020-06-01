@@ -1,6 +1,17 @@
 Change log
 ==========
 
+1.1.1
+-----
+
+* Add support for python 3.7 and 3.8
+* Fix asyncio compatibility to support latest python version
+* Remove six dependency
+* Use new style of class declaration
+* Get rid of py3.4 old compat
+* Drop support of deprecated python2
+* base: allow weights parameter in service register
+
 1.1.0
 -----
 
