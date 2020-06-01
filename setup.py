@@ -46,11 +46,11 @@ class PyTest(TestCommand):
 
 
 setup(
-    name='python-consul',
+    name='py-consul',
     version=metadata['version'],
-    author='Andy Gayton',
-    author_email='andy@thecablelounge.com',
-    url='https://github.com/cablehead/python-consul',
+    author='NetworkLB Team',
+    author_email='network-lb@criteo.com',
+    url='https://github.com/criteo-forks/py-consul',
     license='MIT',
     description=description,
     long_description="%s\n\n%s" % (
