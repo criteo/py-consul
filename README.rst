@@ -1,6 +1,12 @@
 Python client for `Consul.io <http://www.consul.io/>`_
 ======================================================
 
+Fork intent
+-----------
+
+The main project https://github.com/cablehead/python-consul is not maintained since 2018.
+As we're not able to get in touch with the maintainer (andy@thecablelounge.com) to merge and release our PRs, we've forked the project in order to continue making live the project.
+
 Documentation
 -------------
 
