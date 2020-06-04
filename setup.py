@@ -43,8 +43,8 @@ class PyTest(TestCommand):
 setup(
     name='py-consul',
     version=metadata['version'],
-    author='NetworkLB Team',
-    author_email='network-lb@criteo.com',
+    author='Criteo',
+    author_email='github@criteo.com',
     url='https://github.com/criteo-forks/py-consul',
     license='MIT',
     description=description,
