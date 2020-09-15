@@ -37,7 +37,7 @@ class TestAsyncioConsul:
             assert response is True
             index, data = await c.kv.get('foo')
             assert data['Value'] == b'bar'
-            c.close()
+            await c.close()
 
         loop.run_until_complete(main())
 
@@ -49,7 +49,7 @@ class TestAsyncioConsul:
             await c.kv.put('foo', struct.pack('i', 1000))
             index, data = await c.kv.get('foo')
             assert struct.unpack('i', data['Value']) == (1000,)
-            c.close()
+            await c.close()
 
         asyncio.set_event_loop(loop)
         loop.run_until_complete(main())
@@ -60,7 +60,7 @@ class TestAsyncioConsul:
             await c.kv.put('foo', struct.pack('i', 1000))
             index, data = await c.kv.get('foo')
             assert struct.unpack('i', data['Value']) == (1000,)
-            c.close()
+            await c.close()
 
         loop.run_until_complete(main())
 
@@ -75,7 +75,7 @@ class TestAsyncioConsul:
             index, data = await c.kv.get('foo', index=index)
             assert data['Value'] == b'bar'
             await fut
-            c.close()
+            await c.close()
 
         async def put():
             await asyncio.sleep(2.0/100, loop=loop)
@@ -94,7 +94,7 @@ class TestAsyncioConsul:
             assert response is True
             index, data = await c.kv.get('foo')
             assert data['Flags'] == 50
-            c.close()
+            await c.close()
 
         loop.run_until_complete(main())
 
@@ -115,7 +115,7 @@ class TestAsyncioConsul:
             assert response is True
             index, data = await c.kv.get('foo', recurse=True)
             assert data is None
-            c.close()
+            await c.close()
 
         loop.run_until_complete(main())
 
@@ -129,7 +129,7 @@ class TestAsyncioConsul:
             index, data = await c.kv.get('foo', index=index)
             assert data['Value'] == b'bar'
             await fut
-            c.close()
+            await c.close()
 
         async def put():
             await asyncio.sleep(1.0/100, loop=loop)
@@ -149,7 +149,7 @@ class TestAsyncioConsul:
             d = {"KV": {"Verb": "get", "Key": "asdf"}}
             r = await c.txn.put([d])
             assert r["Results"][0]["KV"]["Value"] == value
-            c.close()
+            await c.close()
         loop.run_until_complete(main())
 
     def test_agent_services(self, loop, consul_port):
@@ -175,7 +175,7 @@ class TestAsyncioConsul:
             assert response is True
             services = await c.agent.services()
             assert services == {}
-            c.close()
+            await c.close()
 
         loop.run_until_complete(main())
 
@@ -196,7 +196,7 @@ class TestAsyncioConsul:
             nodes.remove(current)
             assert [x['Node'] for x in nodes] == []
             await fut
-            c.close()
+            await c.close()
 
         async def register():
             await asyncio.sleep(1.0/100, loop=loop)
@@ -223,7 +223,7 @@ class TestAsyncioConsul:
             index, services = await c.session.list(index=index)
             assert services == []
             await fut
-            c.close()
+            await c.close()
 
         async def register():
             await asyncio.sleep(1.0/100, loop=loop)
@@ -257,6 +257,6 @@ class TestAsyncioConsul:
 
             destroyed = await c.acl.destroy(token)
             assert destroyed is True
-            c.close()
+            await c.close()
 
         loop.run_until_complete(main())
