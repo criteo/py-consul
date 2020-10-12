@@ -53,7 +53,7 @@ class Consul(base.Consul):
 
     def connect(self, host, port, scheme, verify=True, cert=None):
         return HTTPClient(host, port, scheme, loop=self._loop,
-                          verify=verify, cert=None)
+                          verify=verify, cert=cert)
 
     def close(self):
         """Close all opened http connections"""
