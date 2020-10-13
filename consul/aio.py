@@ -10,11 +10,15 @@ __all__ = ['Consul']
 class HTTPClient(base.HTTPClient):
     """Asyncio adapter for python consul using aiohttp library"""
 
-    def __init__(self, *args, loop=None, **kwargs):
+    def __init__(self, *args, loop=None, connections_limit=None, **kwargs):
         super(HTTPClient, self).__init__(*args, **kwargs)
         self._loop = loop or asyncio.get_event_loop()
+        connector_kwargs = {}
+        if connections_limit:
+            connector_kwargs['connections_limit'] = connections_limit
         connector = aiohttp.TCPConnector(loop=self._loop,
-                                         verify_ssl=self.verify)
+                                         verify_ssl=self.verify,
+                                         **connector_kwargs)
         self._session = aiohttp.ClientSession(connector=connector)
 
     async def _request(self, callback, method, uri, data=None):
@@ -47,12 +51,14 @@ class HTTPClient(base.HTTPClient):
 
 class Consul(base.Consul):
 
-    def __init__(self, *args, loop=None, **kwargs):
+    def __init__(self, *args, loop=None, connections_limit=None, **kwargs):
         self._loop = loop or asyncio.get_event_loop()
+        self.connections_limit = connections_limit
         super().__init__(*args, **kwargs)
 
     def connect(self, host, port, scheme, verify=True, cert=None):
         return HTTPClient(host, port, scheme, loop=self._loop,
+                          connections_limit=self.connections_limit,
                           verify=verify, cert=cert)
 
     def close(self):
