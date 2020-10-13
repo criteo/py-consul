@@ -16,7 +16,7 @@ class HTTPClient(base.HTTPClient):
         self._loop = loop or asyncio.get_event_loop()
         connector_kwargs = {}
         if connections_limit:
-            connector_kwargs['connections_limit'] = connections_limit
+            connector_kwargs['limit'] = connections_limit
         connector = aiohttp.TCPConnector(loop=self._loop,
                                          verify_ssl=self.verify,
                                          **connector_kwargs)
