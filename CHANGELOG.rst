@@ -1,6 +1,10 @@
 Change log
 ==========
 
+1.1.3
+-----
+* bugfix: fixed connection_limit usage for aiohttp
+
 1.1.2
 -----
 * add support for connection_limit and connection_timeout in aiohttp
