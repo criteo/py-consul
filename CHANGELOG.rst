@@ -1,6 +1,11 @@
 Change log
 ==========
 
+1.1.2
+-----
+* add support for connection_limit and connection_timeout in aiohttp
+* fix asyncio session close
+
 1.1.1
 -----
 
