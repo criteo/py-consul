@@ -21,7 +21,7 @@ class HTTPClient(base.HTTPClient):
                                          verify_ssl=self.verify,
                                          **connector_kwargs)
         session_kwargs = {}
-        if session_kwargs:
+        if connections_timeout:
             session_kwargs['timeout'] = connections_timeout
         self._session = aiohttp.ClientSession(connector=connector,
                                               **session_kwargs)
