@@ -22,7 +22,8 @@ class HTTPClient(base.HTTPClient):
                                          **connector_kwargs)
         session_kwargs = {}
         if connections_timeout:
-            session_kwargs['timeout'] = connections_timeout
+            timeout = aiohttp.ClientTimeout(total=connections_timeout)
+            session_kwargs['timeout'] = timeout
         self._session = aiohttp.ClientSession(connector=connector,
                                               **session_kwargs)
 
