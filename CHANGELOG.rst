@@ -1,6 +1,14 @@
 Change log
 ==========
 
+1.1.5
+-----
+* Dummy release to overcome a pypi release issue
+
+1.1.4
+-----
+* bugfix: fixed connection_timeout usage for aiohttp
+
 1.1.3
 -----
 * bugfix: fixed connection_limit usage for aiohttp
