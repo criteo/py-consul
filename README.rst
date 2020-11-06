@@ -10,16 +10,6 @@ to merge and release our PRs, we've forked the project in order to continue the
 maintenance of the project.  We also renamed the project to be able to upload
 on pypi; see https://pypi.org/project/py-consul/
 
-Documentation
--------------
-
-`Read the Docs`_
-
-Status
-------
-
-|Build Status|
-
 Example
 -------
 
