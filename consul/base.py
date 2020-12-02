@@ -1517,7 +1517,8 @@ class Consul:
             Calling with *passing* set to True will filter results to only
             those nodes whose checks are currently passing.
 
-            Calling with *tag* will filter the results by tag.
+            Calling with *tag* will filter the results by tag, multiple tags 
+            using list possible.
 
             *dc* is the datacenter of the node and defaults to this agents
             datacenter.
@@ -1538,7 +1539,10 @@ class Consul:
             if passing:
                 params.append(('passing', '1'))
             if tag is not None:
-                params.append(('tag', tag))
+                if not isinstance(tag, list):
+                    tag = [tag]
+                for tag_item in tag:
+                    params.append(('tag', tag_item))                
             dc = dc or self.agent.dc
             if dc:
                 params.append(('dc', dc))
