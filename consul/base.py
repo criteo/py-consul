@@ -746,7 +746,7 @@ class Consul:
             return self.agent.http.get(
                 CB.json(), '/v1/agent/members', params=params)
 
-        def maintenance(self, enable, reason=None):
+        def maintenance(self, enable, reason=None, token=None):
             """
             The node maintenance endpoint can place the agent into
             "maintenance mode".
@@ -763,11 +763,14 @@ class Consul:
             params.append(('enable', enable))
             if reason:
                 params.append(('reason', reason))
+            token = token or self.agent.token
+            if token:
+                params.append(('token', token))
 
             return self.agent.http.put(
                 CB.bool(), '/v1/agent/maintenance', params=params)
 
-        def join(self, address, wan=False):
+        def join(self, address, wan=False, token=None):
             """
             This endpoint instructs the agent to attempt to connect to a
             given address.
@@ -783,6 +786,9 @@ class Consul:
 
             if wan:
                 params.append(('wan', 1))
+            token = token or self.agent.token
+            if token:
+                params.append(('token', token))
 
             return self.agent.http.put(
                 CB.bool(), '/v1/agent/join/%s' % address, params=params)
@@ -903,16 +909,22 @@ class Consul:
                     params=params,
                     data=json.dumps(payload))
 
-            def deregister(self, service_id):
+            def deregister(self, service_id, token=None):
                 """
                 Used to remove a service from the local agent. The agent will
                 take care of deregistering the service with the Catalog. If
                 there is an associated check, that is also deregistered.
                 """
-                return self.agent.http.put(
-                    CB.bool(), '/v1/agent/service/deregister/%s' % service_id)
+                params = []
+                token = token or self.agent.token
+                if token:
+                    params.append(('token', token))
 
-            def maintenance(self, service_id, enable, reason=None):
+                return self.agent.http.put(
+                    CB.bool(), '/v1/agent/service/deregister/%s' % service_id,
+                    params=params)
+
+            def maintenance(self, service_id, enable, reason=None, token=None):
                 """
                 The service maintenance endpoint allows placing a given service
                 into "maintenance mode".
@@ -932,6 +944,10 @@ class Consul:
                 params.append(('enable', enable))
                 if reason:
                     params.append(('reason', reason))
+
+                token = token or self.agent.token
+                if token:
+                    params.append(('token', token))
 
                 return self.agent.http.put(
                     CB.bool(),
@@ -1018,15 +1034,21 @@ class Consul:
                     params=params,
                     data=json.dumps(payload))
 
-            def deregister(self, check_id):
+            def deregister(self, check_id, token=None):
                 """
                 Remove a check from the local agent.
                 """
+                params = []
+                token = token or self.agent.token
+                if token:
+                    params.append(('token', token))
+
                 return self.agent.http.put(
                     CB.bool(),
-                    '/v1/agent/check/deregister/%s' % check_id)
+                    '/v1/agent/check/deregister/%s' % check_id,
+                    params=params)
 
-            def ttl_pass(self, check_id, notes=None):
+            def ttl_pass(self, check_id, notes=None, token=None):
                 """
                 Mark a ttl based check as passing. Optional notes can be
                 attached to describe the status of the check.
@@ -1034,13 +1056,16 @@ class Consul:
                 params = []
                 if notes:
                     params.append(('note', notes))
+                token = token or self.agent.token
+                if token:
+                    params.append(('token', token))
 
                 return self.agent.http.put(
                     CB.bool(),
                     '/v1/agent/check/pass/%s' % check_id,
                     params=params)
 
-            def ttl_fail(self, check_id, notes=None):
+            def ttl_fail(self, check_id, notes=None, token=None):
                 """
                 Mark a ttl based check as failing. Optional notes can be
                 attached to describe why check is failing. The status of the
@@ -1049,13 +1074,16 @@ class Consul:
                 params = []
                 if notes:
                     params.append(('note', notes))
+                token = token or self.agent.token
+                if token:
+                    params.append(('token', token))
 
                 return self.agent.http.put(
                     CB.bool(),
                     '/v1/agent/check/fail/%s' % check_id,
                     params=params)
 
-            def ttl_warn(self, check_id, notes=None):
+            def ttl_warn(self, check_id, notes=None, token=None):
                 """
                 Mark a ttl based check with warning. Optional notes can be
                 attached to describe the warning. The status of the
@@ -1064,6 +1092,9 @@ class Consul:
                 params = []
                 if notes:
                     params.append(('note', notes))
+                token = token or self.agent.token
+                if token:
+                    params.append(('token', token))
 
                 return self.agent.http.put(
                     CB.bool(),
