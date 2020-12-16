@@ -340,6 +340,7 @@ class Consul:
         self.query = Consul.Query(self)
         self.coordinate = Consul.Coordinate(self)
         self.operator = Consul.Operator(self)
+        self.connect = Consul.Connect(self)
 
     class Event:
         """
@@ -697,6 +698,7 @@ class Consul:
             self.agent = agent
             self.service = Consul.Agent.Service(agent)
             self.check = Consul.Agent.Check(agent)
+            self.connect = Consul.Agent.Connect(agent)
 
         def self(self):
             """
@@ -1101,6 +1103,69 @@ class Consul:
                     '/v1/agent/check/warn/%s' % check_id,
                     params=params)
 
+        class Connect:
+            def __init__(self, agent):
+                self.agent = agent
+                self.ca = Consul.Agent.Connect.CA(agent)
+
+            def authorize(
+                    self,
+                    target,
+                    client_cert_uri,
+                    client_cert_serial,
+                    token=None):
+                """
+                Tests whether a connection attempt is authorized between
+                two services.
+                More information is available
+                `here <https://www.consul.io/api-docs/agent/connect>`_.
+
+                *target* is the name of the service that is being requested.
+
+                *client_cert_uri* The unique identifier for the requesting
+                client.
+
+                *client_cert_serial* The colon-hex-encoded serial number for
+                the requesting client cert.
+                """
+
+                payload = {
+                    'Target': target,
+                    'ClientCertURI': client_cert_uri,
+                    'ClientCertSerial': client_cert_serial
+                }
+
+                params = []
+                token = token or self.agent.token
+                if token:
+                    params.append(('token', token))
+
+                return self.agent.http.put(
+                    CB.bool(),
+                    '/v1/agent/connect/authorize',
+                    params=params,
+                    data=json.dumps(payload))
+
+            class CA:
+                def __init__(self, agent):
+                    self.agent = agent
+
+                def roots(self):
+                    return self.agent.http.get(
+                        CB.json(),
+                        '/v1/agent/connect/ca/roots')
+
+                def leaf(self, service, token=None):
+                    params = []
+                    token = token or self.agent.token
+                    if token:
+                        params.append(('token', token))
+
+                    return self.agent.http.get(
+                        CB.bool(),
+                        '/v1/agent/connect/ca/leaf/%s' % service,
+                        params=params)
+
     class Catalog:
         def __init__(self, agent):
             self.agent = agent
@@ -1440,17 +1505,47 @@ class Consul:
                 '/v1/catalog/node/%s' % node,
                 params=params)
 
+        def _service(self,
+                     internal_uri,
+                     index=None,
+                     wait=None,
+                     tag=None,
+                     consistency=None,
+                     dc=None,
+                     near=None,
+                     token=None,
+                     node_meta=None):
+            params = []
+            dc = dc or self.agent.dc
+            if dc:
+                params.append(('dc', dc))
+            if tag:
+                params.append(('tag', tag))
+            if index:
+                params.append(('index', index))
+                if wait:
+                    params.append(('wait', wait))
+            if near:
+                params.append(('near', near))
+            token = token or self.agent.token
+            if token:
+                params.append(('token', token))
+            consistency = consistency or self.agent.consistency
+            if consistency in ('consistent', 'stale'):
+                params.append((consistency, '1'))
+            if node_meta:
+                for nodemeta_name, nodemeta_value in node_meta.items():
+                    params.append(('node-meta', '{0}:{1}'.
+                                   format(nodemeta_name, nodemeta_value)))
+            return self.agent.http.get(
+                CB.json(index=True),
+                internal_uri,
+                params=params)
+
         def service(
                 self,
                 service,
-                index=None,
-                wait=None,
-                tag=None,
-                consistency=None,
-                dc=None,
-                near=None,
-                token=None,
-                node_meta=None):
+                **kwargs):
             """
             Returns a tuple of (*index*, *nodes*) of the nodes providing
             *service* in the *dc* datacenter. *dc* defaults to the current
@@ -1491,77 +1586,38 @@ class Consul:
                     }
                 ])
             """
-            params = []
-            dc = dc or self.agent.dc
-            if dc:
-                params.append(('dc', dc))
-            if tag:
-                params.append(('tag', tag))
-            if index:
-                params.append(('index', index))
-                if wait:
-                    params.append(('wait', wait))
-            if near:
-                params.append(('near', near))
-            token = token or self.agent.token
-            if token:
-                params.append(('token', token))
-            consistency = consistency or self.agent.consistency
-            if consistency in ('consistent', 'stale'):
-                params.append((consistency, '1'))
-            if node_meta:
-                for nodemeta_name, nodemeta_value in node_meta.items():
-                    params.append(('node-meta', '{0}:{1}'.
-                                   format(nodemeta_name, nodemeta_value)))
-            return self.agent.http.get(
-                CB.json(index=True),
-                '/v1/catalog/service/%s' % service,
-                params=params)
+            internal_uri = '/v1/catalog/service/%s' % service
+            return self._service(internal_uri=internal_uri, **kwargs)
+
+        def connect(
+                self,
+                service,
+                **kwargs):
+            """
+            Returns a tuple of (*index*, *nodes*) of the nodes providing
+            connect-capable *service* in the *dc* datacenter. *dc* defaults
+            to the current datacenter of this agent.
+
+            Request arguments and response format are the same as catalog.service
+            """
+            internal_uri = '/v1/catalog/connect/%s' % service
+            return self._service(internal_uri=internal_uri, **kwargs)
 
     class Health:
         # TODO: All of the health endpoints support all consistency modes
         def __init__(self, agent):
             self.agent = agent
 
-        def service(self,
-                    service,
-                    index=None,
-                    wait=None,
-                    passing=None,
-                    tag=None,
-                    dc=None,
-                    near=None,
-                    token=None,
-                    node_meta=None):
-            """
-            Returns a tuple of (*index*, *nodes*)
-
-            *index* is the current Consul index, suitable for making subsequent
-            calls to wait for changes since this query was last run.
-
-            *wait* the maximum duration to wait (e.g. '10s') to retrieve
-            a given index. this parameter is only applied if *index* is also
-            specified. the wait time by default is 5 minutes.
-
-            *nodes* are the nodes providing the given service.
-
-            Calling with *passing* set to True will filter results to only
-            those nodes whose checks are currently passing.
-
-            Calling with *tag* will filter the results by tag, multiple tags 
-            using list possible.
-
-            *dc* is the datacenter of the node and defaults to this agents
-            datacenter.
-
-            *near* is a node name to sort the resulting list in ascending
-            order based on the estimated round trip time from that node
-
-            *token* is an optional `ACL token`_ to apply to this request.
-
-            *node_meta* is an optional meta data used for filtering, a
-            dictionary formatted as {k1:v1, k2:v2}.
-            """
+        def _service(self,
+                     internal_uri,
+                     index=None,
+                     wait=None,
+                     passing=None,
+                     tag=None,
+                     dc=None,
+                     near=None,
+                     token=None,
+                     node_meta=None):
             params = []
             if index:
                 params.append(('index', index))
@@ -1588,8 +1644,52 @@ class Consul:
                                    format(nodemeta_name, nodemeta_value)))
             return self.agent.http.get(
                 CB.json(index=True),
-                '/v1/health/service/%s' % service,
+                internal_uri,
                 params=params)
+
+        def service(self, service, **kwargs):
+            """
+           Returns a tuple of (*index*, *nodes*)
+
+           *index* is the current Consul index, suitable for making subsequent
+           calls to wait for changes since this query was last run.
+
+           *wait* the maximum duration to wait (e.g. '10s') to retrieve
+           a given index. this parameter is only applied if *index* is also
+           specified. the wait time by default is 5 minutes.
+
+           *nodes* are the nodes providing the given service.
+
+           Calling with *passing* set to True will filter results to only
+           those nodes whose checks are currently passing.
+
+           Calling with *tag* will filter the results by tag, multiple tags
+           using list possible.
+
+           *dc* is the datacenter of the node and defaults to this agents
+           datacenter.
+
+           *near* is a node name to sort the resulting list in ascending
+           order based on the estimated round trip time from that node
+
+           *token* is an optional `ACL token`_ to apply to this request.
+
+           *node_meta* is an optional meta data used for filtering, a
+           dictionary formatted as {k1:v1, k2:v2}.
+           """
+            internal_uri = '/v1/health/service/%s' % service
+            return self._service(internal_uri=internal_uri, **kwargs)
+
+        def connect(self, service, **kwargs):
+            """
+            Returns a tuple of (*index*, *nodes*) of the nodes providing
+            connect-capable *service* in the *dc* datacenter. *dc* defaults
+            to the current datacenter of this agent.
+
+            Request arguments and response format are the same as health.service
+            """
+            internal_uri = '/v1/health/connect/%s' % service
+            return self._service(internal_uri=internal_uri, **kwargs)
 
         def checks(
                 self,
@@ -2471,3 +2571,35 @@ class Consul:
             """
             return self.agent.http.get(
                 CB.json(), '/v1/operator/raft/configuration')
+
+    class Connect:
+        def __init__(self, agent):
+            self.agent = agent
+            self.ca = Consul.Connect.CA(agent)
+
+        class CA:
+            def __init__(self, agent):
+                self.agent = agent
+
+            def roots(self, pem=False, token=None):
+                params = []
+                params.append(('pem', int(pem)))
+                token = token or self.agent.token
+                if token:
+                    params.append(('token', token))
+
+                return self.agent.http.get(
+                    CB.bool(),
+                    '/v1/connect/ca/roots',
+                    params=params)
+
+            def configuration(self, token=None):
+                params = []
+                token = token or self.agent.token
+                if token:
+                    params.append(('token', token))
+
+                return self.agent.http.get(
+                    CB.bool(),
+                    '/v1/connect/ca/configuration',
+                    params=params)
