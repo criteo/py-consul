@@ -1,6 +1,14 @@
 Change log
 ==========
 
+1.2.0
+-----
+* feature: Support deregister field in Check.script
+* feature: Introduce Consul Connect-related API wrappers
+* feature: Add token support missing in multiple methods
+* bugfix: aio: fix timeout type
+* feature: allow multiple tags in service health query
+
 1.1.5
 -----
 * Dummy release to overcome a pypi release issue
