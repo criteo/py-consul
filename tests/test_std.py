@@ -214,7 +214,7 @@ class TestConsul:
 
         assert c.agent.check.register(
             'check name',
-            Check.script('/bin/true', 10),
+            Check.script('/bin/true', 10, '10m'),
             check_id='check_id') is True
         verify_and_dereg_check('check_id')
 
