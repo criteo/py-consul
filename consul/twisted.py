@@ -121,6 +121,10 @@ class HTTPClient(base.HTTPClient):
         response = yield self.request(callback, 'delete', uri, params=params)
         returnValue(response)
 
+    @inlineCallbacks
+    def close(self):
+        pass
+
 
 class Consul(base.Consul):
     @staticmethod

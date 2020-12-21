@@ -38,6 +38,9 @@ class HTTPClient(base.HTTPClient):
             self.session.post(uri, data=data, verify=self.verify,
                               cert=self.cert)))
 
+    def close(self):
+        pass
+
 
 class Consul(base.Consul):
     @staticmethod

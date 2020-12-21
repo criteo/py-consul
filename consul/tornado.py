@@ -51,6 +51,9 @@ class HTTPClient(base.HTTPClient):
                                          validate_cert=self.verify)
         return self._request(callback, request)
 
+    def close(self):
+        self.client.close()
+
 
 class Consul(base.Consul):
     @staticmethod

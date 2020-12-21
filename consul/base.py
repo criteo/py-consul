@@ -277,6 +277,10 @@ class HTTPClient(metaclass=abc.ABCMeta):
     def post(self, callback, path, params=None, data=''):
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def close(self):
+        raise NotImplementedError
+
 
 class Consul:
     def __init__(
@@ -344,6 +348,18 @@ class Consul:
         self.coordinate = Consul.Coordinate(self)
         self.operator = Consul.Operator(self)
         self.connect = Consul.Connect(self)
+
+    def __enter__(self):
+        return self
+
+    async def __aenter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.http.close()
+
+    async def __aexit__(self, exc_type, exc, tb):
+        await self.http.close()
 
     class Event:
         """
