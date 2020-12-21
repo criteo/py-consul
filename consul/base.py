@@ -722,6 +722,15 @@ class Consul:
             """
             return self.agent.http.get(CB.json(), '/v1/agent/services')
 
+        def service_definition(self, service_id):
+            """
+            Returns a service definition for a single instance that is registered
+            with the local agent.
+            """
+            return self.agent.http.get(
+                CB.json(),
+                '/v1/agent/service/%s' % service_id)
+
         def checks(self):
             """
             Returns all the checks that are registered with the local agent.
