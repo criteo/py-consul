@@ -64,7 +64,7 @@ class Consul(base.Consul):
         self.connections_timeout = connections_timeout
         super().__init__(*args, **kwargs)
 
-    def connect(self, host, port, scheme, verify=True, cert=None):
+    def http_connect(self, host, port, scheme, verify=True, cert=None):
         return HTTPClient(host, port, scheme, loop=self._loop,
                           connections_limit=self.connections_limit,
                           connections_timeout=self.connections_timeout,

@@ -323,7 +323,7 @@ class Consul:
         if os.getenv('CONSUL_HTTP_SSL_VERIFY') is not None:
             verify = os.getenv('CONSUL_HTTP_SSL_VERIFY') == 'true'
 
-        self.http = self.connect(host, port, scheme, verify, cert)
+        self.http = self.http_connect(host, port, scheme, verify, cert)
         self.token = os.getenv('CONSUL_HTTP_TOKEN', token)
         self.scheme = scheme
         self.dc = dc
