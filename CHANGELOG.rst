@@ -1,6 +1,12 @@
 Change log
 ==========
 
+1.2.1
+-----
+* feature: Add support for context-managers
+* feature: Add support for /agent/service/:service_id API
+* bugfix: rename internal connect method
+
 1.2.0
 -----
 * feature: Support deregister field in Check.script
