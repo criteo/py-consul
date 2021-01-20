@@ -636,6 +636,57 @@ class Consul:
             return self.agent.http.put(
                 CB.json(), '/v1/kv/%s' % key, params=params, data=value)
 
+        def replace(
+                self,
+                key,
+                value,
+                cas=None,
+                flags=None,
+                acquire=None,
+                release=None,
+                token=None,
+                dc=None):
+            """
+            Replaces *key* to the given *value* if different from what's
+            already stored in KV
+
+            *value* can either be None (useful for marking a key as a
+            directory) or any string type, including binary data (e.g. a
+            msgpack'd data structure)
+
+            The optional *cas* parameter is used to turn the PUT into a
+            Check-And-Set operation. This is very useful as it allows clients
+            to build more complex syncronization primitives on top. If the
+            index is 0, then Consul will only put the key if it does not
+            already exist. If the index is non-zero, then the key is only set
+            if the index matches the ModifyIndex of that key.
+
+            An optional *flags* can be set. This can be used to specify an
+            unsigned value between 0 and 2^64-1.
+
+            *acquire* is an optional session_id. if supplied a lock acquisition
+            will be attempted.
+
+            *release* is an optional session_id. if supplied a lock release
+            will be attempted.
+
+            *token* is an optional `ACL token`_ to apply to this request. If
+            the token's policy is not allowed to write to this key an
+            *ACLPermissionDenied* exception will be raised.
+
+            *dc* is the optional datacenter that you wish to communicate with.
+            If None is provided, defaults to the agent's datacenter.
+
+            The return value is simply either True or False. If False is
+            returned, then the replace has not taken place.
+            """
+            _index, data = self.get(key=key, token=token, dc=dc)
+            if not data or data.get('Value') != value:
+                return self.put(key=key, value=value, cas=cas,
+                                flags=None, acquire=acquire,
+                                release=release, token=token, dc=dc)
+            return False
+
         def delete(self, key, recurse=None, cas=None, token=None, dc=None):
             """
             Deletes a single key or if *recurse* is True, all keys sharing a
