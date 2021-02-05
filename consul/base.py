@@ -1169,7 +1169,7 @@ class Consul:
                     params.append(('token', token))
 
                 return self.agent.http.put(
-                    CB.bool(),
+                    CB.json(),
                     '/v1/agent/connect/authorize',
                     params=params,
                     data=json.dumps(payload))
@@ -1190,7 +1190,7 @@ class Consul:
                         params.append(('token', token))
 
                     return self.agent.http.get(
-                        CB.bool(),
+                        CB.json(),
                         '/v1/agent/connect/ca/leaf/%s' % service,
                         params=params)
 
@@ -2617,7 +2617,7 @@ class Consul:
                     params.append(('token', token))
 
                 return self.agent.http.get(
-                    CB.bool(),
+                    CB.json(),
                     '/v1/connect/ca/roots',
                     params=params)
 
@@ -2628,6 +2628,6 @@ class Consul:
                     params.append(('token', token))
 
                 return self.agent.http.get(
-                    CB.bool(),
+                    CB.json(),
                     '/v1/connect/ca/configuration',
                     params=params)
