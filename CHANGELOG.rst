@@ -1,6 +1,10 @@
 Change log
 ==========
 
+1.2.2
+-----
+* bugfix: connect: fix wrong endpoints callbacks
+
 1.2.1
 -----
 * feature: Add support for context-managers
