@@ -222,23 +222,22 @@ class CB:
         def cb(response):
             CB._status(response, allow_404=allow_404)
             if response.code == 404:
-                return response.headers['X-Consul-Index'], None
-
-            data = json.loads(response.body)
-
-            if decode:
-                for item in data:
-                    if item.get(decode) is not None:
-                        item[decode] = base64.b64decode(item[decode])
-            if is_id:
-                data = data['ID']
-            if one:
-                if data == []:
-                    data = None
-                if data is not None:
-                    data = data[0]
-            if map:
-                data = map(data)
+                data = None
+            else:
+                data = json.loads(response.body)
+                if decode:
+                    for item in data:
+                        if item.get(decode) is not None:
+                            item[decode] = base64.b64decode(item[decode])
+                if is_id:
+                    data = data['ID']
+                if one:
+                    if data == []:
+                        data = None
+                    if data is not None:
+                        data = data[0]
+                if map:
+                    data = map(data)
             if index:
                 return response.headers['X-Consul-Index'], data
             return data
