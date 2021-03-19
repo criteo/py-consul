@@ -1,6 +1,10 @@
 Change log
 ==========
 
+1.2.3
+-----
+* feature: base: ensure return format of json callback is more consistent
+
 1.2.2
 -----
 * bugfix: connect: fix wrong endpoints callbacks
