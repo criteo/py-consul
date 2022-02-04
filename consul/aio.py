@@ -27,29 +27,33 @@ class HTTPClient(base.HTTPClient):
         self._session = aiohttp.ClientSession(connector=connector,
                                               **session_kwargs)
 
-    async def _request(self, callback, method, uri, data=None):
-        resp = await self._session.request(method, uri, data=data)
+    async def _request(self, callback, method, uri, data=None, connections_timeout=None):
+        session_kwargs = {}
+        if connections_timeout:
+            timeout = aiohttp.ClientTimeout(total=connections_timeout)
+            session_kwargs['timeout'] = timeout
+        resp = await self._session.request(method, uri, data=data, **session_kwargs)
         body = await resp.text(encoding='utf-8')
         if resp.status == 599:
             raise base.Timeout
         r = base.Response(resp.status, resp.headers, body)
         return callback(r)
 
-    def get(self, callback, path, params=None):
+    def get(self, callback, path, params=None, connections_timeout=None):
         uri = self.uri(path, params)
-        return self._request(callback, 'GET', uri)
+        return self._request(callback, 'GET', uri, connections_timeout=connections_timeout)
 
-    def put(self, callback, path, params=None, data=''):
+    def put(self, callback, path, params=None, data='', connections_timeout=None):
         uri = self.uri(path, params)
-        return self._request(callback, 'PUT', uri, data=data)
+        return self._request(callback, 'PUT', uri, data=data, connections_timeout=connections_timeout)
 
-    def delete(self, callback, path, params=None):
+    def delete(self, callback, path, params=None, connections_timeout=None):
         uri = self.uri(path, params)
-        return self._request(callback, 'DELETE', uri)
+        return self._request(callback, 'DELETE', uri, connections_timeout=connections_timeout)
 
-    def post(self, callback, path, params=None, data=''):
+    def post(self, callback, path, params=None, data='', connections_timeout=None):
         uri = self.uri(path, params)
-        return self._request(callback, 'POST', uri, data=data)
+        return self._request(callback, 'POST', uri, data=data, connections_timeout=connections_timeout)
 
     def close(self):
         return self._session.close()
