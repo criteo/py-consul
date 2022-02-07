@@ -494,7 +494,8 @@ class Consul:
                 consistency=None,
                 keys=False,
                 separator=None,
-                dc=None):
+                dc=None,
+                connections_timeout=None):
             """
             Returns a tuple of (*index*, *value[s]*)
 
@@ -564,10 +565,13 @@ class Consul:
                 decode = 'Value'
             if not recurse and not keys:
                 one = True
+            http_kwargs = {}
+            if connections_timeout:
+                http_kwargs['connections_timeout'] = connections_timeout
             return self.agent.http.get(
                 CB.json(index=True, decode=decode, one=one),
                 '/v1/kv/%s' % key,
-                params=params)
+                params=params,**http_kwargs)
 
         def put(
                 self,
@@ -578,7 +582,8 @@ class Consul:
                 acquire=None,
                 release=None,
                 token=None,
-                dc=None):
+                dc=None,
+                connections_timeout=None):
             """
             Sets *key* to the given *value*.
 
@@ -632,10 +637,13 @@ class Consul:
             dc = dc or self.agent.dc
             if dc:
                 params.append(('dc', dc))
+            http_kwargs = {}
+            if connections_timeout:
+                http_kwargs['connections_timeout'] = connections_timeout
             return self.agent.http.put(
-                CB.json(), '/v1/kv/%s' % key, params=params, data=value)
+                CB.json(), '/v1/kv/%s' % key, params=params, data=value, **http_kwargs)
 
-        def delete(self, key, recurse=None, cas=None, token=None, dc=None):
+        def delete(self, key, recurse=None, cas=None, token=None, dc=None, connections_timeout=None):
             """
             Deletes a single key or if *recurse* is True, all keys sharing a
             prefix.
@@ -668,9 +676,11 @@ class Consul:
             dc = dc or self.agent.dc
             if dc:
                 params.append(('dc', dc))
-
+            http_kwargs = {}
+            if connections_timeout:
+                http_kwargs['connections_timeout'] = connections_timeout
             return self.agent.http.delete(
-                CB.json(), '/v1/kv/%s' % key, params=params)
+                CB.json(), '/v1/kv/%s' % key, params=params, **http_kwargs)
 
     class Txn:
         """
