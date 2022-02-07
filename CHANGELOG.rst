@@ -1,6 +1,10 @@
 Change log
 ==========
 
+1.2.4
+-----
+* feature: aio: allow setting timeout by request
+
 1.2.3
 -----
 * feature: base: ensure return format of json callback is more consistent
