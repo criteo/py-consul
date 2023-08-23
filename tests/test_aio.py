@@ -43,9 +43,9 @@ class TestAsyncioConsul:
         # same as previous but with global event loop
         async def main():
             c = consul.aio.Consul(port=consul_port)
-            assert c._loop is loop
+            assert c._loop is loop  # pylint: disable=protected-access
             await c.kv.put("foo", struct.pack("i", 1000))
-            index, data = await c.kv.get("foo")
+            _index, data = await c.kv.get("foo")
             assert struct.unpack("i", data["Value"]) == (1000,)
             await c.close()
 
@@ -56,7 +56,7 @@ class TestAsyncioConsul:
         async def main():
             c = consul.aio.Consul(port=consul_port, loop=loop)
             await c.kv.put("foo", struct.pack("i", 1000))
-            index, data = await c.kv.get("foo")
+            _index, data = await c.kv.get("foo")
             assert struct.unpack("i", data["Value"]) == (1000,)
             await c.close()
 
@@ -76,7 +76,7 @@ class TestAsyncioConsul:
             await c.close()
 
         async def put():
-            await asyncio.sleep(2.0 / 100, loop=loop)
+            await asyncio.sleep(2.0 / 100)
             await c.kv.put("foo", "bar")
 
         loop.run_until_complete(main())
@@ -85,12 +85,12 @@ class TestAsyncioConsul:
         async def main():
             c = consul.aio.Consul(port=consul_port, loop=loop)
             await c.kv.put("foo", "bar")
-            index, data = await c.kv.get("foo")
+            _index, data = await c.kv.get("foo")
             assert data["Flags"] == 0
 
             response = await c.kv.put("foo", "bar", flags=50)
             assert response is True
-            index, data = await c.kv.get("foo")
+            _index, data = await c.kv.get("foo")
             assert data["Flags"] == 50
             await c.close()
 
@@ -102,16 +102,16 @@ class TestAsyncioConsul:
             await c.kv.put("foo1", "1")
             await c.kv.put("foo2", "2")
             await c.kv.put("foo3", "3")
-            index, data = await c.kv.get("foo", recurse=True)
+            _index, data = await c.kv.get("foo", recurse=True)
             assert [x["Key"] for x in data] == ["foo1", "foo2", "foo3"]
 
             response = await c.kv.delete("foo2")
             assert response is True
-            index, data = await c.kv.get("foo", recurse=True)
+            _index, data = await c.kv.get("foo", recurse=True)
             assert [x["Key"] for x in data] == ["foo1", "foo3"]
             response = await c.kv.delete("foo", recurse=True)
             assert response is True
-            index, data = await c.kv.get("foo", recurse=True)
+            _index, data = await c.kv.get("foo", recurse=True)
             assert data is None
             await c.close()
 
@@ -130,7 +130,7 @@ class TestAsyncioConsul:
             await c.close()
 
         async def put():
-            await asyncio.sleep(1.0 / 100, loop=loop)
+            await asyncio.sleep(1.0 / 100)
             response = await c.kv.put("foo", "bar")
             assert response is True
 
@@ -200,10 +200,10 @@ class TestAsyncioConsul:
             await c.close()
 
         async def register():
-            await asyncio.sleep(1.0 / 100, loop=loop)
+            await asyncio.sleep(1.0 / 100)
             response = await c.catalog.register("n1", "10.1.10.11")
             assert response is True
-            await asyncio.sleep(50 / 1000.0, loop=loop)
+            await asyncio.sleep(50 / 1000.0)
             response = await c.catalog.deregister("n1")
             assert response is True
 
@@ -216,7 +216,7 @@ class TestAsyncioConsul:
             fut = asyncio.ensure_future(register(), loop=loop)
             index, services = await c.session.list()
             assert services == []
-            await asyncio.sleep(20 / 1000.0, loop=loop)
+            await asyncio.sleep(20 / 1000.0)
 
             index, services = await c.session.list(index=index)
             assert len(services)
@@ -227,9 +227,9 @@ class TestAsyncioConsul:
             await c.close()
 
         async def register():
-            await asyncio.sleep(1.0 / 100, loop=loop)
+            await asyncio.sleep(1.0 / 100)
             session_id = await c.session.create()
-            await asyncio.sleep(50 / 1000.0, loop=loop)
+            await asyncio.sleep(50 / 1000.0)
             response = await c.session.destroy(session_id)
             assert response is True
 
@@ -249,11 +249,8 @@ class TestAsyncioConsul:
             """
             token = await c.acl.create(rules=rules)
 
-            try:
+            with pytest.raises(consul.ACLPermissionDenied):
                 await c.acl.list(token=token)
-            except consul.ACLPermissionDenied:
-                raised = True
-            assert raised
 
             destroyed = await c.acl.destroy(token)
             assert destroyed is True

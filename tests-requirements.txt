@@ -1,12 +1,16 @@
+-r requirements.txt
 aiohttp
 black
 isort
 pre-commit
 pyOpenSSL
+pylint
 pytest
 pytest-rerunfailures
 pytest-twisted
 ruff
 tornado
+tox
 treq
 twisted
+virtualenv

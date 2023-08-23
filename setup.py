@@ -7,10 +7,17 @@ from setuptools import setup
 from setuptools.command.install import install
 from setuptools.command.test import test as TestCommand
 
-metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", open("consul/__init__.py").read()))
+with open("consul/__init__.py", encoding="utf-8") as f:
+    metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", f.read()))
 
 
-requirements = [x.strip() for x in open("requirements.txt").readlines() if not x.startswith("#")]
+def _read_reqs(relpath: str):
+    fullpath = os.path.join(os.path.dirname(__file__), relpath)
+    with open(fullpath, encoding="utf-8") as f:
+        return [s.strip() for s in f.readlines() if (s.strip() and not s.startswith("#"))]
+
+
+requirements = _read_reqs("requirements.txt")
 
 
 description = "Python client for Consul (http://www.consul.io/)"
@@ -25,17 +32,21 @@ class Install(install):
 
 
 class PyTest(TestCommand):
+    # pylint: disable=attribute-defined-outside-init
     def finalize_options(self):
         TestCommand.finalize_options(self)
         self.test_args = []
         self.test_suite = True
 
     def run_tests(self):
-        import pytest
+        import pytest  # pylint: disable=import-outside-toplevel
 
         errno = pytest.main(self.test_args)
         sys.exit(errno)
 
+
+with open("README.rst", encoding="utf-8") as f1, open("CHANGELOG.rst", encoding="utf-8") as f2:
+    long_description = f"{f1.read()}\n\n{f2.read()}"
 
 setup(
     name="py-consul",
@@ -45,7 +56,7 @@ setup(
     url="https://github.com/criteo-forks/py-consul",
     license="MIT",
     description=description,
-    long_description="{}\n\n{}".format(open("README.rst").read(), open("CHANGELOG.rst").read()),
+    long_description=long_description,
     py_modules=py_modules,
     install_requires=requirements,
     extras_require={
