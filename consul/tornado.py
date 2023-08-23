@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from tornado import gen, httpclient
 
 from consul import base
@@ -9,7 +7,7 @@ __all__ = ["Consul"]
 
 class HTTPClient(base.HTTPClient):
     def __init__(self, *args, **kwargs):
-        super(HTTPClient, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.client = httpclient.AsyncHTTPClient()
 
     def response(self, response):

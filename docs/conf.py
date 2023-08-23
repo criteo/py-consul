@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # python-consul documentation build configuration file, created by
 # sphinx-quickstart on Sun Sep 28 05:56:44 2014.

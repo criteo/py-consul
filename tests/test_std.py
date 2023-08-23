@@ -209,7 +209,7 @@ class TestConsul:
         assert c.agent.check.register("check name", Check.script("/bin/true", 10, "10m"), check_id="check_id") is True
         verify_and_dereg_check("check_id")
 
-        http_addr = "http://127.0.0.1:{0}".format(consul_port)
+        http_addr = f"http://127.0.0.1:{consul_port}"
         assert c.agent.check.register("http_check", Check.http(http_addr, "10ms")) is True
         time.sleep(1)
         verify_check_status("http_check", "passing")
@@ -792,7 +792,7 @@ class TestConsul:
         leader = c.status.leader()
         addr_port = agent_self["Stats"]["consul"]["leader_addr"]
 
-        assert leader == addr_port, "Leader value was {0}, expected value was {1}".format(leader, addr_port)
+        assert leader == addr_port, "Leader value was {}, expected value was {}".format(leader, addr_port)
 
     def test_status_peers(self, consul_port):
         c = consul.Consul(port=consul_port)
@@ -802,7 +802,7 @@ class TestConsul:
         addr_port = agent_self["Stats"]["consul"]["leader_addr"]
         peers = c.status.peers()
 
-        assert addr_port in peers, "Expected value '{0}' in peer list but it was not present".format(addr_port)
+        assert addr_port in peers, "Expected value '{}' in peer list but it was not present".format(addr_port)
 
     def test_query(self, consul_port):
         c = consul.Consul(port=consul_port)
