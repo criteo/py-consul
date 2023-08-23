@@ -11,7 +11,7 @@ class HTTPClient(base.HTTPClient):
     """Asyncio adapter for python consul using aiohttp library"""
 
     def __init__(self, *args, loop=None, connections_limit=None, connections_timeout=None, **kwargs):
-        super(HTTPClient, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._loop = loop or asyncio.get_event_loop()
         connector_kwargs = {}
         if connections_limit:

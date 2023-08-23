@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 # noinspection PyUnresolvedReferences
 from treq.client import HTTPClient as TreqHTTPClient
 from twisted.internet import reactor
@@ -31,7 +29,7 @@ class InsecureContextFactory(ClientContextFactory):
 
 class HTTPClient(base.HTTPClient):
     def __init__(self, contextFactory, *args, **kwargs):
-        super(HTTPClient, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         agent_kwargs = {"reactor": reactor, "pool": HTTPConnectionPool(reactor)}
         if contextFactory is not None:
             # use the provided context factory
@@ -64,7 +62,7 @@ class HTTPClient(base.HTTPClient):
         # http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
         headers = {
             self.compat_string(k): ",".join(map(self.compat_string, v))
-                for k, v in dict(response.headers.getAllRawHeaders()).items()
+            for k, v in dict(response.headers.getAllRawHeaders()).items()
         }
         body = yield response.text(encoding="utf-8")
         returnValue((response.code, headers, body))
@@ -81,15 +79,15 @@ class HTTPClient(base.HTTPClient):
             parsed = yield self._get_resp(response)
             returnValue(callback(self.response(*parsed)))
         except ConnectError as e:
-            raise ConsulException("{}: {}".format(e.__class__.__name__, e.message))
+            raise ConsulException(f"{e.__class__.__name__}: {e.message}")
         except ResponseNeverReceived:
             # this exception is raised if the connection to the server is lost
             # when yielding a response, this could be due to network issues or
             # server restarts
-            raise ConsulException("Server connection lost: {} {}".format(method.upper(), url))
+            raise ConsulException(f"Server connection lost: {method.upper()} {url}")
         except RequestTransmissionFailed:
             # this exception is expected if the reactor is stopped mid request
-            raise ConsulException("Request incomplete: {} {}".format(method.upper(), url))
+            raise ConsulException(f"Request incomplete: {method.upper()} {url}")
 
     @inlineCallbacks
     def get(self, callback, path, params=None):
