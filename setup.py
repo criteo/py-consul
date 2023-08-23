@@ -1,26 +1,22 @@
 import glob
-import sys
-import re
 import os
+import re
+import sys
 
-from setuptools.command.test import test as TestCommand
-from setuptools.command.install import install
 from setuptools import setup
+from setuptools.command.install import install
+from setuptools.command.test import test as TestCommand
+
+metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", open("consul/__init__.py").read()))
 
 
-metadata = dict(
-    re.findall("__([a-z]+)__ = '([^']+)'", open('consul/__init__.py').read()))
-
-
-requirements = [
-    x.strip() for x
-    in open('requirements.txt').readlines() if not x.startswith('#')]
+requirements = [x.strip() for x in open("requirements.txt").readlines() if not x.startswith("#")]
 
 
 description = "Python client for Consul (http://www.consul.io/)"
 
 
-py_modules = [os.path.splitext(x)[0] for x in glob.glob('consul/*.py')]
+py_modules = [os.path.splitext(x)[0] for x in glob.glob("consul/*.py")]
 
 
 class Install(install):
@@ -36,40 +32,37 @@ class PyTest(TestCommand):
 
     def run_tests(self):
         import pytest
+
         errno = pytest.main(self.test_args)
         sys.exit(errno)
 
 
 setup(
-    name='py-consul',
-    version=metadata['version'],
-    author='Criteo',
-    author_email='github@criteo.com',
-    url='https://github.com/criteo-forks/py-consul',
-    license='MIT',
+    name="py-consul",
+    version=metadata["version"],
+    author="Criteo",
+    author_email="github@criteo.com",
+    url="https://github.com/criteo-forks/py-consul",
+    license="MIT",
     description=description,
-    long_description="%s\n\n%s" % (
-        open('README.rst').read(),
-        open('CHANGELOG.rst').read()
-    ),
+    long_description="%s\n\n%s" % (open("README.rst").read(), open("CHANGELOG.rst").read()),
     py_modules=py_modules,
     install_requires=requirements,
     extras_require={
-        'tornado': ['tornado'],
-        'asyncio': ['aiohttp'],
-        'twisted': ['twisted', 'treq'],
+        "tornado": ["tornado"],
+        "asyncio": ["aiohttp"],
+        "twisted": ["twisted", "treq"],
     },
-    tests_require=['pytest', 'pytest-twisted'],
-    cmdclass={'test': PyTest,
-              'install': Install},
+    tests_require=["pytest", "pytest-twisted"],
+    cmdclass={"test": PyTest, "install": Install},
     classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
 )

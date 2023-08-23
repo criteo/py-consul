@@ -1,11 +1,4 @@
-__version__ = '1.2.4'
+__version__ = "1.2.4"
 
+from consul.base import ACLDisabled, ACLPermissionDenied, Check, ConsulException, NotFound, Timeout
 from consul.std import Consul
-
-from consul.base import Check
-
-from consul.base import ConsulException
-from consul.base import ACLPermissionDenied
-from consul.base import ACLDisabled
-from consul.base import NotFound
-from consul.base import Timeout

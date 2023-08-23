@@ -1,12 +1,10 @@
 from __future__ import absolute_import
 
-from tornado import httpclient
-from tornado import gen
+from tornado import gen, httpclient
 
 from consul import base
 
-
-__all__ = ['Consul']
+__all__ = ["Consul"]
 
 
 class HTTPClient(base.HTTPClient):
@@ -15,8 +13,7 @@ class HTTPClient(base.HTTPClient):
         self.client = httpclient.AsyncHTTPClient()
 
     def response(self, response):
-        return base.Response(
-            response.code, response.headers, response.body.decode('utf-8'))
+        return base.Response(response.code, response.headers, response.body.decode("utf-8"))
 
     @gen.coroutine
     def _request(self, callback, request):
@@ -32,23 +29,21 @@ class HTTPClient(base.HTTPClient):
         uri = self.uri(path, params)
         return self._request(callback, uri)
 
-    def put(self, callback, path, params=None, data=''):
+    def put(self, callback, path, params=None, data=""):
         uri = self.uri(path, params)
-        request = httpclient.HTTPRequest(uri, method='PUT',
-                                         body='' if data is None else data,
-                                         validate_cert=self.verify)
+        request = httpclient.HTTPRequest(
+            uri, method="PUT", body="" if data is None else data, validate_cert=self.verify
+        )
         return self._request(callback, request)
 
     def delete(self, callback, path, params=None):
         uri = self.uri(path, params)
-        request = httpclient.HTTPRequest(uri, method='DELETE',
-                                         validate_cert=self.verify)
+        request = httpclient.HTTPRequest(uri, method="DELETE", validate_cert=self.verify)
         return self._request(callback, request)
 
-    def post(self, callback, path, params=None, data=''):
+    def post(self, callback, path, params=None, data=""):
         uri = self.uri(path, params)
-        request = httpclient.HTTPRequest(uri, method='POST', body=data,
-                                         validate_cert=self.verify)
+        request = httpclient.HTTPRequest(uri, method="POST", body=data, validate_cert=self.verify)
         return self._request(callback, request)
 
     def close(self):
