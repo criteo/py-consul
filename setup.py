@@ -18,6 +18,7 @@ def _read_reqs(relpath: str):
 
 
 requirements = _read_reqs("requirements.txt")
+tests_requirements = _read_reqs("tests-requirements.txt")
 
 
 description = "Python client for Consul (http://www.consul.io/)"
@@ -64,7 +65,7 @@ setup(
         "asyncio": ["aiohttp"],
         "twisted": ["twisted", "treq"],
     },
-    tests_require=["pytest", "pytest-twisted"],
+    tests_require=tests_requirements,
     cmdclass={"test": PyTest, "install": Install},
     classifiers=[
         "Development Status :: 3 - Alpha",
