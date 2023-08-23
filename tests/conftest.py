@@ -21,7 +21,7 @@ def get_free_ports(num, host=None):
         host = "127.0.0.1"
     sockets = []
     ret = []
-    for i in range(num):
+    for _ in range(num):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((host, 0))
         ret.append(s.getsockname()[1])
@@ -51,38 +51,38 @@ def start_consul_instance(acl_master_token=None):
     tmpdir.join("config.json").write(json.dumps(config))
     tmpdir.chdir()
 
-    (system, node, release, version, machine, processor) = platform.uname()
+    (system, _node, _release, _version, _machine, _processor) = platform.uname()
     postfix = "osx" if system == "Darwin" else "linux64"
-    bin = os.path.join(os.path.dirname(__file__), "consul." + postfix)
+    binary = os.path.join(os.path.dirname(__file__), "consul." + postfix)
     command = "{bin} agent -dev -bind=127.0.0.1 -config-dir=."
-    command = command.format(bin=bin).strip()
+    command = command.format(bin=binary).strip()
     command = shlex.split(command)
 
-    with open("/dev/null", "w") as devnull:
-        p = subprocess.Popen(command, stdout=devnull, stderr=devnull)
+    with open("/dev/null", "w") as devnull:  # pylint: disable=unspecified-encoding
+        p = subprocess.Popen(command, stdout=devnull, stderr=devnull)  # pylint: disable=consider-using-with
 
     # wait for consul instance to bootstrap
-    base_uri = "http://127.0.0.1:%s/v1/" % ports["http"]
+    base_uri = f"http://127.0.0.1:{ports['http']}/v1/"
 
     while True:
         time.sleep(0.1)
         try:
-            response = requests.get(base_uri + "status/leader")
+            response = requests.get(base_uri + "status/leader", timeout=10)
         except requests.ConnectionError:
             continue
         print(response.text)
         if response.text.strip() != '""':
             break
 
-    requests.put(base_uri + "agent/service/register", data='{"name": "foo"}')
+    requests.put(base_uri + "agent/service/register", data='{"name": "foo"}', timeout=10)
 
     while True:
-        response = requests.get(base_uri + "health/service/foo")
+        response = requests.get(base_uri + "health/service/foo", timeout=10)
         if response.text.strip() != "[]":
             break
         time.sleep(0.1)
 
-    requests.put(base_uri + "agent/service/deregister/foo")
+    requests.put(base_uri + "agent/service/deregister/foo", timeout=10)
     # phew
     time.sleep(2)
     return p, ports["http"]
@@ -90,11 +90,11 @@ def start_consul_instance(acl_master_token=None):
 
 def clean_consul(port):
     # remove all data from the instance, to have a clean start
-    base_uri = "http://127.0.0.1:%s/v1/" % port
-    requests.delete(base_uri + "kv/", params={"recurse": 1})
-    services = requests.get(base_uri + "agent/services").json().keys()
+    base_uri = f"http://127.0.0.1:{port}/v1/"
+    requests.delete(base_uri + "kv/", params={"recurse": 1}, timeout=10)
+    services = requests.get(base_uri + "agent/services", timeout=10).json().keys()
     for s in services:
-        requests.put(base_uri + "agent/service/deregister/%s" % s)
+        requests.put(base_uri + f"agent/service/deregister/{s}", timeout=10)
 
 
 @pytest.fixture(scope="module")
