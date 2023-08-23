@@ -6,6 +6,7 @@ pyOpenSSL
 pytest
 pytest-rerunfailures
 pytest-twisted
+ruff
 tornado
 treq
 twisted

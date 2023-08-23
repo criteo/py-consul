@@ -11,7 +11,7 @@ import consul.tornado
 Check = consul.Check
 
 
-@pytest.fixture
+@pytest.fixture()
 def loop():
     loop = ioloop.IOLoop()
     loop.make_current()
