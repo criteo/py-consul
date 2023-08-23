@@ -38,7 +38,6 @@ class ClientError(ConsulException):
     """Encapsulates 4xx Http error code"""
 
 
-
 #
 # Convenience to define checks
 
@@ -89,7 +88,7 @@ class Check:
         *deregister* after which a failing service will be automatically
         deregistered.
         """
-        ret = {"tcp": "{host:s}:{port:d}".format(host=host, port=port), "interval": interval}
+        ret = {"tcp": f"{host:s}:{port:d}", "interval": interval}
         if timeout:
             ret["timeout"] = timeout
         if deregister:
@@ -235,13 +234,13 @@ class HTTPClient(metaclass=abc.ABCMeta):
         self.port = port
         self.scheme = scheme
         self.verify = verify
-        self.base_uri = "%s://%s:%s" % (self.scheme, self.host, self.port)
+        self.base_uri = f"{self.scheme}://{self.host}:{self.port}"
         self.cert = cert
 
     def uri(self, path, params=None):
         uri = self.base_uri + urllib.parse.quote(path, safe="/:")
         if params:
-            uri = "%s?%s" % (uri, urllib.parse.urlencode(params))
+            uri = f"{uri}?{urllib.parse.urlencode(params)}"
         return uri
 
     @abc.abstractmethod
@@ -944,9 +943,7 @@ class Consul:
                 if token:
                     params.append(("token", token))
 
-                return self.agent.http.put(
-                    CB.bool(), "/v1/agent/service/maintenance/{0}".format(service_id), params=params
-                )
+                return self.agent.http.put(CB.bool(), f"/v1/agent/service/maintenance/{service_id}", params=params)
 
         class Check:
             def __init__(self, agent):
@@ -1203,7 +1200,7 @@ class Consul:
                 params.append(("token", token))
             if node_meta:
                 for nodemeta_name, nodemeta_value in node_meta.items():
-                    params.append(("node-meta", "{0}:{1}".format(nodemeta_name, nodemeta_value)))
+                    params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
             return self.agent.http.put(CB.bool(), "/v1/catalog/register", data=json.dumps(data), params=params)
 
         def deregister(self, node, service_id=None, check_id=None, dc=None, token=None):
@@ -1298,7 +1295,7 @@ class Consul:
                 params.append((consistency, "1"))
             if node_meta:
                 for nodemeta_name, nodemeta_value in node_meta.items():
-                    params.append(("node-meta", "{0}:{1}".format(nodemeta_name, nodemeta_value)))
+                    params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
             return self.agent.http.get(CB.json(index=True), "/v1/catalog/nodes", params=params)
 
         def services(self, index=None, wait=None, consistency=None, dc=None, token=None, node_meta=None):
@@ -1353,7 +1350,7 @@ class Consul:
                 params.append((consistency, "1"))
             if node_meta:
                 for nodemeta_name, nodemeta_value in node_meta.items():
-                    params.append(("node-meta", "{0}:{1}".format(nodemeta_name, nodemeta_value)))
+                    params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
             return self.agent.http.get(CB.json(index=True), "/v1/catalog/services", params=params)
 
         def node(self, node, index=None, wait=None, consistency=None, dc=None, token=None):
@@ -1450,7 +1447,7 @@ class Consul:
                 params.append((consistency, "1"))
             if node_meta:
                 for nodemeta_name, nodemeta_value in node_meta.items():
-                    params.append(("node-meta", "{0}:{1}".format(nodemeta_name, nodemeta_value)))
+                    params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
             return self.agent.http.get(CB.json(index=True), internal_uri, params=params)
 
         def service(self, service, **kwargs):
@@ -1547,7 +1544,7 @@ class Consul:
                 params.append(("token", token))
             if node_meta:
                 for nodemeta_name, nodemeta_value in node_meta.items():
-                    params.append(("node-meta", "{0}:{1}".format(nodemeta_name, nodemeta_value)))
+                    params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
             return self.agent.http.get(CB.json(index=True), internal_uri, params=params)
 
         def service(self, service, **kwargs):
@@ -1634,7 +1631,7 @@ class Consul:
                 params.append(("token", token))
             if node_meta:
                 for nodemeta_name, nodemeta_value in node_meta.items():
-                    params.append(("node-meta", "{0}:{1}".format(nodemeta_name, nodemeta_value)))
+                    params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
             return self.agent.http.get(CB.json(index=True), "/v1/health/checks/%s" % service, params=params)
 
         def state(self, name, index=None, wait=None, dc=None, near=None, token=None, node_meta=None):
@@ -1683,7 +1680,7 @@ class Consul:
                 params.append(("token", token))
             if node_meta:
                 for nodemeta_name, nodemeta_value in node_meta.items():
-                    params.append(("node-meta", "{0}:{1}".format(nodemeta_name, nodemeta_value)))
+                    params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
             return self.agent.http.get(CB.json(index=True), "/v1/health/state/%s" % name, params=params)
 
         def node(self, node, index=None, wait=None, dc=None, token=None):
@@ -2123,34 +2120,30 @@ class Consul:
         ):
             service_body = {
                 k: v
-                    for k, v in {
-                        "service": service,
-                        "onlypassing": onlypassing,
-                        "tags": tags,
-                        "failover": {
-                            k: v
-                                for k, v in {"nearestn": nearestn, "datacenters": datacenters}.items()
-                                if v is not None
-                        },
-                    }.items()
-                    if v is not None
+                for k, v in {
+                    "service": service,
+                    "onlypassing": onlypassing,
+                    "tags": tags,
+                    "failover": {
+                        k: v for k, v in {"nearestn": nearestn, "datacenters": datacenters}.items() if v is not None
+                    },
+                }.items()
+                if v is not None
             }
 
             data = {
                 k: v
-                    for k, v in {
-                        "name": name,
-                        "session": session,
-                        "token": token or self.agent.token,
-                        "dns": {"ttl": ttl} if ttl is not None else None,
-                        "template": {
-                            k: v
-                                for k, v in {"type": "name_prefix_match", "regexp": regexp}.items()
-                                if v is not None
-                        },
-                        "service": service_body,
-                    }.items()
-                    if v is not None
+                for k, v in {
+                    "name": name,
+                    "session": session,
+                    "token": token or self.agent.token,
+                    "dns": {"ttl": ttl} if ttl is not None else None,
+                    "template": {
+                        k: v for k, v in {"type": "name_prefix_match", "regexp": regexp}.items() if v is not None
+                    },
+                    "service": service_body,
+                }.items()
+                if v is not None
             }
             return json.dumps(data)
 

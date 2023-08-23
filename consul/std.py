@@ -7,7 +7,7 @@ __all__ = ["Consul"]
 
 class HTTPClient(base.HTTPClient):
     def __init__(self, *args, **kwargs):
-        super(HTTPClient, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.session = requests.session()
 
     def response(self, response):

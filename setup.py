@@ -45,7 +45,7 @@ setup(
     url="https://github.com/criteo-forks/py-consul",
     license="MIT",
     description=description,
-    long_description="%s\n\n%s" % (open("README.rst").read(), open("CHANGELOG.rst").read()),
+    long_description="{}\n\n{}".format(open("README.rst").read(), open("CHANGELOG.rst").read()),
     py_modules=py_modules,
     install_requires=requirements,
     extras_require={
