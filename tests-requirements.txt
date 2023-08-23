@@ -1,3 +1,11 @@
+aiohttp
 black
 isort
 pre-commit
+pyOpenSSL
+pytest
+pytest-rerunfailures
+pytest-twisted
+tornado
+treq
+twisted
