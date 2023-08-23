@@ -48,7 +48,7 @@ class Check:
     """
 
     @classmethod
-    def script(klass, args, interval, deregister=None):
+    def script(cls, args, interval, deregister=None):
         """
         Run the script *args* every *interval* (e.g. "10s") to peform health
         check
@@ -62,7 +62,7 @@ class Check:
         return ret
 
     @classmethod
-    def http(klass, url, interval, timeout=None, deregister=None, header=None):
+    def http(cls, url, interval, timeout=None, deregister=None, header=None):
         """
         Peform a HTTP GET against *url* every *interval* (e.g. "10s") to peform
         health check with an optional *timeout* and optional *deregister* after
@@ -81,7 +81,7 @@ class Check:
         return ret
 
     @classmethod
-    def tcp(klass, host, port, interval, timeout=None, deregister=None):
+    def tcp(cls, host, port, interval, timeout=None, deregister=None):
         """
         Attempt to establish a tcp connection to the specified *host* and
         *port* at a specified *interval* with optional *timeout* and optional
@@ -96,7 +96,7 @@ class Check:
         return ret
 
     @classmethod
-    def ttl(klass, ttl):
+    def ttl(cls, ttl):
         """
         Set check to be marked as critical after *ttl* (e.g. "10s") unless the
         check is periodically marked as passing.
@@ -104,7 +104,7 @@ class Check:
         return {"ttl": ttl}
 
     @classmethod
-    def docker(klass, container_id, shell, script, interval, deregister=None):
+    def docker(cls, container_id, shell, script, interval, deregister=None):
         """
         Invoke *script* packaged within a running docker container with
         *container_id* at a specified *interval* on the configured
@@ -117,11 +117,11 @@ class Check:
         return ret
 
     @classmethod
-    def _compat(self, script=None, interval=None, ttl=None, http=None, timeout=None, deregister=None):
+    def _compat(cls, script=None, interval=None, ttl=None, http=None, timeout=None, deregister=None):
         if not script and not http and not ttl:
             return {}
 
-        log.warn("DEPRECATED: use consul.Check.script/http/ttl to specify check")
+        log.warning("DEPRECATED: use consul.Check.script/http/ttl to specify check")
 
         ret = {"check": {}}
 
@@ -158,25 +158,25 @@ Response = collections.namedtuple("Response", ["code", "headers", "body"])
 
 class CB:
     @classmethod
-    def _status(klass, response, allow_404=True):
+    def _status(cls, response, allow_404=True):
         # status checking
         if 400 <= response.code < 500:
             if response.code == 400:
-                raise BadRequest("%d %s" % (response.code, response.body))
-            elif response.code == 401:
+                raise BadRequest(f"{response.code} {response.body}")
+            if response.code == 401:
                 raise ACLDisabled(response.body)
-            elif response.code == 403:
+            if response.code == 403:
                 raise ACLPermissionDenied(response.body)
-            elif response.code == 404:
+            if response.code == 404:
                 if not allow_404:
                     raise NotFound(response.body)
             else:
-                raise ClientError("%d %s" % (response.code, response.body))
+                raise ClientError(f"{response.code} {response.body}")
         elif 500 <= response.code < 600:
-            raise ConsulException("%d %s" % (response.code, response.body))
+            raise ConsulException(f"{response.code} {response.body}")
 
     @classmethod
-    def bool(klass):
+    def bool(cls):
         # returns True on successful response
         def cb(response):
             CB._status(response)
@@ -185,9 +185,9 @@ class CB:
         return cb
 
     @classmethod
-    def json(klass, map=None, allow_404=True, one=False, decode=False, is_id=False, index=False):
+    def json(cls, postprocess=None, allow_404=True, one=False, decode=False, is_id=False, index=False):
         """
-        *map* is a function to apply to the final result.
+        *postprocess* is a function to apply to the final result.
 
         *allow_404* if set, None will be returned on 404, instead of raising
         NotFound.
@@ -219,8 +219,8 @@ class CB:
                         data = None
                     if data is not None:
                         data = data[0]
-                if map:
-                    data = map(data)
+                if postprocess:
+                    data = postprocess(data)
             if index:
                 return response.headers["X-Consul-Index"], data
             return data
@@ -300,10 +300,10 @@ class Consul:
         if os.getenv("CONSUL_HTTP_ADDR"):
             try:
                 host, port = os.getenv("CONSUL_HTTP_ADDR").split(":")
-            except ValueError:
+            except ValueError as err:
                 raise ConsulException(
-                    "CONSUL_HTTP_ADDR (%s) invalid, does not match <host>:<port>" % os.getenv("CONSUL_HTTP_ADDR")
-                )
+                    f"CONSUL_HTTP_ADDR ({os.getenv('CONSUL_HTTP_ADDR')}) invalid, does not match <host>:<port>"
+                ) from err
         use_ssl = os.getenv("CONSUL_HTTP_SSL")
         if use_ssl is not None:
             scheme = "https" if use_ssl == "true" else "http"
@@ -347,6 +347,10 @@ class Consul:
     async def __aexit__(self, exc_type, exc, tb):
         await self.http.close()
 
+    @abc.abstractmethod
+    def http_connect(self, host, port, scheme, verify=True, cert=None):
+        pass
+
     class Event:
         """
         The event command provides a mechanism to fire a custom user event to
@@ -377,7 +381,7 @@ class Consul:
                 The underlying gossip also sets limits on the size of a user
                 event message. It is hard to give an exact number, as it
                 depends on various parameters of the event, but the payload
-                should be kept very small (< 100 bytes). Specifying too large
+                should be kept very small (< 100 bytes²). Specifying too large
                 of an event will return an error.
 
             *node*, *service*, and *tag* are regular expressions which remote
@@ -400,7 +404,7 @@ class Consul:
             if token:
                 params.append(("token", token))
 
-            return self.agent.http.put(CB.json(), "/v1/event/fire/%s" % name, params=params, data=body)
+            return self.agent.http.put(CB.json(), f"/v1/event/fire/{name}", params=params, data=body)
 
         def list(self, name=None, index=None, wait=None):
             """
@@ -542,7 +546,7 @@ class Consul:
             if connections_timeout:
                 http_kwargs["connections_timeout"] = connections_timeout
             return self.agent.http.get(
-                CB.json(index=True, decode=decode, one=one), "/v1/kv/%s" % key, params=params, **http_kwargs
+                CB.json(index=True, decode=decode, one=one), f"/v1/kv/{key}", params=params, **http_kwargs
             )
 
         def put(
@@ -611,7 +615,7 @@ class Consul:
             http_kwargs = {}
             if connections_timeout:
                 http_kwargs["connections_timeout"] = connections_timeout
-            return self.agent.http.put(CB.json(), "/v1/kv/%s" % key, params=params, data=value, **http_kwargs)
+            return self.agent.http.put(CB.json(), f"/v1/kv/{key}", params=params, data=value, **http_kwargs)
 
         def delete(self, key, recurse=None, cas=None, token=None, dc=None, connections_timeout=None):
             """
@@ -648,7 +652,7 @@ class Consul:
             http_kwargs = {}
             if connections_timeout:
                 http_kwargs["connections_timeout"] = connections_timeout
-            return self.agent.http.delete(CB.json(), "/v1/kv/%s" % key, params=params, **http_kwargs)
+            return self.agent.http.delete(CB.json(), f"/v1/kv/{key}", params=params, **http_kwargs)
 
     class Txn:
         """
@@ -721,7 +725,7 @@ class Consul:
             Returns a service definition for a single instance that is registered
             with the local agent.
             """
-            return self.agent.http.get(CB.json(), "/v1/agent/service/%s" % service_id)
+            return self.agent.http.get(CB.json(), f"/v1/agent/service/{service_id}")
 
         def checks(self):
             """
@@ -794,7 +798,7 @@ class Consul:
             if token:
                 params.append(("token", token))
 
-            return self.agent.http.put(CB.bool(), "/v1/agent/join/%s" % address, params=params)
+            return self.agent.http.put(CB.bool(), f"/v1/agent/join/{address}", params=params)
 
         def force_leave(self, node):
             """
@@ -808,7 +812,7 @@ class Consul:
             *node* is the node to change state for.
             """
 
-            return self.agent.http.put(CB.bool(), "/v1/agent/force-leave/%s" % node)
+            return self.agent.http.put(CB.bool(), f"/v1/agent/force-leave/{node}")
 
         class Service:
             def __init__(self, agent):
@@ -894,7 +898,11 @@ class Consul:
                     payload["weights"] = weights
 
                 else:
-                    payload.update(Check._compat(script=script, interval=interval, ttl=ttl, http=http, timeout=timeout))
+                    payload.update(
+                        Check._compat(  # pylint: disable=protected-access
+                            script=script, interval=interval, ttl=ttl, http=http, timeout=timeout
+                        )
+                    )
 
                 params = []
                 token = token or self.agent.token
@@ -916,7 +924,7 @@ class Consul:
                 if token:
                     params.append(("token", token))
 
-                return self.agent.http.put(CB.bool(), "/v1/agent/service/deregister/%s" % service_id, params=params)
+                return self.agent.http.put(CB.bool(), f"/v1/agent/service/deregister/{service_id}", params=params)
 
             def maintenance(self, service_id, enable, reason=None, token=None):
                 """
@@ -1029,7 +1037,7 @@ class Consul:
                 if token:
                     params.append(("token", token))
 
-                return self.agent.http.put(CB.bool(), "/v1/agent/check/deregister/%s" % check_id, params=params)
+                return self.agent.http.put(CB.bool(), f"/v1/agent/check/deregister/{check_id}", params=params)
 
             def ttl_pass(self, check_id, notes=None, token=None):
                 """
@@ -1043,7 +1051,7 @@ class Consul:
                 if token:
                     params.append(("token", token))
 
-                return self.agent.http.put(CB.bool(), "/v1/agent/check/pass/%s" % check_id, params=params)
+                return self.agent.http.put(CB.bool(), f"/v1/agent/check/pass/{check_id}", params=params)
 
             def ttl_fail(self, check_id, notes=None, token=None):
                 """
@@ -1058,7 +1066,7 @@ class Consul:
                 if token:
                     params.append(("token", token))
 
-                return self.agent.http.put(CB.bool(), "/v1/agent/check/fail/%s" % check_id, params=params)
+                return self.agent.http.put(CB.bool(), f"/v1/agent/check/fail/{check_id}", params=params)
 
             def ttl_warn(self, check_id, notes=None, token=None):
                 """
@@ -1073,7 +1081,7 @@ class Consul:
                 if token:
                     params.append(("token", token))
 
-                return self.agent.http.put(CB.bool(), "/v1/agent/check/warn/%s" % check_id, params=params)
+                return self.agent.http.put(CB.bool(), f"/v1/agent/check/warn/{check_id}", params=params)
 
         class Connect:
             def __init__(self, agent):
@@ -1120,7 +1128,7 @@ class Consul:
                     if token:
                         params.append(("token", token))
 
-                    return self.agent.http.get(CB.json(), "/v1/agent/connect/ca/leaf/%s" % service, params=params)
+                    return self.agent.http.get(CB.json(), f"/v1/agent/connect/ca/leaf/{service}", params=params)
 
     class Catalog:
         def __init__(self, agent):
@@ -1413,7 +1421,7 @@ class Consul:
             consistency = consistency or self.agent.consistency
             if consistency in ("consistent", "stale"):
                 params.append((consistency, "1"))
-            return self.agent.http.get(CB.json(index=True), "/v1/catalog/node/%s" % node, params=params)
+            return self.agent.http.get(CB.json(index=True), f"/v1/catalog/node/{node}", params=params)
 
         def _service(
             self,
@@ -1491,7 +1499,7 @@ class Consul:
                     }
                 ])
             """
-            internal_uri = "/v1/catalog/service/%s" % service
+            internal_uri = f"/v1/catalog/service/{service}"
             return self._service(internal_uri=internal_uri, **kwargs)
 
         def connect(self, service, **kwargs):
@@ -1502,7 +1510,7 @@ class Consul:
 
             Request arguments and response format are the same as catalog.service
             """
-            internal_uri = "/v1/catalog/connect/%s" % service
+            internal_uri = f"/v1/catalog/connect/{service}"
             return self._service(internal_uri=internal_uri, **kwargs)
 
     class Health:
@@ -1577,7 +1585,7 @@ class Consul:
             *node_meta* is an optional meta data used for filtering, a
             dictionary formatted as {k1:v1, k2:v2}.
             """
-            internal_uri = "/v1/health/service/%s" % service
+            internal_uri = f"/v1/health/service/{service}"
             return self._service(internal_uri=internal_uri, **kwargs)
 
         def connect(self, service, **kwargs):
@@ -1588,7 +1596,7 @@ class Consul:
 
             Request arguments and response format are the same as health.service
             """
-            internal_uri = "/v1/health/connect/%s" % service
+            internal_uri = f"/v1/health/connect/{service}"
             return self._service(internal_uri=internal_uri, **kwargs)
 
         def checks(self, service, index=None, wait=None, dc=None, near=None, token=None, node_meta=None):
@@ -1632,7 +1640,7 @@ class Consul:
             if node_meta:
                 for nodemeta_name, nodemeta_value in node_meta.items():
                     params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
-            return self.agent.http.get(CB.json(index=True), "/v1/health/checks/%s" % service, params=params)
+            return self.agent.http.get(CB.json(index=True), f"/v1/health/checks/{service}", params=params)
 
         def state(self, name, index=None, wait=None, dc=None, near=None, token=None, node_meta=None):
             """
@@ -1681,7 +1689,7 @@ class Consul:
             if node_meta:
                 for nodemeta_name, nodemeta_value in node_meta.items():
                     params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
-            return self.agent.http.get(CB.json(index=True), "/v1/health/state/%s" % name, params=params)
+            return self.agent.http.get(CB.json(index=True), f"/v1/health/state/{name}", params=params)
 
         def node(self, node, index=None, wait=None, dc=None, token=None):
             """
@@ -1713,7 +1721,7 @@ class Consul:
             if token:
                 params.append(("token", token))
 
-            return self.agent.http.get(CB.json(index=True), "/v1/health/node/%s" % node, params=params)
+            return self.agent.http.get(CB.json(index=True), f"/v1/health/node/{node}", params=params)
 
     class Session:
         def __init__(self, agent):
@@ -1764,13 +1772,13 @@ class Consul:
             if checks is not None:
                 data["checks"] = checks
             if lock_delay != 15:
-                data["lockdelay"] = "%ss" % lock_delay
+                data["lockdelay"] = f"{lock_delay}s"
             assert behavior in ("release", "delete"), "behavior must be release or delete"
             if behavior != "release":
                 data["behavior"] = behavior
             if ttl:
                 assert 10 <= ttl <= 86400
-                data["ttl"] = "%ss" % ttl
+                data["ttl"] = f"{ttl}s"
             data = json.dumps(data) if data else ""
 
             return self.agent.http.put(CB.json(is_id=True), "/v1/session/create", params=params, data=data)
@@ -1785,7 +1793,7 @@ class Consul:
             dc = dc or self.agent.dc
             if dc:
                 params.append(("dc", dc))
-            return self.agent.http.put(CB.bool(), "/v1/session/destroy/%s" % session_id, params=params)
+            return self.agent.http.put(CB.bool(), f"/v1/session/destroy/{session_id}", params=params)
 
         def list(self, index=None, wait=None, consistency=None, dc=None):
             """
@@ -1859,7 +1867,7 @@ class Consul:
             consistency = consistency or self.agent.consistency
             if consistency in ("consistent", "stale"):
                 params.append((consistency, "1"))
-            return self.agent.http.get(CB.json(index=True), "/v1/session/node/%s" % node, params=params)
+            return self.agent.http.get(CB.json(index=True), f"/v1/session/node/{node}", params=params)
 
         def info(self, session_id, index=None, wait=None, consistency=None, dc=None):
             """
@@ -1889,7 +1897,7 @@ class Consul:
             consistency = consistency or self.agent.consistency
             if consistency in ("consistent", "stale"):
                 params.append((consistency, "1"))
-            return self.agent.http.get(CB.json(index=True, one=True), "/v1/session/info/%s" % session_id, params=params)
+            return self.agent.http.get(CB.json(index=True, one=True), f"/v1/session/info/{session_id}", params=params)
 
         def renew(self, session_id, dc=None):
             """
@@ -1906,7 +1914,7 @@ class Consul:
             if dc:
                 params.append(("dc", dc))
             return self.agent.http.put(
-                CB.json(one=True, allow_404=False), "/v1/session/renew/%s" % session_id, params=params
+                CB.json(one=True, allow_404=False), f"/v1/session/renew/{session_id}", params=params
             )
 
     class ACL:
@@ -1934,9 +1942,9 @@ class Consul:
             token = token or self.agent.token
             if token:
                 params.append(("token", token))
-            return self.agent.http.get(CB.json(one=True), "/v1/acl/info/%s" % acl_id, params=params)
+            return self.agent.http.get(CB.json(one=True), f"/v1/acl/info/{acl_id}", params=params)
 
-        def create(self, name=None, type="client", rules=None, acl_id=None, token=None):
+        def create(self, name=None, token_type="client", rules=None, acl_id=None, token=None):
             """
             Creates a new ACL token. This is a privileged endpoint, and
             requires a management token. *token* will override this client's
@@ -1945,7 +1953,7 @@ class Consul:
 
             *name* is an optional name for this token.
 
-            *type* is either 'management' or 'client'. A management token is
+            *token_type* is either 'management' or 'client'. A management token is
             effectively like a root user, and has the ability to perform any
             action including creating, modifying, and deleting ACLs. A client
             token can only perform actions as permitted by *rules*.
@@ -1977,9 +1985,9 @@ class Consul:
             payload = {}
             if name:
                 payload["Name"] = name
-            if type:
-                assert type in ("client", "management"), "type must be client or management"
-                payload["Type"] = type
+            if token_type:
+                assert token_type in ("client", "management"), "token_type must be client or management"
+                payload["Type"] = token_type
             if rules:
                 assert isinstance(rules, str), "Only HCL or JSON encoded strings supported for the moment"
                 payload["Rules"] = rules
@@ -1990,7 +1998,7 @@ class Consul:
 
             return self.agent.http.put(CB.json(is_id=True), "/v1/acl/create", params=params, data=data)
 
-        def update(self, acl_id, name=None, type=None, rules=None, token=None):
+        def update(self, acl_id, name=None, token_type=None, rules=None, token=None):
             """
             Updates the ACL token *acl_id*. This is a privileged endpoint, and
             requires a management token. *token* will override this client's
@@ -1999,7 +2007,7 @@ class Consul:
 
             *name* is an optional name for this token.
 
-            *type* is either 'management' or 'client'. A management token is
+            *token_type* is either 'management' or 'client'. A management token is
             effectively like a root user, and has the ability to perform any
             action including creating, modifying, and deleting ACLs. A client
             token can only perform actions as permitted by *rules*.
@@ -2017,9 +2025,9 @@ class Consul:
             payload = {"ID": acl_id}
             if name:
                 payload["Name"] = name
-            if type:
-                assert type in ("client", "management"), "type must be client or management"
-                payload["Type"] = type
+            if token_type:
+                assert token_type in ("client", "management"), "token_type must be client or management"
+                payload["Type"] = token_type
             if rules:
                 assert isinstance(rules, str), "Only HCL or JSON encoded strings supported for the moment"
                 payload["Rules"] = rules
@@ -2041,7 +2049,7 @@ class Consul:
             token = token or self.agent.token
             if token:
                 params.append(("token", token))
-            return self.agent.http.put(CB.json(is_id=True), "/v1/acl/clone/%s" % acl_id, params=params)
+            return self.agent.http.put(CB.json(is_id=True), f"/v1/acl/clone/{acl_id}", params=params)
 
         def destroy(self, acl_id, token=None):
             """
@@ -2056,7 +2064,7 @@ class Consul:
             token = token or self.agent.token
             if token:
                 params.append(("token", token))
-            return self.agent.http.put(CB.json(), "/v1/acl/destroy/%s" % acl_id, params=params)
+            return self.agent.http.put(CB.json(), f"/v1/acl/destroy/{acl_id}", params=params)
 
     class Status:
         """
@@ -2230,7 +2238,7 @@ class Consul:
 
             all the other setting remains the same as the query create method
             """
-            path = "/v1/query/%s" % query_id
+            path = f"/v1/query/{query_id}"
             params = None if dc is None else [("dc", dc)]
             data = self._query_data(
                 service, name, session, token, nearestn, datacenters, onlypassing, tags, ttl, regexp
@@ -2254,7 +2262,7 @@ class Consul:
                 params.append(("token", token))
             if dc:
                 params.append(("dc", dc))
-            return self.agent.http.get(CB.json(), "/v1/query/%s" % query_id, params=params)
+            return self.agent.http.get(CB.json(), f"/v1/query/{query_id}", params=params)
 
         def delete(self, query_id, token=None, dc=None):
             """
@@ -2273,7 +2281,7 @@ class Consul:
                 params.append(("token", token))
             if dc:
                 params.append(("dc", dc))
-            return self.agent.http.delete(CB.bool(), "/v1/query/%s" % query_id, params=params)
+            return self.agent.http.delete(CB.bool(), f"/v1/query/{query_id}", params=params)
 
         def execute(self, query, token=None, dc=None, near=None, limit=None):
             """
@@ -2302,7 +2310,7 @@ class Consul:
                 params.append(("near", near))
             if limit:
                 params.append(("limit", limit))
-            return self.agent.http.get(CB.json(), "/v1/query/%s/execute" % query, params=params)
+            return self.agent.http.get(CB.json(), f"/v1/query/{query}/execute", params=params)
 
         def explain(self, query, token=None, dc=None):
             """
@@ -2321,7 +2329,7 @@ class Consul:
                 params.append(("token", token))
             if dc:
                 params.append(("dc", dc))
-            return self.agent.http.get(CB.json(), "/v1/query/%s/explain" % query, params=params)
+            return self.agent.http.get(CB.json(), f"/v1/query/{query}/explain", params=params)
 
     class Coordinate:
         def __init__(self, agent):

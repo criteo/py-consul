@@ -11,6 +11,29 @@ case_sensitive = true
 profile = "black"
 src_paths = ["."]
 
+[tool.pylint]
+ignored-classes=["twisted.internet.reactor"]
+ignore-paths=["docs/"]
+
+[tool.pylint."messages control"]
+disable = [
+    "C0103", # Argument name "xyz" doesn't conform to snake_case naming style
+    "C0301", # Line too long. This is handled by black
+#    # To be removed:
+    "C0114", # Missing module docstring
+    "C0115", # Missing class docstring
+    "C0116", # Missing function or method docstring
+    "C0302", # Too many lines in module
+    "R0801", # Similar lines in 2 files
+    "R0902", # Too many instance attributes
+    "R0903", # Too few public methods
+    "R0904", # Too many public methods
+    "R0913", # Too many arguments
+    "R0914", # Too many local variables
+    "W0511", # TODO
+    "W0621", # redefined-outer-name
+]
+
 [tool.ruff]
 target-version = 'py39'
 # See complete list : https://beta.ruff.rs/docs/rules

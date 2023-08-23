@@ -23,7 +23,7 @@ class InsecureContextFactory(ClientContextFactory):
     https://twistedmatrix.com/documents/current/core/howto/ssl.html
     """
 
-    def getContext(self, hostname, port):
+    def getContext(self):
         return ClientContextFactory.getContext(self)
 
 
@@ -79,15 +79,15 @@ class HTTPClient(base.HTTPClient):
             parsed = yield self._get_resp(response)
             returnValue(callback(self.response(*parsed)))
         except ConnectError as e:
-            raise ConsulException(f"{e.__class__.__name__}: {e.message}")
-        except ResponseNeverReceived:
+            raise ConsulException(f"{e.__class__.__name__}: {e.MESSAGE}") from e
+        except ResponseNeverReceived as exc:
             # this exception is raised if the connection to the server is lost
             # when yielding a response, this could be due to network issues or
             # server restarts
-            raise ConsulException(f"Server connection lost: {method.upper()} {url}")
-        except RequestTransmissionFailed:
+            raise ConsulException(f"Server connection lost: {method.upper()} {url}") from exc
+        except RequestTransmissionFailed as exc:
             # this exception is expected if the reactor is stopped mid request
-            raise ConsulException(f"Request incomplete: {method.upper()} {url}")
+            raise ConsulException(f"Request incomplete: {method.upper()} {url}") from exc
 
     @inlineCallbacks
     def get(self, callback, path, params=None):
@@ -119,6 +119,5 @@ class HTTPClient(base.HTTPClient):
 
 
 class Consul(base.Consul):
-    @staticmethod
-    def http_connect(host, port, scheme, verify=True, cert=None, contextFactory=None, **kwargs):
+    def http_connect(self, host, port, scheme, verify=True, cert=None, contextFactory=None, **kwargs):
         return HTTPClient(contextFactory, host, port, scheme, verify=verify, cert=cert, **kwargs)

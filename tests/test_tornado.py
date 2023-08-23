@@ -13,9 +13,9 @@ Check = consul.Check
 
 @pytest.fixture()
 def loop():
-    loop = ioloop.IOLoop()
-    loop.make_current()
-    return loop
+    current_loop = ioloop.IOLoop()
+    current_loop.make_current()
+    return current_loop
 
 
 def sleep(loop, s):
@@ -29,11 +29,11 @@ class TestConsul:
         @gen.coroutine
         def main():
             c = consul.tornado.Consul(port=consul_port)
-            index, data = yield c.kv.get("foo")
+            _index, data = yield c.kv.get("foo")
             assert data is None
             response = yield c.kv.put("foo", "bar")
             assert response is True
-            index, data = yield c.kv.get("foo")
+            _index, data = yield c.kv.get("foo")
             assert data["Value"] == b"bar"
             loop.stop()
 
@@ -44,7 +44,7 @@ class TestConsul:
         def main():
             c = consul.tornado.Consul(port=consul_port)
             yield c.kv.put("foo", struct.pack("i", 1000))
-            index, data = yield c.kv.get("foo")
+            _index, data = yield c.kv.get("foo")
             assert struct.unpack("i", data["Value"]) == (1000,)
             loop.stop()
 
@@ -74,12 +74,12 @@ class TestConsul:
         def main():
             c = consul.tornado.Consul(port=consul_port)
             yield c.kv.put("foo", "bar")
-            index, data = yield c.kv.get("foo")
+            _index, data = yield c.kv.get("foo")
             assert data["Flags"] == 0
 
             response = yield c.kv.put("foo", "bar", flags=50)
             assert response is True
-            index, data = yield c.kv.get("foo")
+            _index, data = yield c.kv.get("foo")
             assert data["Flags"] == 50
             loop.stop()
 
@@ -92,16 +92,16 @@ class TestConsul:
             yield c.kv.put("foo1", "1")
             yield c.kv.put("foo2", "2")
             yield c.kv.put("foo3", "3")
-            index, data = yield c.kv.get("foo", recurse=True)
+            _index, data = yield c.kv.get("foo", recurse=True)
             assert [x["Key"] for x in data] == ["foo1", "foo2", "foo3"]
 
             response = yield c.kv.delete("foo2")
             assert response is True
-            index, data = yield c.kv.get("foo", recurse=True)
+            _index, data = yield c.kv.get("foo", recurse=True)
             assert [x["Key"] for x in data] == ["foo1", "foo3"]
             response = yield c.kv.delete("foo", recurse=True)
             assert response is True
-            index, data = yield c.kv.get("foo", recurse=True)
+            _index, data = yield c.kv.get("foo", recurse=True)
             assert data is None
             loop.stop()
 
@@ -134,33 +134,30 @@ class TestConsul:
             # test binary
             response = yield c.kv.put("foo", struct.pack("i", 1000))
             assert response is True
-            index, data = yield c.kv.get("foo")
+            _index, data = yield c.kv.get("foo")
             assert struct.unpack("i", data["Value"]) == (1000,)
 
             # test unicode
             response = yield c.kv.put("foo", "bar")
             assert response is True
-            index, data = yield c.kv.get("foo")
+            _index, data = yield c.kv.get("foo")
             assert data["Value"] == b"bar"
 
             # test empty-string comes back as `None`
             response = yield c.kv.put("foo", "")
             assert response is True
-            index, data = yield c.kv.get("foo")
+            _index, data = yield c.kv.get("foo")
             assert data["Value"] is None
 
             # test None
             response = yield c.kv.put("foo", None)
             assert response is True
-            index, data = yield c.kv.get("foo")
+            _index, data = yield c.kv.get("foo")
             assert data["Value"] is None
 
             # check unencoded values raises assert
-            try:
+            with pytest.raises(AssertionError):
                 yield c.kv.put("foo", {1: 2})
-            except AssertionError:
-                raised = True
-            assert raised
 
             loop.stop()
 
@@ -247,7 +244,7 @@ class TestConsul:
             c = consul.tornado.Consul(port=consul_port)
 
             # check there are no nodes for the service 'foo'
-            index, nodes = yield c.health.service("foo")
+            _index, nodes = yield c.health.service("foo")
             assert nodes == []
 
             # register two nodes, one with a long ttl, the other shorter
@@ -257,11 +254,11 @@ class TestConsul:
             time.sleep(30 / 1000.0)
 
             # check the nodes show for the /health/service endpoint
-            index, nodes = yield c.health.service("foo")
+            _index, nodes = yield c.health.service("foo")
             assert [node["Service"]["ID"] for node in nodes] == ["foo:1", "foo:2"]
 
             # but that they aren't passing their health check
-            index, nodes = yield c.health.service("foo", passing=True)
+            _index, nodes = yield c.health.service("foo", passing=True)
             assert nodes == []
 
             # ping the two node's health check
@@ -271,14 +268,14 @@ class TestConsul:
             time.sleep(50 / 1000.0)
 
             # both nodes are now available
-            index, nodes = yield c.health.service("foo", passing=True)
+            _index, nodes = yield c.health.service("foo", passing=True)
             assert [node["Service"]["ID"] for node in nodes] == ["foo:1", "foo:2"]
 
             # wait until the short ttl node fails
             time.sleep(120 / 1000.0)
 
             # only one node available
-            index, nodes = yield c.health.service("foo", passing=True)
+            _index, nodes = yield c.health.service("foo", passing=True)
             assert [node["Service"]["ID"] for node in nodes] == ["foo:1"]
 
             # ping the failed node's health check
@@ -287,7 +284,7 @@ class TestConsul:
             time.sleep(30 / 1000.0)
 
             # check both nodes are available
-            index, nodes = yield c.health.service("foo", passing=True)
+            _index, nodes = yield c.health.service("foo", passing=True)
             assert [node["Service"]["ID"] for node in nodes] == ["foo:1", "foo:2"]
 
             # deregister the nodes
@@ -296,7 +293,7 @@ class TestConsul:
 
             time.sleep(30 / 1000.0)
 
-            index, nodes = yield c.health.service("foo")
+            _index, nodes = yield c.health.service("foo")
             assert nodes == []
 
         loop.run_sync(main)
@@ -305,7 +302,7 @@ class TestConsul:
         c = consul.tornado.Consul(port=consul_port)
 
         class Config:
-            pass
+            nodes = []
 
         config = Config()
 
@@ -379,11 +376,8 @@ class TestConsul:
             """
             token = yield c.acl.create(rules=rules)
 
-            try:
+            with pytest.raises(consul.ACLPermissionDenied):
                 yield c.acl.list(token=token)
-            except consul.ACLPermissionDenied:
-                raised = True
-            assert raised
 
             destroyed = yield c.acl.destroy(token)
             assert destroyed is True

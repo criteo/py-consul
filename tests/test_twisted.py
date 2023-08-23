@@ -26,18 +26,18 @@ class TestConsul:
     @pytest_twisted.inlineCallbacks
     def test_kv(self, consul_port):
         c = consul.twisted.Consul(port=consul_port)
-        index, data = yield c.kv.get("foo")
+        _index, data = yield c.kv.get("foo")
         assert data is None
         response = yield c.kv.put("foo", "bar")
         assert response is True
-        index, data = yield c.kv.get("foo")
+        _index, data = yield c.kv.get("foo")
         assert data["Value"] == b"bar"
 
     @pytest_twisted.inlineCallbacks
     def test_kv_binary(self, consul_port):
         c = consul.twisted.Consul(port=consul_port)
         yield c.kv.put("foo", struct.pack("i", 1000))
-        index, data = yield c.kv.get("foo")
+        _index, data = yield c.kv.get("foo")
         assert struct.unpack("i", data["Value"]) == (1000,)
 
     @pytest_twisted.inlineCallbacks
@@ -54,12 +54,12 @@ class TestConsul:
     def test_kv_put_flags(self, consul_port):
         c = consul.twisted.Consul(port=consul_port)
         yield c.kv.put("foo", "bar")
-        index, data = yield c.kv.get("foo")
+        _index, data = yield c.kv.get("foo")
         assert data["Flags"] == 0
 
         response = yield c.kv.put("foo", "bar", flags=50)
         assert response is True
-        index, data = yield c.kv.get("foo")
+        _index, data = yield c.kv.get("foo")
         assert data["Flags"] == 50
 
     @pytest_twisted.inlineCallbacks
@@ -68,16 +68,16 @@ class TestConsul:
         yield c.kv.put("foo1", "1")
         yield c.kv.put("foo2", "2")
         yield c.kv.put("foo3", "3")
-        index, data = yield c.kv.get("foo", recurse=True)
+        _index, data = yield c.kv.get("foo", recurse=True)
         assert [x["Key"] for x in data] == ["foo1", "foo2", "foo3"]
 
         response = yield c.kv.delete("foo2")
         assert response is True
-        index, data = yield c.kv.get("foo", recurse=True)
+        _index, data = yield c.kv.get("foo", recurse=True)
         assert [x["Key"] for x in data] == ["foo1", "foo3"]
         response = yield c.kv.delete("foo", recurse=True)
         assert response is True
-        index, data = yield c.kv.get("foo", recurse=True)
+        _index, data = yield c.kv.get("foo", recurse=True)
         assert data is None
 
     @pytest_twisted.inlineCallbacks
@@ -164,7 +164,7 @@ class TestConsul:
         c = consul.twisted.Consul(port=consul_port)
 
         # check there are no nodes for the service 'foo'
-        index, nodes = yield c.health.service("foo")
+        _index, nodes = yield c.health.service("foo")
         assert nodes == []
 
         # register two nodes, one with a long ttl, the other shorter
@@ -174,11 +174,11 @@ class TestConsul:
         yield sleep(1.0)
 
         # check the nodes show for the /health/service endpoint
-        index, nodes = yield c.health.service("foo")
+        _index, nodes = yield c.health.service("foo")
         assert [node["Service"]["ID"] for node in nodes] == ["foo:1", "foo:2"]
 
         # but that they aren't passing their health check
-        index, nodes = yield c.health.service("foo", passing=True)
+        _index, nodes = yield c.health.service("foo", passing=True)
         assert nodes == []
 
         # ping the two node's health check
@@ -188,14 +188,14 @@ class TestConsul:
         yield sleep(0.05)
 
         # both nodes are now available
-        index, nodes = yield c.health.service("foo", passing=True)
+        _index, nodes = yield c.health.service("foo", passing=True)
         assert [node["Service"]["ID"] for node in nodes] == ["foo:1", "foo:2"]
 
         # wait until the short ttl node fails
         yield sleep(0.5)
 
         # only one node available
-        index, nodes = yield c.health.service("foo", passing=True)
+        _index, nodes = yield c.health.service("foo", passing=True)
         assert [node["Service"]["ID"] for node in nodes] == ["foo:1"]
 
         # ping the failed node's health check
@@ -204,7 +204,7 @@ class TestConsul:
         yield sleep(0.05)
 
         # check both nodes are available
-        index, nodes = yield c.health.service("foo", passing=True)
+        _index, nodes = yield c.health.service("foo", passing=True)
         assert [node["Service"]["ID"] for node in nodes] == ["foo:1", "foo:2"]
 
         # deregister the nodes
@@ -212,7 +212,7 @@ class TestConsul:
         yield c.agent.service.deregister("foo:2")
 
         yield sleep(2)
-        index, nodes = yield c.health.service("foo")
+        _index, nodes = yield c.health.service("foo")
         assert nodes == []
 
     @pytest_twisted.inlineCallbacks

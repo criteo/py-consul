@@ -21,17 +21,17 @@ class TestHTTPClient:
 class TestConsul:
     def test_kv(self, consul_port):
         c = consul.Consul(port=consul_port)
-        index, data = c.kv.get("foo")
+        _index, data = c.kv.get("foo")
         assert data is None
         assert c.kv.put("foo", "bar") is True
-        index, data = c.kv.get("foo")
+        _index, data = c.kv.get("foo")
         assert data["Value"] == b"bar"
 
     def test_kv_wait(self, consul_port):
         c = consul.Consul(port=consul_port)
         assert c.kv.put("foo", "bar") is True
-        index, data = c.kv.get("foo")
-        check, data = c.kv.get("foo", index=index, wait="20ms")
+        index, _data = c.kv.get("foo")
+        check, _data = c.kv.get("foo", index=index, wait="20ms")
         assert index == check
 
     def test_kv_encoding(self, consul_port):
@@ -39,22 +39,22 @@ class TestConsul:
 
         # test binary
         c.kv.put("foo", struct.pack("i", 1000))
-        index, data = c.kv.get("foo")
+        _index, data = c.kv.get("foo")
         assert struct.unpack("i", data["Value"]) == (1000,)
 
         # test unicode
         c.kv.put("foo", "bar")
-        index, data = c.kv.get("foo")
+        _index, data = c.kv.get("foo")
         assert data["Value"] == b"bar"
 
         # test empty-string comes back as `None`
         c.kv.put("foo", "")
-        index, data = c.kv.get("foo")
+        _index, data = c.kv.get("foo")
         assert data["Value"] is None
 
         # test None
         c.kv.put("foo", None)
-        index, data = c.kv.get("foo")
+        _index, data = c.kv.get("foo")
         assert data["Value"] is None
 
         # check unencoded values raises assert
@@ -64,36 +64,36 @@ class TestConsul:
         c = consul.Consul(port=consul_port)
         assert c.kv.put("foo", "bar", cas=50) is False
         assert c.kv.put("foo", "bar", cas=0) is True
-        index, data = c.kv.get("foo")
+        _index, data = c.kv.get("foo")
 
         assert c.kv.put("foo", "bar2", cas=data["ModifyIndex"] - 1) is False
         assert c.kv.put("foo", "bar2", cas=data["ModifyIndex"]) is True
-        index, data = c.kv.get("foo")
+        _index, data = c.kv.get("foo")
         assert data["Value"] == b"bar2"
 
     def test_kv_put_flags(self, consul_port):
         c = consul.Consul(port=consul_port)
         c.kv.put("foo", "bar")
-        index, data = c.kv.get("foo")
+        _index, data = c.kv.get("foo")
         assert data["Flags"] == 0
 
         assert c.kv.put("foo", "bar", flags=50) is True
-        index, data = c.kv.get("foo")
+        _index, data = c.kv.get("foo")
         assert data["Flags"] == 50
 
     def test_kv_recurse(self, consul_port):
         c = consul.Consul(port=consul_port)
-        index, data = c.kv.get("foo/", recurse=True)
+        _index, data = c.kv.get("foo/", recurse=True)
         assert data is None
 
         c.kv.put("foo/", None)
-        index, data = c.kv.get("foo/", recurse=True)
+        _index, data = c.kv.get("foo/", recurse=True)
         assert len(data) == 1
 
         c.kv.put("foo/bar1", "1")
         c.kv.put("foo/bar2", "2")
         c.kv.put("foo/bar3", "3")
-        index, data = c.kv.get("foo/", recurse=True)
+        _index, data = c.kv.get("foo/", recurse=True)
         assert [x["Key"] for x in data] == ["foo/", "foo/bar1", "foo/bar2", "foo/bar3"]
         assert [x["Value"] for x in data] == [None, b"1", b"2", b"3"]
 
@@ -102,14 +102,14 @@ class TestConsul:
         c.kv.put("foo1", "1")
         c.kv.put("foo2", "2")
         c.kv.put("foo3", "3")
-        index, data = c.kv.get("foo", recurse=True)
+        _index, data = c.kv.get("foo", recurse=True)
         assert [x["Key"] for x in data] == ["foo1", "foo2", "foo3"]
 
         assert c.kv.delete("foo2") is True
-        index, data = c.kv.get("foo", recurse=True)
+        _index, data = c.kv.get("foo", recurse=True)
         assert [x["Key"] for x in data] == ["foo1", "foo3"]
         assert c.kv.delete("foo", recurse=True) is True
-        index, data = c.kv.get("foo", recurse=True)
+        _index, data = c.kv.get("foo", recurse=True)
         assert data is None
 
     def test_kv_delete_cas(self, consul_port):
@@ -150,7 +150,7 @@ class TestConsul:
         assert c.kv.put("base/foo", "1") is True
         assert c.kv.put("base/base/foo", "5") is True
 
-        index, data = c.kv.get("base/", keys=True, separator="/")
+        _index, data = c.kv.get("base/", keys=True, separator="/")
         assert data == ["base/base/", "base/foo"]
 
     def test_transaction(self, consul_port):
@@ -168,7 +168,7 @@ class TestConsul:
         c = consul.Consul(port=consul_port)
 
         assert c.event.fire("fooname", "foobody")
-        index, events = c.event.list()
+        _index, events = c.event.list()
         assert [x["Name"] == "fooname" for x in events]
         assert [x["Payload"] == "foobody" for x in events]
 
@@ -176,10 +176,10 @@ class TestConsul:
         c = consul.Consul(port=consul_port)
 
         assert c.event.fire("fooname", "foobody")
-        index, events = c.event.list(name="othername")
+        _index, events = c.event.list(name="othername")
         assert events == []
 
-        index, events = c.event.list(name="fooname")
+        _index, events = c.event.list(name="fooname")
         assert [x["Name"] == "fooname" for x in events]
         assert [x["Payload"] == "foobody" for x in events]
 
@@ -247,7 +247,7 @@ class TestConsul:
 
         time.sleep(80 / 1000.0)
 
-        index, nodes = c.health.service(service_name)
+        _index, nodes = c.health.service(service_name)
         assert [node["Service"]["ID"] for node in nodes] == [service_name]
 
         # Clean up tasks
@@ -255,7 +255,7 @@ class TestConsul:
 
         time.sleep(40 / 1000.0)
 
-        index, nodes = c.health.service(service_name)
+        _index, nodes = c.health.service(service_name)
         assert [node["Service"]["ID"] for node in nodes] == []
 
     def test_agent_checks_service_id(self, consul_port):
@@ -264,14 +264,14 @@ class TestConsul:
 
         time.sleep(40 / 1000.0)
 
-        index, nodes = c.health.service("foo1")
+        _index, nodes = c.health.service("foo1")
         assert [node["Service"]["ID"] for node in nodes] == ["foo1"]
 
         c.agent.check.register("foo", Check.ttl("100ms"), service_id="foo1")
 
         time.sleep(40 / 1000.0)
 
-        index, nodes = c.health.service("foo1")
+        _index, nodes = c.health.service("foo1")
         assert {check["ServiceID"] for node in nodes for check in node["Checks"]} == {"foo1", ""}
         assert {check["CheckID"] for node in nodes for check in node["Checks"]} == {"foo", "serfHealth"}
 
@@ -286,7 +286,7 @@ class TestConsul:
 
     def test_agent_register_check_no_service_id(self, consul_port):
         c = consul.Consul(port=consul_port)
-        index, nodes = c.health.service("foo1")
+        _index, nodes = c.health.service("foo1")
         assert nodes == []
 
         pytest.raises(
@@ -304,7 +304,7 @@ class TestConsul:
 
     def test_agent_register_enable_tag_override(self, consul_port):
         c = consul.Consul(port=consul_port)
-        index, nodes = c.health.service("foo1")
+        _index, nodes = c.health.service("foo1")
         assert nodes == []
 
         c.agent.service.register("foo", enable_tag_override=True)
@@ -453,7 +453,7 @@ class TestConsul:
         c = consul.Consul(port=consul_port)
 
         # check there are no nodes for the service 'foo'
-        index, nodes = c.health.service("foo")
+        _index, nodes = c.health.service("foo")
         assert nodes == []
 
         # register two nodes, one with a long ttl, the other shorter
@@ -463,11 +463,11 @@ class TestConsul:
         time.sleep(40 / 1000.0)
 
         # check the nodes show for the /health/service endpoint
-        index, nodes = c.health.service("foo")
+        _index, nodes = c.health.service("foo")
         assert [node["Service"]["ID"] for node in nodes] == ["foo:1", "foo:2"]
 
         # but that they aren't passing their health check
-        index, nodes = c.health.service("foo", passing=True)
+        _index, nodes = c.health.service("foo", passing=True)
         assert nodes == []
 
         # ping the two node's health check
@@ -477,14 +477,14 @@ class TestConsul:
         time.sleep(40 / 1000.0)
 
         # both nodes are now available
-        index, nodes = c.health.service("foo", passing=True)
+        _index, nodes = c.health.service("foo", passing=True)
         assert [node["Service"]["ID"] for node in nodes] == ["foo:1", "foo:2"]
 
         # wait until the short ttl node fails
         time.sleep(120 / 1000.0)
 
         # only one node available
-        index, nodes = c.health.service("foo", passing=True)
+        _index, nodes = c.health.service("foo", passing=True)
         assert [node["Service"]["ID"] for node in nodes] == ["foo:1"]
 
         # ping the failed node's health check
@@ -493,11 +493,11 @@ class TestConsul:
         time.sleep(40 / 1000.0)
 
         # check both nodes are available
-        index, nodes = c.health.service("foo", passing=True)
+        _index, nodes = c.health.service("foo", passing=True)
         assert [node["Service"]["ID"] for node in nodes] == ["foo:1", "foo:2"]
 
         # check that tag works
-        index, nodes = c.health.service("foo", tag="tag:foo:1")
+        _index, nodes = c.health.service("foo", tag="tag:foo:1")
         assert [node["Service"]["ID"] for node in nodes] == ["foo:1"]
 
         # deregister the nodes
@@ -506,7 +506,7 @@ class TestConsul:
 
         time.sleep(40 / 1000.0)
 
-        index, nodes = c.health.service("foo")
+        _index, nodes = c.health.service("foo")
         assert nodes == []
 
     def test_health_state(self, consul_port):
@@ -514,7 +514,7 @@ class TestConsul:
 
         # The empty string is for the Serf Health Status check, which has an
         # empty ServiceID
-        index, nodes = c.health.state("any")
+        _index, nodes = c.health.state("any")
         assert [node["ServiceID"] for node in nodes] == [""]
 
         # register two nodes, one with a long ttl, the other shorter
@@ -524,11 +524,11 @@ class TestConsul:
         time.sleep(40 / 1000.0)
 
         # check the nodes show for the /health/state/any endpoint
-        index, nodes = c.health.state("any")
+        _index, nodes = c.health.state("any")
         assert {node["ServiceID"] for node in nodes} == {"", "foo:1", "foo:2"}
 
         # but that they aren't passing their health check
-        index, nodes = c.health.state("passing")
+        _index, nodes = c.health.state("passing")
         assert [node["ServiceID"] for node in nodes] != "foo"
 
         # ping the two node's health check
@@ -538,14 +538,14 @@ class TestConsul:
         time.sleep(40 / 1000.0)
 
         # both nodes are now available
-        index, nodes = c.health.state("passing")
+        _index, nodes = c.health.state("passing")
         assert {node["ServiceID"] for node in nodes} == {"", "foo:1", "foo:2"}
 
         # wait until the short ttl node fails
         time.sleep(2200 / 1000.0)
 
         # only one node available
-        index, nodes = c.health.state("passing")
+        _index, nodes = c.health.state("passing")
         assert {node["ServiceID"] for node in nodes} == {"", "foo:1"}
 
         # ping the failed node's health check
@@ -554,7 +554,7 @@ class TestConsul:
         time.sleep(40 / 1000.0)
 
         # check both nodes are available
-        index, nodes = c.health.state("passing")
+        _index, nodes = c.health.state("passing")
         assert {node["ServiceID"] for node in nodes} == {"", "foo:1", "foo:2"}
 
         # deregister the nodes
@@ -563,14 +563,14 @@ class TestConsul:
 
         time.sleep(40 / 1000.0)
 
-        index, nodes = c.health.state("any")
+        _index, nodes = c.health.state("any")
         assert [node["ServiceID"] for node in nodes] == [""]
 
     def test_health_node(self, consul_port):
         c = consul.Consul(port=consul_port)
         # grab local node name
         node = c.agent.self()["Config"]["NodeName"]
-        index, checks = c.health.node(node)
+        _index, checks = c.health.node(node)
         assert node in [check["Node"] for check in checks]
 
     def test_health_checks(self, consul_port):
@@ -580,7 +580,7 @@ class TestConsul:
 
         time.sleep(40 / 1000.00)
 
-        index, checks = c.health.checks("foobar")
+        _index, checks = c.health.checks("foobar")
 
         assert [check["ServiceID"] for check in checks] == ["foobar"]
         assert [check["CheckID"] for check in checks] == ["service:foobar"]
@@ -589,7 +589,7 @@ class TestConsul:
 
         time.sleep(40 / 1000.0)
 
-        index, checks = c.health.checks("foobar")
+        _index, checks = c.health.checks("foobar")
         assert len(checks) == 0
 
     def test_session(self, consul_port):
@@ -607,9 +607,9 @@ class TestConsul:
 
         # session.info
         pytest.raises(consul.ConsulException, c.session.info, session_id, dc="dc2")
-        index, session = c.session.info("1" * 36)
+        _index, session = c.session.info("1" * 36)
         assert session is None
-        index, session = c.session.info(session_id)
+        _index, session = c.session.info(session_id)
         assert session["Name"] == "my-session"
 
         # session.node
@@ -638,11 +638,11 @@ class TestConsul:
 
         # trying out the behavior
         assert c.kv.put("foo", "1", acquire=s) is True
-        index, data = c.kv.get("foo")
+        _index, data = c.kv.get("foo")
         assert data["Value"] == b"1"
 
         c.session.destroy(s)
-        index, data = c.kv.get("foo")
+        _index, data = c.kv.get("foo")
         assert data is None
 
     def test_acl_disabled(self, consul_port):
@@ -716,11 +716,11 @@ class TestConsul:
         # test token pass through for service registration
         pytest.raises(consul.ACLPermissionDenied, c.agent.service.register, "bar-1", token=token)
         c.agent.service.register("foo-1", token=token)
-        index, data = c.health.service("foo-1", token=token)
+        _index, data = c.health.service("foo-1", token=token)
         assert data[0]["Service"]["ID"] == "foo-1"
-        index, data = c.health.checks("foo-1", token=token)
+        _index, data = c.health.checks("foo-1", token=token)
         assert data == []
-        index, data = c.health.service("bar-1", token=token)
+        _index, data = c.health.service("bar-1", token=token)
         assert not data
 
         # clean up
@@ -792,7 +792,7 @@ class TestConsul:
         leader = c.status.leader()
         addr_port = agent_self["Stats"]["consul"]["leader_addr"]
 
-        assert leader == addr_port, "Leader value was {}, expected value was {}".format(leader, addr_port)
+        assert leader == addr_port, f"Leader value was {leader}, expected value was {addr_port}"
 
     def test_status_peers(self, consul_port):
         c = consul.Consul(port=consul_port)
@@ -802,7 +802,7 @@ class TestConsul:
         addr_port = agent_self["Stats"]["consul"]["leader_addr"]
         peers = c.status.peers()
 
-        assert addr_port in peers, "Expected value '{}' in peer list but it was not present".format(addr_port)
+        assert addr_port in peers, f"Expected value '{addr_port}' in peer list but it was not present"
 
     def test_query(self, consul_port):
         c = consul.Consul(port=consul_port)

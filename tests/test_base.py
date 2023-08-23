@@ -15,13 +15,13 @@ class HTTPClient:
     def __init__(self, host=None, port=None, scheme=None, verify=True, cert=None):
         pass
 
-    def get(self, callback, path, params=None):
+    def get(self, callback, path, params=None):  # pylint: disable=unused-argument
         return Request("get", path, params, None)
 
-    def put(self, callback, path, params=None, data=""):
+    def put(self, callback, path, params=None, data=""):  # pylint: disable=unused-argument
         return Request("put", path, params, data)
 
-    def delete(self, callback, path, params=None):
+    def delete(self, callback, path, params=None):  # pylint: disable=unused-argument
         return Request("delete", path, params, None)
 
 
@@ -129,6 +129,7 @@ class TestMeta:
 
 
 class TestCB:
+    # pylint: disable=protected-access
     def test_status_200_passes(self):
         response = consul.base.Response(200, None, None)
         CB._status(response)

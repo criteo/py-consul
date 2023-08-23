@@ -23,3 +23,9 @@ repos:
         language: system
         entry: isort --filter-files --check
         types_or: [python]
+
+      - id: pylint
+        name: pylint static code analyzer
+        entry: pylint -rn -sn # Only display messages, don't display the score
+        language: system
+        types: [python]
