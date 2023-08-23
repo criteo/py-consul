@@ -6,6 +6,11 @@ default_stages: [commit]
 repos:
   - repo: local
     hooks:
+      - id: ruff
+        name: ruff
+        entry: ruff check
+        language: system
+        types_or: [python]
 
       - id: black
         name: black formatter

@@ -52,10 +52,7 @@ def start_consul_instance(acl_master_token=None):
     tmpdir.chdir()
 
     (system, node, release, version, machine, processor) = platform.uname()
-    if system == "Darwin":
-        postfix = "osx"
-    else:
-        postfix = "linux64"
+    postfix = "osx" if system == "Darwin" else "linux64"
     bin = os.path.join(os.path.dirname(__file__), "consul." + postfix)
     command = "{bin} agent -dev -bind=127.0.0.1 -config-dir=."
     command = command.format(bin=bin).strip()
@@ -107,7 +104,7 @@ def consul_instance():
     p.terminate()
 
 
-@pytest.fixture
+@pytest.fixture()
 def consul_port(consul_instance):
     port = consul_instance
     yield port
@@ -122,7 +119,7 @@ def acl_consul_instance():
     p.terminate()
 
 
-@pytest.fixture
+@pytest.fixture()
 def acl_consul(acl_consul_instance):
     ACLConsul = collections.namedtuple("ACLConsul", ["port", "token"])
     port, token = acl_consul_instance

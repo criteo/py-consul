@@ -37,7 +37,6 @@ class BadRequest(ConsulException):
 class ClientError(ConsulException):
     """Encapsulates 4xx Http error code"""
 
-    pass
 
 
 #
@@ -128,13 +127,18 @@ class Check:
         ret = {"check": {}}
 
         if script:
-            assert interval and not (ttl or http)
+            assert interval
+            assert not ttl
+            assert not http
             ret["check"] = {"script": script, "interval": interval}
         if ttl:
-            assert not (interval or script or http)
+            assert not interval or script
+            assert not http
             ret["check"] = {"ttl": ttl}
         if http:
-            assert interval and not (script or ttl)
+            assert interval
+            assert not script
+            assert not ttl
             ret["check"] = {"http": http, "interval": interval}
         if timeout:
             assert http
@@ -1770,10 +1774,7 @@ class Consul:
             if ttl:
                 assert 10 <= ttl <= 86400
                 data["ttl"] = "%ss" % ttl
-            if data:
-                data = json.dumps(data)
-            else:
-                data = ""
+            data = json.dumps(data) if data else ""
 
             return self.agent.http.put(CB.json(is_id=True), "/v1/session/create", params=params, data=data)
 
@@ -1988,10 +1989,7 @@ class Consul:
             if acl_id:
                 payload["ID"] = acl_id
 
-            if payload:
-                data = json.dumps(payload)
-            else:
-                data = ""
+            data = json.dumps(payload) if payload else ""
 
             return self.agent.http.put(CB.json(is_id=True), "/v1/acl/create", params=params, data=data)
 
@@ -2123,45 +2121,37 @@ class Consul:
             ttl=None,
             regexp=None,
         ):
-            service_body = dict(
-                [
-                    (k, v)
+            service_body = {
+                k: v
                     for k, v in {
                         "service": service,
                         "onlypassing": onlypassing,
                         "tags": tags,
-                        "failover": dict(
-                            [
-                                (k, v)
+                        "failover": {
+                            k: v
                                 for k, v in {"nearestn": nearestn, "datacenters": datacenters}.items()
                                 if v is not None
-                            ]
-                        ),
+                        },
                     }.items()
                     if v is not None
-                ]
-            )
+            }
 
-            data = dict(
-                [
-                    (k, v)
+            data = {
+                k: v
                     for k, v in {
                         "name": name,
                         "session": session,
                         "token": token or self.agent.token,
                         "dns": {"ttl": ttl} if ttl is not None else None,
-                        "template": dict(
-                            [
-                                (k, v)
+                        "template": {
+                            k: v
                                 for k, v in {"type": "name_prefix_match", "regexp": regexp}.items()
                                 if v is not None
-                            ]
-                        ),
+                        },
                         "service": service_body,
                     }.items()
                     if v is not None
-                ]
-            )
+            }
             return json.dumps(data)
 
         def create(
