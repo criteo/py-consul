@@ -134,7 +134,7 @@ class TestCB:
         CB._status(response)
 
     @pytest.mark.parametrize(
-        "response, expected_exception",
+        ("response", "expected_exception"),
         [
             (Response(400, None, None), consul.base.BadRequest),
             (Response(401, None, None), consul.base.ACLDisabled),
@@ -177,7 +177,7 @@ class TestChecks:
     """
 
     @pytest.mark.parametrize(
-        "url, interval, timeout, deregister, header, want",
+        ("url", "interval", "timeout", "deregister", "header", "want"),
         [
             (
                 "http://example.com",
@@ -248,7 +248,7 @@ class TestChecks:
         assert ch == want
 
     @pytest.mark.parametrize(
-        "host, port, interval, timeout, deregister, want",
+        ("host", "port", "interval", "timeout", "deregister", "want"),
         [
             (
                 "localhost",
@@ -305,7 +305,7 @@ class TestChecks:
         assert ch == want
 
     @pytest.mark.parametrize(
-        "container_id, shell, script, interval, deregister, want",
+        ("container_id", "shell", "script", "interval", "deregister", "want"),
         [
             (
                 "wandering_bose",

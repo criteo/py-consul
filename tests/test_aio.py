@@ -10,7 +10,7 @@ import consul.aio
 Check = consul.Check
 
 
-@pytest.fixture
+@pytest.fixture()
 def loop(request):
     asyncio.set_event_loop(None)
     loop = asyncio.new_event_loop()

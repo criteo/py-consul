@@ -32,7 +32,7 @@ class InsecureContextFactory(ClientContextFactory):
 class HTTPClient(base.HTTPClient):
     def __init__(self, contextFactory, *args, **kwargs):
         super(HTTPClient, self).__init__(*args, **kwargs)
-        agent_kwargs = dict(reactor=reactor, pool=HTTPConnectionPool(reactor))
+        agent_kwargs = {"reactor": reactor, "pool": HTTPConnectionPool(reactor)}
         if contextFactory is not None:
             # use the provided context factory
             agent_kwargs["contextFactory"] = contextFactory
@@ -62,12 +62,10 @@ class HTTPClient(base.HTTPClient):
     def _get_resp(self, response):
         # Merge multiple header values as per RFC2616
         # http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
-        headers = dict(
-            [
-                (self.compat_string(k), ",".join(map(self.compat_string, v)))
+        headers = {
+            self.compat_string(k): ",".join(map(self.compat_string, v))
                 for k, v in dict(response.headers.getAllRawHeaders()).items()
-            ]
-        )
+        }
         body = yield response.text(encoding="utf-8")
         returnValue((response.code, headers, body))
 
