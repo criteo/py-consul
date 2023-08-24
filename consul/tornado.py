@@ -51,3 +51,7 @@ class HTTPClient(base.HTTPClient):
 class Consul(base.Consul):
     def http_connect(self, host, port, scheme, verify=True, cert=None):
         return HTTPClient(host, port, scheme, verify=verify, cert=cert)
+
+    def close(self):
+        """Close all opened http connections"""
+        return self.http.close()
