@@ -3,7 +3,7 @@ import json
 
 import pytest
 
-import consul.base
+import consul
 
 CB = consul.base.CB
 Response = consul.base.Response
