@@ -8,17 +8,13 @@ from setuptools.command.install import install
 from setuptools.command.test import test as TestCommand
 
 with open("consul/__init__.py", encoding="utf-8") as f:
-    metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", f.read()))
+    metadata = dict(re.findall('__([a-z]+)__ = "([^"]+)"', f.read()))
 
 
 def _read_reqs(relpath: str):
     fullpath = os.path.join(os.path.dirname(__file__), relpath)
     with open(fullpath, encoding="utf-8") as f:
         return [s.strip() for s in f.readlines() if (s.strip() and not s.startswith("#"))]
-
-
-requirements = _read_reqs("requirements.txt")
-tests_requirements = _read_reqs("tests-requirements.txt")
 
 
 description = "Python client for Consul (http://www.consul.io/)"
@@ -59,13 +55,14 @@ setup(
     description=description,
     long_description=long_description,
     py_modules=py_modules,
-    install_requires=requirements,
+    install_requires=_read_reqs("requirements.txt"),
     extras_require={
         "tornado": ["tornado"],
         "asyncio": ["aiohttp"],
         "twisted": ["twisted", "treq"],
     },
-    tests_require=tests_requirements,
+    data_files=[(".", ["requirements.txt", "tests-requirements.txt"])],
+    tests_require=_read_reqs("tests-requirements.txt"),
     cmdclass={"test": PyTest, "install": Install},
     classifiers=[
         "Development Status :: 3 - Alpha",
