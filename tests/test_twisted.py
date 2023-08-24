@@ -1,6 +1,7 @@
 import base64
 import struct
 
+import pytest
 import pytest_twisted
 from twisted.internet import defer, reactor
 
@@ -22,10 +23,27 @@ def sleep(seconds):
     return d
 
 
+@pytest.fixture(autouse=True)
+def check_twisted_reactor():
+    assert reactor, "Not using Twisted's reactor!"
+
+
+@pytest.fixture
+def consul_obj(consul_port):
+    c = consul.twisted.Consul(port=consul_port)
+    yield c
+
+
+@pytest.fixture
+def consul_acl_obj(acl_consul):
+    c = consul.twisted.Consul(port=acl_consul.port, token=acl_consul.token)
+    yield c
+
+
 class TestConsul:
     @pytest_twisted.inlineCallbacks
-    def test_kv(self, consul_port):
-        c = consul.twisted.Consul(port=consul_port)
+    def test_kv(self, consul_obj):
+        c = consul_obj
         _index, data = yield c.kv.get("foo")
         assert data is None
         response = yield c.kv.put("foo", "bar")
@@ -34,15 +52,15 @@ class TestConsul:
         assert data["Value"] == b"bar"
 
     @pytest_twisted.inlineCallbacks
-    def test_kv_binary(self, consul_port):
-        c = consul.twisted.Consul(port=consul_port)
+    def test_kv_binary(self, consul_obj):
+        c = consul_obj
         yield c.kv.put("foo", struct.pack("i", 1000))
         _index, data = yield c.kv.get("foo")
         assert struct.unpack("i", data["Value"]) == (1000,)
 
     @pytest_twisted.inlineCallbacks
-    def test_kv_missing(self, consul_port):
-        c = consul.twisted.Consul(port=consul_port)
+    def test_kv_missing(self, consul_obj):
+        c = consul_obj
         reactor.callLater(2.0 / 100, c.kv.put, "foo", "bar")
         yield c.kv.put("index", "bump")
         index, data = yield c.kv.get("foo")
@@ -51,8 +69,8 @@ class TestConsul:
         assert data["Value"] == b"bar"
 
     @pytest_twisted.inlineCallbacks
-    def test_kv_put_flags(self, consul_port):
-        c = consul.twisted.Consul(port=consul_port)
+    def test_kv_put_flags(self, consul_obj):
+        c = consul_obj
         yield c.kv.put("foo", "bar")
         _index, data = yield c.kv.get("foo")
         assert data["Flags"] == 0
@@ -63,8 +81,8 @@ class TestConsul:
         assert data["Flags"] == 50
 
     @pytest_twisted.inlineCallbacks
-    def test_kv_delete(self, consul_port):
-        c = consul.twisted.Consul(port=consul_port)
+    def test_kv_delete(self, consul_obj):
+        c = consul_obj
         yield c.kv.put("foo1", "1")
         yield c.kv.put("foo2", "2")
         yield c.kv.put("foo3", "3")
@@ -81,8 +99,8 @@ class TestConsul:
         assert data is None
 
     @pytest_twisted.inlineCallbacks
-    def test_kv_subscribe(self, consul_port):
-        c = consul.twisted.Consul(port=consul_port)
+    def test_kv_subscribe(self, consul_obj):
+        c = consul_obj
 
         @defer.inlineCallbacks
         def put():
@@ -96,8 +114,8 @@ class TestConsul:
         assert data["Value"] == b"bar"
 
     @pytest_twisted.inlineCallbacks
-    def test_transaction(self, consul_port):
-        c = consul.twisted.Consul(port=consul_port)
+    def test_transaction(self, consul_obj):
+        c = consul_obj
         value = base64.b64encode(b"1").decode("utf8")
         d = {"KV": {"Verb": "set", "Key": "asdf", "Value": value}}
         r = yield c.txn.put([d])
@@ -108,8 +126,8 @@ class TestConsul:
         assert r["Results"][0]["KV"]["Value"] == value
 
     @pytest_twisted.inlineCallbacks
-    def test_agent_services(self, consul_port):
-        c = consul.twisted.Consul(port=consul_port)
+    def test_agent_services(self, consul_obj):
+        c = consul_obj
         services = yield c.agent.services()
         assert services == {}
         response = yield c.agent.service.register("foo")
@@ -134,8 +152,8 @@ class TestConsul:
         assert services == {}
 
     @pytest_twisted.inlineCallbacks
-    def test_catalog(self, consul_port):
-        c = consul.twisted.Consul(port=consul_port)
+    def test_catalog(self, consul_obj):
+        c = consul_obj
 
         @defer.inlineCallbacks
         def register():
@@ -160,8 +178,8 @@ class TestConsul:
         assert [x["Node"] for x in nodes] == []
 
     @pytest_twisted.inlineCallbacks
-    def test_health_service(self, consul_port):
-        c = consul.twisted.Consul(port=consul_port)
+    def test_health_service(self, consul_obj):
+        c = consul_obj
 
         # check there are no nodes for the service 'foo'
         _index, nodes = yield c.health.service("foo")
@@ -216,8 +234,8 @@ class TestConsul:
         assert nodes == []
 
     @pytest_twisted.inlineCallbacks
-    def test_health_service_subscribe(self, consul_port):
-        c = consul.twisted.Consul(port=consul_port)
+    def test_health_service_subscribe(self, consul_obj):
+        c = consul_obj
 
         class Config:
             def __init__(self):
@@ -247,8 +265,8 @@ class TestConsul:
         yield c.agent.service.deregister("foo:1")
 
     @pytest_twisted.inlineCallbacks
-    def test_session(self, consul_port):
-        c = consul.twisted.Consul(port=consul_port)
+    def test_session(self, consul_obj):
+        c = consul_obj
 
         index, services = yield c.session.list()
         assert services == []
@@ -264,8 +282,8 @@ class TestConsul:
         assert services == []
 
     @pytest_twisted.inlineCallbacks
-    def test_acl(self, acl_consul):
-        c = consul.twisted.Consul(port=acl_consul.port, token=acl_consul.token)
+    def test_acl(self, consul_acl_obj):
+        c = consul_acl_obj
 
         rules = """
             key "" {
