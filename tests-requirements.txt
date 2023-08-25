@@ -9,13 +9,10 @@ pytest
 pytest_asyncio
 pytest-cov
 pytest-rerunfailures
-pytest-twisted
 pytest-xdist
 ruff
 setuptools
-tornado
 tox
 treq
-twisted
 virtualenv
 wheel
