@@ -44,48 +44,6 @@ library from the python standard lib, including the `requests`_ library can be
 made non-blocking via monkey patching. This means the standard python-consul
 client will just work asynchronously with `gevent`_.
 
-Tornado
-~~~~~~~
-
-There is a `Tornado`_ client which makes use of `gen.coroutine`_. The API for
-this client is identical to the standard python-consul client except that you
-need to *yield* the result of each API call. This client is available in
-*consul.tornado*.
-
-.. code:: python
-
-    from tornado.ioloop import IOLoop
-    from tornado.gen import coroutine
-    from consul.base import Timeout
-    from consul.tornado import Consul
-
-
-    class Config:
-        def __init__(self, loop):
-            self.foo = None
-            loop.add_callback(self.watch)
-
-        @coroutine
-        def watch(self):
-            c = Consul()
-
-            # asynchronously poll for updates
-            index = None
-            while True:
-                try:
-                    index, data = yield c.kv.get('foo', index=index)
-                    if data is not None:
-                        self.foo = data['Value']
-                except Timeout:
-                    # gracefully handle request timeout
-                    pass
-
-    if __name__ == '__main__':
-        loop = IOLoop.instance()
-        _ = Config(loop)
-        loop.start()
-
-
 asyncio
 ~~~~~~~
 
@@ -123,11 +81,6 @@ result of each API call. This client is available in *consul.aio*.
 
     loop.run_until_complete(go())
 
-
-Wanted
-~~~~~~
-
-Adaptors for `Twisted`_ and a `thread pool`_ based adaptor.
 
 Tools
 -----
@@ -306,12 +259,9 @@ Consul.txn
 .. _requests: http://python-requests.org
 .. _Vanilla: https://github.com/cablehead/vanilla
 .. _gevent: http://www.gevent.org
-.. _Tornado: http://www.tornadoweb.org
-.. _gen.coroutine: https://tornado.readthedocs.io/en/latest/gen.html
 .. _asyncio.coroutine: https://docs.python.org/3/library/asyncio-task.html#coroutines
 .. _aiohttp: https://github.com/KeepSafe/aiohttp
 .. _asyncio: https://docs.python.org/3/library/asyncio.html
-.. _Twisted: https://twistedmatrix.com/trac/
 .. _thread pool: https://docs.python.org/2/library/threading.html
 
 .. _ianitor: https://github.com/ClearcodeHQ/ianitor
