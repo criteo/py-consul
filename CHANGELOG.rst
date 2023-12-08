@@ -1,5 +1,13 @@
 Change log
 ==========
+1.3.0
+-----
+* feature: drop tornado and twisted support
+* env: support python 3.10 and 3.11
+* env: drop support of EOL python versions 3.5, 3.6 and 3.7
+* code-style: syntax modernization
+* code-style: formatter and linter use
+* ci: multiple python version test and linter enforcement
 
 1.2.4
 -----
