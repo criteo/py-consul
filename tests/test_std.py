@@ -245,6 +245,35 @@ class TestConsul:
         verify_check_status("ttl_check", "critical")
         verify_and_dereg_check("ttl_check")
 
+    def test_service_multi_check(self, consul_port):
+        c = consul.Consul(port=consul_port)
+        http_addr = f"http://127.0.0.1:{consul_port}"
+        c.agent.service.register(
+            "foo1",
+            check=Check.http(http_addr, "10ms"),
+            extra_checks=[
+                Check.http(http_addr, "20ms"),
+                Check.http(http_addr, "30ms"),
+            ],
+        )
+
+        time.sleep(200 / 1000.0)
+
+        _index, nodes = c.health.service("foo1")
+        assert {check["ServiceID"] for node in nodes for check in node["Checks"]} == {"foo1", ""}
+
+        assert {check["CheckID"] for node in nodes for check in node["Checks"]} == {
+            "service:foo1:1",
+            "service:foo1:2",
+            "service:foo1:3",
+            "serfHealth",
+        }
+        time.sleep(1)
+
+        _index, checks = c.health.checks(service="foo1")
+        assert [check["CheckID"] for check in checks] == ["service:foo1:1", "service:foo1:2", "service:foo1:3"]
+        assert [check["Status"] for check in checks] == ["passing", "passing", "passing"]
+
     def test_service_dereg_issue_156(self, consul_port):
         # https://github.com/cablehead/python-consul/issues/156
         service_name = "app#127.0.0.1#3000"
@@ -274,15 +303,17 @@ class TestConsul:
         assert [node["Service"]["ID"] for node in nodes] == ["foo1"]
 
         c.agent.check.register("foo", Check.ttl("100ms"), service_id="foo1")
+        c.agent.check.register("foo2", Check.ttl("100ms"), service_id="foo1")
 
         time.sleep(40 / 1000.0)
 
         _index, nodes = c.health.service("foo1")
         assert {check["ServiceID"] for node in nodes for check in node["Checks"]} == {"foo1", ""}
-        assert {check["CheckID"] for node in nodes for check in node["Checks"]} == {"foo", "serfHealth"}
+        assert {check["CheckID"] for node in nodes for check in node["Checks"]} == {"foo", "foo2", "serfHealth"}
 
         # Clean up tasks
         assert c.agent.check.deregister("foo") is True
+        assert c.agent.check.deregister("foo2") is True
 
         time.sleep(40 / 1000.0)
 
