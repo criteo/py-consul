@@ -18,10 +18,10 @@ class TestHTTPClient:
         assert http.uri("/v1/kv", params={"index": 1}) == "http://127.0.0.1:8500/v1/kv?index=1"
 
 
-@pytest.fixture
+@pytest.fixture()
 def consul_obj(consul_port):
     c = consul.std.Consul(port=consul_port)
-    yield c
+    return c
 
 
 class TestConsul:
@@ -369,8 +369,8 @@ class TestConsul:
         members = c.agent.members()
         for x in members:
             assert x["Status"] == 1
-            assert not x["Name"] is None
-            assert not x["Tags"] is None
+            assert x["Name"] is not None
+            assert x["Tags"] is not None
         assert c.agent.self()["Member"] in members
 
         wan_members = c.agent.members(wan=True)

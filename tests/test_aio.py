@@ -10,14 +10,14 @@ import consul.aio
 Check = consul.Check
 
 
-@pytest.fixture
+@pytest.fixture()
 async def consul_obj(consul_port):
     c = consul.aio.Consul(port=consul_port)
     yield c
     await c.close()
 
 
-@pytest.fixture
+@pytest.fixture()
 async def consul_acl_obj(acl_consul):
     c = consul.aio.Consul(port=acl_consul.port, token=acl_consul.token)
     yield c

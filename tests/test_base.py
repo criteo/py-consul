@@ -112,7 +112,8 @@ class TestNodemeta:
         for r in _should_support_node_meta(c):
             assert r().params == []
             assert sorted(r(node_meta={"env": "prod", "net": 1}).params) == sorted([
-                ("node-meta", "net:1"), ("node-meta", "env:prod")
+                ("node-meta", "net:1"),
+                ("node-meta", "env:prod"),
             ])
 
 
