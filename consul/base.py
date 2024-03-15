@@ -836,6 +836,7 @@ class Consul:
                 http=None,
                 timeout=None,
                 enable_tag_override=False,
+                extra_checks=None,
             ):
                 """
                 Add a new service to the local agent. There is more
@@ -877,6 +878,8 @@ class Consul:
                 https://www.consul.io/docs/agent/services.html
                 """
 
+                if extra_checks is None:
+                    extra_checks = []
                 payload = {}
 
                 payload["name"] = name
@@ -893,7 +896,7 @@ class Consul:
                 if meta:
                     payload["meta"] = meta
                 if check:
-                    payload["check"] = check
+                    payload["checks"] = [check] + extra_checks
                 if weights:
                     payload["weights"] = weights
 
