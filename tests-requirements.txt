@@ -1,7 +1,5 @@
 aiohttp
 asynctest
-black
-isort
 pre-commit
 pyOpenSSL
 pylint
@@ -13,6 +11,8 @@ pytest-xdist
 ruff
 setuptools
 tox
+tox-uv
 treq
+uv
 virtualenv
 wheel

@@ -2,27 +2,22 @@ default_language_version:
   python: python3.9
 default_install_hook_types: [pre-commit,pre-push]
 default_stages: [commit]
+exclude: ^docs/
 
 repos:
   - repo: local
     hooks:
       - id: ruff
         name: ruff
-        entry: ruff check
+        entry: ruff check -n
         language: system
-        types_or: [python]
+        types_or: [ python ]
 
-      - id: black
-        name: black formatter
+      - id: ruff format
+        name: ruff format
+        entry: ruff format --check .
         language: system
-        entry: black --check
-        types_or: [python]
-
-      - id: isort
-        name: isort
-        language: system
-        entry: isort --filter-files --check
-        types_or: [python]
+        types_or: [ python ]
 
       - id: pylint
         name: pylint static code analyzer
