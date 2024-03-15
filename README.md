@@ -1,5 +1,4 @@
-Python client for `Consul.io <http://www.consul.io/>`_
-======================================================
+# py-consul [![PyPi version](https://img.shields.io/pypi/v/py-consul.svg)](https://pypi.python.org/pypi/py-consul/) [![Python version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/) ![Status](https://img.shields.io/badge/status-maintained-green.svg)
 
 Fork intent
 -----------
@@ -13,8 +12,7 @@ on pypi; see https://pypi.org/project/py-consul/
 Example
 -------
 
-.. code:: python
-
+```python
     import consul
 
     c = consul.Consul()
@@ -27,13 +25,13 @@ Example
 
     # in another process
     c.kv.put('foo', 'bar')
+```
 
 Installation
 ------------
-
-::
-
+```bash
     pip install py-consul
+```
 
 **Note:** When using py-consul library in environment with proxy server, setting of ``http_proxy``, ``https_proxy`` and ``no_proxy`` environment variables can be required for proper functionality.
 
@@ -47,5 +45,5 @@ open a PR or Issue we'll try and respond as quickly as we're able.
 
 When you create a PR please ensure:
 
-#. To add tests for your new features, if reasonable
-#. To add docstrings for new api features you may add
+- To add tests for your new features, if reasonable
+- To add docstrings for new api features you may add
