@@ -42,7 +42,7 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
-with open("README.rst", encoding="utf-8") as f1, open("CHANGELOG.rst", encoding="utf-8") as f2:
+with open("README.md", encoding="utf-8") as f1, open("CHANGELOG.rst", encoding="utf-8") as f2:
     long_description = f"{f1.read()}\n\n{f2.read()}"
 
 setup(
