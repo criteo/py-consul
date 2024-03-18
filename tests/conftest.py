@@ -1,7 +1,6 @@
 import collections
 import json
 import os
-import platform
 import shlex
 import socket
 import subprocess
@@ -18,7 +17,6 @@ from packaging import version
 collect_ignore = []
 
 CONSUL_BINARIES = {
-    "1.1.0": "consul",
     "1.13.8": "consul-1.13.8",
     "1.15.4": "consul-1.15.4",
     "1.16.1": "consul-1.16.1",
@@ -60,8 +58,7 @@ def start_consul_instance(binary_name, acl_master_token=None):
     tmpdir.join("config.json").write(json.dumps(config))
     tmpdir.chdir()
 
-    (system, _node, _release, _version, _machine, _processor) = platform.uname()
-    ext = "osx" if system == "Darwin" else "linux64"
+    ext = "linux64"
     binary = os.path.join(os.path.dirname(__file__), f"{binary_name}.{ext}")
     command = "{bin} agent -dev -bind=127.0.0.1 -config-dir=."
     command = command.format(bin=binary).strip()
