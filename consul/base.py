@@ -1928,146 +1928,117 @@ class Consul:
             """
             Lists all the active ACL tokens. This is a privileged endpoint, and
             requires a management token. *token* will override this client's
-            default token.  An *ACLPermissionDenied* exception will be raised
-            if a management token is not used.
+            default token.
+            Requires a token with acl:read capability. ACLPermissionDenied raised otherwise
             """
             params = []
             token = token or self.agent.token
             if token:
                 params.append(("token", token))
-            return self.agent.http.get(CB.json(), "/v1/acl/list", params=params)
+            return self.agent.http.get(CB.json(), "/v1/acl/tokens", params=params)
 
-        def info(self, acl_id, token=None):
+        def read(self, accessor_id, token=None):
             """
-            Returns the token information for *acl_id*.
+            Returns the token information for *accessor_id*. Requires a token with acl:read capability.
+            :param accessor_id: The accessor ID of the token to read
+            :param token: token with acl:read capability
+            :return: selected token information
             """
             params = []
             token = token or self.agent.token
             if token:
                 params.append(("token", token))
-            return self.agent.http.get(CB.json(one=True), f"/v1/acl/info/{acl_id}", params=params)
+            return self.agent.http.get(CB.json(), f"/v1/acl/token/{accessor_id}", params=params)
 
-        def create(self, name=None, token_type="client", rules=None, acl_id=None, token=None):
+        def delete(self, accessor_id, token=None):
             """
-            Creates a new ACL token. This is a privileged endpoint, and
-            requires a management token. *token* will override this client's
-            default token.  An *ACLPermissionDenied* exception will be raised
-            if a management token is not used.
+            Deletes the token with *accessor_id*. This is a privileged endpoint, and requires a token with acl:write.
+            :param accessor_id: The accessor ID of the token to delete
+            :param token: token with acl:write capability
+            :return: True if the token was deleted
+            """
+            params = []
+            token = token or self.agent.token
+            if token:
+                params.append(("token", token))
+            return self.agent.http.delete(CB.bool(), f"/v1/acl/token/{accessor_id}", params=params)
 
-            *name* is an optional name for this token.
-
-            *token_type* is either 'management' or 'client'. A management token is
-            effectively like a root user, and has the ability to perform any
-            action including creating, modifying, and deleting ACLs. A client
-            token can only perform actions as permitted by *rules*.
-
-            *rules* is an optional `HCL`_ string for this `ACL Token`_ Rule
-            Specification.
-
-            Rules look like this::
-
-                # Default all keys to read-only
-                key "" {
-                  policy = "read"
-                }
-                key "foo/" {
-                  policy = "write"
-                }
-                key "foo/private/" {
-                  # Deny access to the private dir
-                  policy = "deny"
-                }
-
-            Returns the string *acl_id* for the new token.
+        def clone(self, accessor_id, token=None, description=""):
+            """
+            Clones the token identified by *accessor_id*. This is a privileged endpoint, and requires a token with acl:write.
+            :param accessor_id: The accessor ID of the token to clone
+            :param token: token with acl:write capability
+            :param description: Optional new token description
+            :return: The cloned token information
             """
             params = []
             token = token or self.agent.token
             if token:
                 params.append(("token", token))
 
-            payload = {}
-            if name:
-                payload["Name"] = name
-            if token_type:
-                assert token_type in ("client", "management"), "token_type must be client or management"
-                payload["Type"] = token_type
-            if rules:
-                assert isinstance(rules, str), "Only HCL or JSON encoded strings supported for the moment"
-                payload["Rules"] = rules
-            if acl_id:
-                payload["ID"] = acl_id
+            json_data = {"Description": description}
+            return self.agent.http.put(
+                CB.json(),
+                f"/v1/acl/token/{accessor_id}/clone",
+                params=params,
+                data=json.dumps(json_data),
+            )
 
-            data = json.dumps(payload) if payload else ""
-
-            return self.agent.http.put(CB.json(is_id=True), "/v1/acl/create", params=params, data=data)
-
-        def update(self, acl_id, name=None, token_type=None, rules=None, token=None):
+        def create(self, token=None, accessor_id=None, secret_id=None, description=""):
             """
-            Updates the ACL token *acl_id*. This is a privileged endpoint, and
-            requires a management token. *token* will override this client's
-            default token. An *ACLPermissionDenied* exception will be raised if
-            a management token is not used.
-
-            *name* is an optional name for this token.
-
-            *token_type* is either 'management' or 'client'. A management token is
-            effectively like a root user, and has the ability to perform any
-            action including creating, modifying, and deleting ACLs. A client
-            token can only perform actions as permitted by *rules*.
-
-            *rules* is an optional `HCL`_ string for this `ACL Token`_ Rule
-            Specification.
-
-            Returns the string *acl_id* of this token on success.
+            Create a token (optionally identified by *secret_id* and *accessor_id*).
+            This is a privileged endpoint, and requires a token with acl:write.
+            :param token: token with acl:write capability
+            :param accessor_id: The accessor ID of the token to create
+            :param secret_id: The secret ID of the token to create
+            :param description: Optional new token description
+            :return: The cloned token information
             """
             params = []
             token = token or self.agent.token
             if token:
                 params.append(("token", token))
 
-            payload = {"ID": acl_id}
-            if name:
-                payload["Name"] = name
-            if token_type:
-                assert token_type in ("client", "management"), "token_type must be client or management"
-                payload["Type"] = token_type
-            if rules:
-                assert isinstance(rules, str), "Only HCL or JSON encoded strings supported for the moment"
-                payload["Rules"] = rules
+            json_data = {}
+            if accessor_id:
+                json_data["AccessorID"] = accessor_id
+            if secret_id:
+                json_data["SecretID"] = secret_id
+            if description:
+                json_data["Description"] = description
+            return self.agent.http.put(
+                CB.json(),
+                "/v1/acl/token",
+                params=params,
+                data=json.dumps(json_data),
+            )
 
-            data = json.dumps(payload)
-
-            return self.agent.http.put(CB.json(is_id=True), "/v1/acl/update", params=params, data=data)
-
-        def clone(self, acl_id, token=None):
+        def update(self, accessor_id, token=None, secret_id=None, description=""):
             """
-            Clones the ACL token *acl_id*. This is a privileged endpoint, and
-            requires a management token. *token* will override this client's
-            default token. An *ACLPermissionDenied* exception will be raised if
-            a management token is not used.
-
-            Returns the string of the newly created *acl_id*.
-            """
-            params = []
-            token = token or self.agent.token
-            if token:
-                params.append(("token", token))
-            return self.agent.http.put(CB.json(is_id=True), f"/v1/acl/clone/{acl_id}", params=params)
-
-        def destroy(self, acl_id, token=None):
-            """
-            Destroys the ACL token *acl_id*. This is a privileged endpoint, and
-            requires a management token. *token* will override this client's
-            default token. An *ACLPermissionDenied* exception will be raised if
-            a management token is not used.
-
-            Returns *True* on success.
+            Update a token (optionally identified by *secret_id* and *accessor_id*).
+            This is a privileged endpoint, and requires a token with acl:write.
+            :param accessor_id: The accessor ID of the token to update
+            :param token: token with acl:write capability
+            :param secret_id: Optional secret ID of the token to update
+            :param description: Optional new token description
+            :return: The updated token information
             """
             params = []
             token = token or self.agent.token
             if token:
                 params.append(("token", token))
-            return self.agent.http.put(CB.json(), f"/v1/acl/destroy/{acl_id}", params=params)
+
+            json_data = {"AccessorID": accessor_id}
+            if secret_id:
+                json_data["SecretID"] = secret_id
+            if description:
+                json_data["Description"] = description
+            return self.agent.http.put(
+                CB.json(),
+                f"/v1/acl/token/{accessor_id}",
+                params=params,
+                data=json.dumps(json_data),
+            )
 
     class Status:
         """
