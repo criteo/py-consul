@@ -8,11 +8,8 @@ import tempfile
 import time
 import uuid
 
-import aiohttp
-import py
 import pytest
 import requests
-from packaging import version
 
 collect_ignore = []
 
@@ -47,30 +44,41 @@ def start_consul_instance(binary_name, acl_master_token=None):
     returns: a tuple of the instances process object and the http port the
              instance is listening on
     """
-    ports = dict(zip(["http", "serf_lan", "serf_wan", "server", "dns"], get_free_ports(4) + [-1]))
+    ports = dict(zip(["http", "server", "grpc", "serf_lan", "serf_wan", "https", "dns"], get_free_ports(5) + [-1] * 2))
+    if "1.13" not in binary_name:
+        ports["grpc_tls"] = -1
 
     config = {"ports": ports, "performance": {"raft_multiplier": 1}, "enable_script_checks": True}
     if acl_master_token:
-        config["acl_datacenter"] = "dc1"
-        config["acl_master_token"] = acl_master_token
+        config["primary_datacenter"] = "dc1"
+        config["acl"] = {"enabled": True, "tokens": {"initial_management": acl_master_token}}
 
-    tmpdir = py.path.local(tempfile.mkdtemp())
-    tmpdir.join("config.json").write(json.dumps(config))
-    tmpdir.chdir()
+    tmpdir = tempfile.mkdtemp()
+    config_path = os.path.join(tmpdir, "config.json")
+    print(config_path)
+    with open(config_path, "w", encoding="utf-8") as f:
+        json.dump(config, f)
 
     ext = "linux64"
     binary = os.path.join(os.path.dirname(__file__), f"{binary_name}.{ext}")
-    command = "{bin} agent -dev -bind=127.0.0.1 -config-dir=."
-    command = command.format(bin=binary).strip()
+    command = f"{binary} agent -dev -bind=127.0.0.1 -config-dir={tmpdir}"
     command = shlex.split(command)
+    log_file_path = os.path.join(tmpdir, "consul.log")
 
-    with open("/dev/null", "w") as devnull:  # pylint: disable=unspecified-encoding
-        p = subprocess.Popen(command, stdout=devnull, stderr=devnull)  # pylint: disable=consider-using-with
+    with open(log_file_path, "w", encoding="utf-8") as log_file:  # pylint: disable=unspecified-encoding
+        p = subprocess.Popen(command, stdout=log_file, stderr=subprocess.STDOUT)  # pylint: disable=consider-using-with
 
     # wait for consul instance to bootstrap
     base_uri = f"http://127.0.0.1:{ports['http']}/v1/"
+    start_time = time.time()
+    global_timeout = 5
 
     while True:
+        # Timeout at some point and read the log file to see what went wrong
+        if time.time() - start_time > global_timeout:
+            with open(log_file_path, encoding="utf-8") as log_file:
+                print(log_file.read())
+            raise TimeoutError("Global timeout reached")
         time.sleep(0.1)
         try:
             response = requests.get(base_uri + "status/leader", timeout=10)
@@ -94,35 +102,13 @@ def start_consul_instance(binary_name, acl_master_token=None):
     return p, ports["http"]
 
 
-def clean_consul(port):
-    # remove all data from the instance, to have a clean start
-    base_uri = f"http://127.0.0.1:{port}/v1/"
-    requests.delete(base_uri + "kv/", params={"recurse": 1}, timeout=10)
-    services = requests.get(base_uri + "agent/services", timeout=10).json().keys()
-    for s in services:
-        requests.put(base_uri + f"agent/service/deregister/{s}", timeout=10)
-
-
-async def async_clean_consul(port):
-    base_uri = f"http://127.0.0.1:{port}/v1/"
-    async with aiohttp.ClientSession() as session:
-        # Delete all key-value pairs
-        await session.delete(base_uri + "kv/", params={"recurse": 1})
-
-        # Deregister all services
-        async with session.get(base_uri + "agent/services") as response:
-            services = await response.json()
-            for s in services:
-                await session.put(base_uri + f"agent/service/deregister/{s}")
-
-
 def get_consul_version(port):
     base_uri = f"http://127.0.0.1:{port}/v1/"
     response = requests.get(base_uri + "agent/self", timeout=10)
     return response.json()["Config"]["Version"].strip()
 
 
-@pytest.fixture(scope="module", params=CONSUL_BINARIES.keys())
+@pytest.fixture(params=CONSUL_BINARIES.keys())
 def consul_instance(request):
     p, port = start_consul_instance(binary_name=CONSUL_BINARIES[request.param])
     version = get_consul_version(port)
@@ -130,7 +116,7 @@ def consul_instance(request):
     p.terminate()
 
 
-@pytest.fixture(scope="module", params=CONSUL_BINARIES.keys())
+@pytest.fixture(params=CONSUL_BINARIES.keys())
 def acl_consul_instance(request):
     acl_master_token = uuid.uuid4().hex
     p, port = start_consul_instance(binary_name=CONSUL_BINARIES[request.param], acl_master_token=acl_master_token)
@@ -142,25 +128,11 @@ def acl_consul_instance(request):
 @pytest.fixture()
 def consul_port(consul_instance):
     port, version = consul_instance
-    yield port, version
-    clean_consul(port)
+    return port, version
 
 
 @pytest.fixture()
 def acl_consul(acl_consul_instance):
     ACLConsul = collections.namedtuple("ACLConsul", ["port", "token", "version"])
     port, token, version = acl_consul_instance
-    yield ACLConsul(port, token, version)
-    clean_consul(port)
-
-
-def should_skip(version_str, comparator, ref_version_str):
-    v = version.parse(version_str)
-    ref_version = version.parse(ref_version_str)
-
-    if comparator == "<" and v >= ref_version:
-        return f"Requires version {comparator} {ref_version_str}"
-    if comparator == ">" and v <= ref_version:
-        return f"Requires version {comparator} {ref_version_str}"
-    # You can add other comparators if needed
-    return None
+    return ACLConsul(port, token, version)

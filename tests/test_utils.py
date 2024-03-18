@@ -1,4 +1,4 @@
-from tests.utils import find_recursive
+from tests.utils import find_recursive, should_skip
 
 
 def test_find_recursive():
@@ -49,3 +49,23 @@ def test_find_recursive():
     assert find_recursive(ret_value, [wanted, wanted2])
     assert find_recursive(wanted, wanted)
     assert not find_recursive(ret_value, unwanted)
+
+
+def test_should_skip():
+    test_cases = [
+        ("1.0.0", "<=", "1.0.0", False),
+        ("1.0.1", "<=", "1.0.0", True),
+        ("0.9.9", "<=", "1.0.0", False),
+        ("1.0.0", ">=", "1.0.0", False),
+        ("1.0.1", ">=", "1.0.0", False),
+        ("0.9.9", ">=", "1.0.0", True),
+        ("1.0.0", "<", "1.0.0", True),
+        ("1.0.1", "<", "1.0.0", True),
+        ("0.9.9", "<", "1.0.0", False),
+        ("1.0.0", ">", "1.0.0", True),
+        ("1.0.1", ">", "1.0.0", False),
+        ("0.9.9", ">", "1.0.0", True),
+    ]
+
+    for version_str, comparator, ref_version_str, expected in test_cases:
+        assert should_skip(version_str, comparator, ref_version_str) == expected

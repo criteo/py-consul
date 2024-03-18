@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from packaging import version
+
 
 def find_recursive(list_or_single_dict: list[dict] | dict, wanted: list[dict] | dict) -> bool:
     """
@@ -41,3 +43,18 @@ def find_recursive(list_or_single_dict: list[dict] | dict, wanted: list[dict] | 
         wanted = [wanted]
 
     return all(any(matches_subdict(item, single_wanted) for item in list_or_single_dict) for single_wanted in wanted)
+
+
+def should_skip(version_str, comparator, ref_version_str):
+    v = version.parse(version_str)
+    ref_version = version.parse(ref_version_str)
+    if (
+        (comparator == "<=" and v > ref_version)  # pylint: disable=too-many-boolean-expressions
+        or (comparator == ">=" and v < ref_version)
+        or (comparator == "<" and v >= ref_version)
+        or (comparator == ">" and v <= ref_version)
+    ):
+        print(f"Requires version {comparator} {ref_version_str}. Got {v}")
+        return True
+
+    return False
