@@ -250,6 +250,7 @@ class TestConsul:
         verify_and_dereg_check("ttl_check")
 
     def test_service_multi_check(self, consul_port):
+        consul_port, _consul_version = consul_port
         c = consul.Consul(port=consul_port)
         http_addr = f"http://127.0.0.1:{consul_port}"
         c.agent.service.register(
