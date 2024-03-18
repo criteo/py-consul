@@ -90,6 +90,7 @@ fixable = [
     "PIE",
     "PT",
     "C4",
+    "I",
     "SIM",
     "SIM",
     "UP",
