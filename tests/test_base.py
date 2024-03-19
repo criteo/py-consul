@@ -4,9 +4,7 @@ import json
 import pytest
 
 import consul
-
-CB = consul.base.CB
-Response = consul.base.Response
+import consul.check
 
 Request = collections.namedtuple("Request", ["method", "path", "params", "data"])
 
@@ -129,50 +127,6 @@ class TestMeta:
             assert sorted(d["meta"]) == sorted({"env": "prod", "net": 1})
 
 
-class TestCB:
-    # pylint: disable=protected-access
-    def test_status_200_passes(self):
-        response = consul.base.Response(200, None, None)
-        CB._status(response)
-
-    @pytest.mark.parametrize(
-        ("response", "expected_exception"),
-        [
-            (Response(400, None, None), consul.base.BadRequest),
-            (Response(401, None, None), consul.base.ACLDisabled),
-            (Response(403, None, None), consul.base.ACLPermissionDenied),
-        ],
-    )
-    def test_status_4xx_raises_error(self, response, expected_exception):
-        with pytest.raises(expected_exception):
-            CB._status(response)
-
-    def test_status_404_allow_404(self):
-        response = Response(404, None, None)
-        CB._status(response, allow_404=True)
-
-    def test_status_404_dont_allow_404(self):
-        response = Response(404, None, None)
-        with pytest.raises(consul.base.NotFound):
-            CB._status(response, allow_404=False)
-
-    def test_status_405_raises_generic_ClientError(self):
-        response = Response(405, None, None)
-        with pytest.raises(consul.base.ClientError):
-            CB._status(response)
-
-    @pytest.mark.parametrize(
-        "response",
-        [
-            Response(500, None, None),
-            Response(599, None, None),
-        ],
-    )
-    def test_status_5xx_raises_error(self, response):
-        with pytest.raises(consul.base.ConsulException):
-            CB._status(response)
-
-
 class TestChecks:
     """
     Check constructor helpers return valid check configurations.
@@ -246,7 +200,7 @@ class TestChecks:
         ],
     )
     def test_http_check(self, url, interval, timeout, deregister, header, want):
-        ch = consul.base.Check.http(url, interval, timeout=timeout, deregister=deregister, header=header)
+        ch = consul.check.Check.http(url, interval, timeout=timeout, deregister=deregister, header=header)
         assert ch == want
 
     @pytest.mark.parametrize(
@@ -303,7 +257,7 @@ class TestChecks:
         ],
     )
     def test_tcp_check(self, host, port, interval, timeout, deregister, want):
-        ch = consul.base.Check.tcp(host, port, interval, timeout=timeout, deregister=deregister)
+        ch = consul.check.Check.tcp(host, port, interval, timeout=timeout, deregister=deregister)
         assert ch == want
 
     @pytest.mark.parametrize(
@@ -339,9 +293,9 @@ class TestChecks:
         ],
     )
     def test_docker_check(self, container_id, shell, script, interval, deregister, want):
-        ch = consul.base.Check.docker(container_id, shell, script, interval, deregister=deregister)
+        ch = consul.check.Check.docker(container_id, shell, script, interval, deregister=deregister)
         assert ch == want
 
     def test_ttl_check(self):
-        ch = consul.base.Check.ttl("1m")
+        ch = consul.check.Check.ttl("1m")
         assert ch == {"ttl": "1m"}

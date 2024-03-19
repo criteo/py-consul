@@ -7,8 +7,9 @@ from packaging import version
 
 import consul
 import consul.aio
+import consul.check
 
-Check = consul.Check
+Check = consul.check.Check
 
 
 @pytest.fixture()
