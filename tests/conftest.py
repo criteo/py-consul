@@ -11,6 +11,8 @@ import uuid
 import pytest
 import requests
 
+from consul import Consul
+
 collect_ignore = []
 
 CONSUL_BINARIES = {
@@ -137,3 +139,10 @@ def acl_consul(acl_consul_instance):
     ACLConsul = collections.namedtuple("ACLConsul", ["port", "token", "version"])
     port, token, version = acl_consul_instance
     return ACLConsul(port, token, version)
+
+
+@pytest.fixture()
+def consul_obj(consul_port):
+    consul_port, consul_version = consul_port
+    c = Consul(port=consul_port)
+    return c, consul_version

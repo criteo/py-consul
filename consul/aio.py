@@ -2,7 +2,7 @@ import asyncio
 
 import aiohttp
 
-from consul import base
+from consul import Timeout, base
 
 __all__ = ["Consul"]
 
@@ -31,7 +31,7 @@ class HTTPClient(base.HTTPClient):
         resp = await self._session.request(method, uri, data=data, **session_kwargs)
         body = await resp.text(encoding="utf-8")
         if resp.status == 599:
-            raise base.Timeout
+            raise Timeout
         r = base.Response(resp.status, resp.headers, body)
         return callback(r)
 
