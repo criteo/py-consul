@@ -1,5 +1,19 @@
 Change log
 ==========
+1.4.0
+-----
+[Breaking] due to the re-implementation of the ACL endpoint and the drop of the support of OSX and consul 1.1.0.
+
+* feature: re-implement some basic ACL endpoint
+* feature: drop support of OSX and consul 1.1.0
+* feature: support multi-check service registration (through extra_checks parameter)
+* env: support python 3.12
+* tests: multi consul version test (1.13.8, 1.15.4, 1.16.1, 1.17.3)
+* tests: add test utils for cleaner API output expected assertion
+* code-style: use ruff linter and formatter
+* code-style: split files following the consul API logic
+* ci: speedup ci with uv/tox-uv
+
 1.3.0
 -----
 * feature: drop tornado and twisted support
