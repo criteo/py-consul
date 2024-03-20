@@ -14,6 +14,16 @@ src_paths = ["."]
 addopts = "--cov=. --cov-context=test --durations=0 --durations-min=1.0"
 asyncio_mode = "auto"
 
+
+[tool.coverage.report]
+skip_empty = true
+omit = ["*test*", "setup.py", "docs/*", "*/__init__.py"]
+exclude_also = [
+    #  TYPE_CHECKING is always False in runtime
+    # https://docs.python.org/3/library/typing.html#typing.TYPE_CHECKING
+    "if TYPE_CHECKING:",
+    ]
+
 [tool.pylint]
 ignored-classes=["twisted.internet.reactor"]
 ignore-paths=["docs/"]
