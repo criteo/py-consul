@@ -57,9 +57,7 @@ setup(
     py_modules=py_modules,
     install_requires=_read_reqs("requirements.txt"),
     extras_require={
-        "tornado": ["tornado"],
         "asyncio": ["aiohttp"],
-        "twisted": ["twisted", "treq"],
     },
     data_files=[(".", ["requirements.txt", "tests-requirements.txt"])],
     tests_require=_read_reqs("tests-requirements.txt"),
