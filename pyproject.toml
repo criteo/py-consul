@@ -1,21 +1,8 @@
-[tool.black]
-line-length = 120
-target-version = ['py39']
-include = '\.pyi?$'
-preview = true
-
-[tool.isort]
-line_length = 120
-case_sensitive = true
-profile = "black"
-src_paths = ["."]
-
 [tool.pytest.ini_options]
 addopts = "--cov=. --cov-context=test --durations=0 --durations-min=1.0"
 asyncio_mode = "auto"
 
 [tool.pylint]
-ignored-classes=["twisted.internet.reactor"]
 ignore-paths=["docs/"]
 
 [tool.pylint."messages control"]
