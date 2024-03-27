@@ -3,7 +3,7 @@ import os
 import re
 import sys
 
-from setuptools import setup
+from setuptools import find_packages, setup
 from setuptools.command.install import install
 from setuptools.command.test import test as TestCommand
 
@@ -42,7 +42,7 @@ class PyTest(TestCommand):
         sys.exit(errno)
 
 
-with open("README.md", encoding="utf-8") as f1, open("CHANGELOG.rst", encoding="utf-8") as f2:
+with open("README.md", encoding="utf-8") as f1, open("CHANGELOG.md", encoding="utf-8") as f2:
     long_description = f"{f1.read()}\n\n{f2.read()}"
 
 setup(
@@ -53,13 +53,16 @@ setup(
     url="https://github.com/criteo-forks/py-consul",
     license="MIT",
     description=description,
+    description_content_type="text/markdown",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     py_modules=py_modules,
     install_requires=_read_reqs("requirements.txt"),
     extras_require={
         "asyncio": ["aiohttp"],
     },
     data_files=[(".", ["requirements.txt", "tests-requirements.txt"])],
+    packages=find_packages(exclude=["tests*"]),
     tests_require=_read_reqs("tests-requirements.txt"),
     cmdclass={"test": PyTest, "install": Install},
     classifiers=[
@@ -71,5 +74,6 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
     ],
 )
