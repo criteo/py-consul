@@ -1,6 +1,10 @@
 # Change log
 
-## 1.4.0
+## 1.4.1
+
+- **ci:** fix package publishing and update GH actions versions
+
+## 1.4.0 (unreleased)
 
 - **[Breaking]** due to the re-implementation of the ACL endpoint and the drop of the support of OSX and consul 1.1.0.
   - **feature:** re-implement some basic ACL endpoint
