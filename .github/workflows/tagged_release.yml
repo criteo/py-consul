@@ -14,11 +14,11 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install tox
-
-      - name: "Build & test"
+          python -m pip install --upgrade uv tox tox-uv
+      - name: Test with tox
         run: tox -e py
+      - name: Run linters
+        run: tox -e lint
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
