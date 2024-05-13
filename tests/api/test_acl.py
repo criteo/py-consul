@@ -9,37 +9,41 @@ class TestConsulAcl:
         c, _master_token, _consul_version = acl_consul
 
         # No token
-        pytest.raises(consul.ACLPermissionDenied, c.acl.list)
-        pytest.raises(consul.ACLPermissionDenied, c.acl.create)
-        pytest.raises(consul.ACLPermissionDenied, c.acl.update, accessor_id="00000000-0000-0000-0000-000000000002")
-        pytest.raises(consul.ACLPermissionDenied, c.acl.clone, accessor_id="00000000-0000-0000-0000-000000000002")
-        pytest.raises(consul.ACLPermissionDenied, c.acl.read, accessor_id="00000000-0000-0000-0000-000000000002")
-        pytest.raises(consul.ACLPermissionDenied, c.acl.delete, accessor_id="00000000-0000-0000-0000-000000000002")
+        pytest.raises(consul.ACLPermissionDenied, c.acl.token.list)
+        pytest.raises(consul.ACLPermissionDenied, c.acl.token.create)
+        pytest.raises(
+            consul.ACLPermissionDenied, c.acl.token.update, accessor_id="00000000-0000-0000-0000-000000000002"
+        )
+        pytest.raises(consul.ACLPermissionDenied, c.acl.token.clone, accessor_id="00000000-0000-0000-0000-000000000002")
+        pytest.raises(consul.ACLPermissionDenied, c.acl.token.read, accessor_id="00000000-0000-0000-0000-000000000002")
+        pytest.raises(
+            consul.ACLPermissionDenied, c.acl.token.delete, accessor_id="00000000-0000-0000-0000-000000000002"
+        )
 
         # Token without the right permission (acl:write or acl:read)
-        pytest.raises(consul.ACLPermissionDenied, c.acl.list, token="anonymous")
-        pytest.raises(consul.ACLPermissionDenied, c.acl.create, token="anonymous")
+        pytest.raises(consul.ACLPermissionDenied, c.acl.token.list, token="anonymous")
+        pytest.raises(consul.ACLPermissionDenied, c.acl.token.create, token="anonymous")
         pytest.raises(
             consul.ACLPermissionDenied,
-            c.acl.update,
+            c.acl.token.update,
             accessor_id="00000000-0000-0000-0000-000000000002",
             token="anonymous",
         )
         pytest.raises(
             consul.ACLPermissionDenied,
-            c.acl.clone,
+            c.acl.token.clone,
             accessor_id="00000000-0000-0000-0000-000000000002",
             token="anonymous",
         )
         pytest.raises(
             consul.ACLPermissionDenied,
-            c.acl.read,
+            c.acl.token.read,
             accessor_id="00000000-0000-0000-0000-000000000002",
             token="anonymous",
         )
         pytest.raises(
             consul.ACLPermissionDenied,
-            c.acl.delete,
+            c.acl.token.delete,
             accessor_id="00000000-0000-0000-0000-000000000002",
             token="anonymous",
         )
@@ -48,7 +52,7 @@ class TestConsulAcl:
         c, master_token, _consul_version = acl_consul
 
         # Make sure both master and anonymous tokens are created
-        acls = c.acl.list(token=master_token)
+        acls = c.acl.token.list(token=master_token)
 
         master_token_repr = {
             "Description": "Initial Management Token",
@@ -66,29 +70,29 @@ class TestConsulAcl:
         c, master_token, _consul_version = acl_consul
 
         # Unknown token
-        pytest.raises(consul.ConsulException, c.acl.read, accessor_id="unknown", token=master_token)
+        pytest.raises(consul.ConsulException, c.acl.token.read, accessor_id="unknown", token=master_token)
 
         anonymous_token_repr = {
             "AccessorID": "00000000-0000-0000-0000-000000000002",
             "SecretID": "anonymous",
         }
-        acl = c.acl.read(accessor_id="00000000-0000-0000-0000-000000000002", token=master_token)
+        acl = c.acl.token.read(accessor_id="00000000-0000-0000-0000-000000000002", token=master_token)
         assert find_recursive(acl, anonymous_token_repr)
 
     def test_acl_create(self, acl_consul):
         c, master_token, _consul_version = acl_consul
 
-        c.acl.create(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
-        c.acl.create(secret_id="DEADBEEF-0000-0000-0000-000000000000", token=master_token)
-        c.acl.create(
+        c.acl.token.create(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
+        c.acl.token.create(secret_id="DEADBEEF-0000-0000-0000-000000000000", token=master_token)
+        c.acl.token.create(
             secret_id="00000000-A5A5-0000-0000-000000000000",
             accessor_id="00000000-0000-A5A5-0000-000000000000",
             description="some token!",
             token=master_token,
         )
 
-        assert c.acl.read(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
-        assert c.acl.read(accessor_id="00000000-0000-A5A5-0000-000000000000", token=master_token)
+        assert c.acl.token.read(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
+        assert c.acl.token.read(accessor_id="00000000-0000-A5A5-0000-000000000000", token=master_token)
 
         expected = [
             {
@@ -105,20 +109,20 @@ class TestConsulAcl:
                 "Description": "some token!",
             },
         ]
-        acl = c.acl.list(token=master_token)
+        acl = c.acl.token.list(token=master_token)
         assert find_recursive(acl, expected)
 
     def test_acl_clone(self, acl_consul):
         c, master_token, _consul_version = acl_consul
 
-        assert len(c.acl.list(token=master_token)) == 2
+        assert len(c.acl.token.list(token=master_token)) == 2
 
         # Unknown token
-        pytest.raises(consul.ConsulException, c.acl.clone, accessor_id="unknown", token=master_token)
+        pytest.raises(consul.ConsulException, c.acl.token.clone, accessor_id="unknown", token=master_token)
 
-        c.acl.create(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
-        c.acl.clone(accessor_id="00000000-DEAD-BEEF-0000-000000000000", description="cloned", token=master_token)
-        assert len(c.acl.list(token=master_token)) == 4
+        c.acl.token.create(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
+        c.acl.token.clone(accessor_id="00000000-DEAD-BEEF-0000-000000000000", description="cloned", token=master_token)
+        assert len(c.acl.token.list(token=master_token)) == 4
 
         expected = [
             {
@@ -128,41 +132,48 @@ class TestConsulAcl:
                 "Description": "cloned",
             },
         ]
-        acl = c.acl.list(token=master_token)
+        acl = c.acl.token.list(token=master_token)
         assert find_recursive(acl, expected)
 
     def test_acl_update(self, acl_consul):
         c, master_token, _consul_version = acl_consul
 
         # Unknown token
-        pytest.raises(consul.ConsulException, c.acl.update, accessor_id="unknown", token=master_token)
+        pytest.raises(consul.ConsulException, c.acl.token.update, accessor_id="unknown", token=master_token)
 
-        assert len(c.acl.list(token=master_token)) == 2
-        c.acl.create(accessor_id="00000000-DEAD-BEEF-0000-000000000000", description="original", token=master_token)
-        assert len(c.acl.list(token=master_token)) == 3
-        c.acl.update(accessor_id="00000000-DEAD-BEEF-0000-000000000000", description="updated", token=master_token)
-        assert len(c.acl.list(token=master_token)) == 3
+        assert len(c.acl.token.list(token=master_token)) == 2
+        c.acl.token.create(
+            accessor_id="00000000-DEAD-BEEF-0000-000000000000", description="original", token=master_token
+        )
+        assert len(c.acl.token.list(token=master_token)) == 3
+        c.acl.token.update(
+            accessor_id="00000000-DEAD-BEEF-0000-000000000000", description="updated", token=master_token
+        )
+        assert len(c.acl.token.list(token=master_token)) == 3
 
         expected = {
             "AccessorID": "00000000-DEAD-BEEF-0000-000000000000",
             "Description": "updated",
         }
-        acl = c.acl.read(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
+        acl = c.acl.token.read(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
         assert find_recursive(acl, expected)
 
     def test_acl_delete(self, acl_consul):
         c, master_token, _consul_version = acl_consul
 
-        assert len(c.acl.list(token=master_token)) == 2
-        c.acl.create(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
-        assert len(c.acl.list(token=master_token)) == 3
-        assert c.acl.read(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
+        assert len(c.acl.token.list(token=master_token)) == 2
+        c.acl.token.create(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
+        assert len(c.acl.token.list(token=master_token)) == 3
+        assert c.acl.token.read(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
 
         # Delete and ensure it doesn't exist anymore
-        c.acl.delete(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
-        assert len(c.acl.list(token=master_token)) == 2
+        c.acl.token.delete(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
+        assert len(c.acl.token.list(token=master_token)) == 2
         pytest.raises(
-            consul.ConsulException, c.acl.read, accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token
+            consul.ConsulException,
+            c.acl.token.read,
+            accessor_id="00000000-DEAD-BEEF-0000-000000000000",
+            token=master_token,
         )
 
     #
