@@ -5,7 +5,7 @@ from tests.utils import find_recursive
 
 
 class TestConsulAcl:
-    def test_acl_permission_denied(self, acl_consul):
+    def test_acl_token_permission_denied(self, acl_consul):
         c, _master_token, _consul_version = acl_consul
 
         # No token
@@ -48,7 +48,7 @@ class TestConsulAcl:
             token="anonymous",
         )
 
-    def test_acl_list(self, acl_consul):
+    def test_acl_token_list(self, acl_consul):
         c, master_token, _consul_version = acl_consul
 
         # Make sure both master and anonymous tokens are created
@@ -66,7 +66,7 @@ class TestConsulAcl:
         assert find_recursive(acls, master_token_repr)
         assert find_recursive(acls, anonymous_token_repr)
 
-    def test_acl_read(self, acl_consul):
+    def test_acl_token_read(self, acl_consul):
         c, master_token, _consul_version = acl_consul
 
         # Unknown token
@@ -79,7 +79,7 @@ class TestConsulAcl:
         acl = c.acl.token.read(accessor_id="00000000-0000-0000-0000-000000000002", token=master_token)
         assert find_recursive(acl, anonymous_token_repr)
 
-    def test_acl_create(self, acl_consul):
+    def test_acl_token_create(self, acl_consul):
         c, master_token, _consul_version = acl_consul
 
         c.acl.token.create(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
@@ -112,7 +112,7 @@ class TestConsulAcl:
         acl = c.acl.token.list(token=master_token)
         assert find_recursive(acl, expected)
 
-    def test_acl_clone(self, acl_consul):
+    def test_acl_token_clone(self, acl_consul):
         c, master_token, _consul_version = acl_consul
 
         assert len(c.acl.token.list(token=master_token)) == 2
@@ -135,7 +135,7 @@ class TestConsulAcl:
         acl = c.acl.token.list(token=master_token)
         assert find_recursive(acl, expected)
 
-    def test_acl_update(self, acl_consul):
+    def test_acl_token_update(self, acl_consul):
         c, master_token, _consul_version = acl_consul
 
         # Unknown token
@@ -158,7 +158,7 @@ class TestConsulAcl:
         acl = c.acl.token.read(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
         assert find_recursive(acl, expected)
 
-    def test_acl_delete(self, acl_consul):
+    def test_acl_token_delete(self, acl_consul):
         c, master_token, _consul_version = acl_consul
 
         assert len(c.acl.token.list(token=master_token)) == 2
@@ -177,7 +177,7 @@ class TestConsulAcl:
         )
 
     #
-    # def test_acl_implicit_token_use(self, acl_consul):
+    # def test_acl_token_implicit_token_use(self, acl_consul):
     #     # configure client to use the master token by default
     #     port, _token, _consul_version = acl_consul
     #     c = consul.Consul(port=port)
