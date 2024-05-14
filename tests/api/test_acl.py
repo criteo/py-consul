@@ -176,6 +176,22 @@ class TestConsulAcl:
             token=master_token,
         )
 
+    def test_acl_policy_list(self, acl_consul):
+        c, master_token, _consul_version = acl_consul
+
+        # Make sure both master and anonymous tokens are created
+        policies = c.acl.policy.list(token=master_token)
+        assert find_recursive(policies, {"ID": "00000000-0000-0000-0000-000000000001", "Name": "global-management"})
+
+    def test_acl_policy_read(self, acl_consul):
+        c, master_token, _consul_version = acl_consul
+
+        # Unknown token
+        pytest.raises(consul.ConsulException, c.acl.policy.read, uuid="unknown", token=master_token)
+
+        policy = c.acl.policy.read(uuid="00000000-0000-0000-0000-000000000001", token=master_token)
+        assert find_recursive(policy, {"ID": "00000000-0000-0000-0000-000000000001", "Name": "global-management"})
+
     #
     # def test_acl_token_implicit_token_use(self, acl_consul):
     #     # configure client to use the master token by default
