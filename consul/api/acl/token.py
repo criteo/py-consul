@@ -3,7 +3,7 @@ import json
 from consul.callback import CB
 
 
-class ACL:
+class Token:
     def __init__(self, agent):
         self.agent = agent
 
