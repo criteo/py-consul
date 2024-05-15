@@ -6,8 +6,7 @@ from tests.utils import find_recursive
 
 class TestConsulAcl:
     def test_acl_permission_denied(self, acl_consul):
-        port, _master_token, _consul_version = acl_consul
-        c = consul.Consul(port=port)
+        c, _master_token, _consul_version = acl_consul
 
         # No token
         pytest.raises(consul.ACLPermissionDenied, c.acl.list)
@@ -46,8 +45,7 @@ class TestConsulAcl:
         )
 
     def test_acl_list(self, acl_consul):
-        port, master_token, _consul_version = acl_consul
-        c = consul.Consul(port=port)
+        c, master_token, _consul_version = acl_consul
 
         # Make sure both master and anonymous tokens are created
         acls = c.acl.list(token=master_token)
@@ -65,8 +63,7 @@ class TestConsulAcl:
         assert find_recursive(acls, anonymous_token_repr)
 
     def test_acl_read(self, acl_consul):
-        port, master_token, _consul_version = acl_consul
-        c = consul.Consul(port=port)
+        c, master_token, _consul_version = acl_consul
 
         # Unknown token
         pytest.raises(consul.ConsulException, c.acl.read, accessor_id="unknown", token=master_token)
@@ -79,8 +76,7 @@ class TestConsulAcl:
         assert find_recursive(acl, anonymous_token_repr)
 
     def test_acl_create(self, acl_consul):
-        port, master_token, _consul_version = acl_consul
-        c = consul.Consul(port=port)
+        c, master_token, _consul_version = acl_consul
 
         c.acl.create(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
         c.acl.create(secret_id="DEADBEEF-0000-0000-0000-000000000000", token=master_token)
@@ -113,8 +109,7 @@ class TestConsulAcl:
         assert find_recursive(acl, expected)
 
     def test_acl_clone(self, acl_consul):
-        port, master_token, _consul_version = acl_consul
-        c = consul.Consul(port=port)
+        c, master_token, _consul_version = acl_consul
 
         assert len(c.acl.list(token=master_token)) == 2
 
@@ -137,8 +132,7 @@ class TestConsulAcl:
         assert find_recursive(acl, expected)
 
     def test_acl_update(self, acl_consul):
-        port, master_token, _consul_version = acl_consul
-        c = consul.Consul(port=port)
+        c, master_token, _consul_version = acl_consul
 
         # Unknown token
         pytest.raises(consul.ConsulException, c.acl.update, accessor_id="unknown", token=master_token)
@@ -157,8 +151,7 @@ class TestConsulAcl:
         assert find_recursive(acl, expected)
 
     def test_acl_delete(self, acl_consul):
-        port, master_token, _consul_version = acl_consul
-        c = consul.Consul(port=port)
+        c, master_token, _consul_version = acl_consul
 
         assert len(c.acl.list(token=master_token)) == 2
         c.acl.create(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)

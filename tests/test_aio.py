@@ -22,10 +22,10 @@ async def consul_obj(consul_port):
 
 @pytest.fixture()
 async def consul_acl_obj(acl_consul):
-    consul_port, token, consul_version = acl_consul
-    c = consul.aio.Consul(port=consul_port, token=token)
-    yield c, consul_version
-    await c.close()
+    consul, token, consul_version = acl_consul
+    consul.token = token
+    yield consul, consul_version
+    await consul.close()
 
 
 class TestAsyncioConsul:

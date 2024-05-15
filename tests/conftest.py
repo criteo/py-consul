@@ -22,6 +22,8 @@ CONSUL_BINARIES = {
     "1.17.3": "consul-1.17.3",
 }
 
+ACLConsul = collections.namedtuple("ACLConsul", ["instance", "token", "version"])
+
 
 def get_free_ports(num, host=None):
     if not host:
@@ -136,9 +138,8 @@ def consul_port(consul_instance):
 
 @pytest.fixture()
 def acl_consul(acl_consul_instance):
-    ACLConsul = collections.namedtuple("ACLConsul", ["port", "token", "version"])
-    port, token, version = acl_consul_instance
-    return ACLConsul(port, token, version)
+    consul_port, token, version = acl_consul_instance
+    return ACLConsul(Consul(port=consul_port), token, version)
 
 
 @pytest.fixture()
