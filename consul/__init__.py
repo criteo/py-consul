@@ -1,4 +1,4 @@
-__version__ = "1.4.1"
+__version__ = "1.5.0"
 
 from consul.check import Check
 from consul.exceptions import ACLDisabled, ACLPermissionDenied, ConsulException, NotFound, Timeout

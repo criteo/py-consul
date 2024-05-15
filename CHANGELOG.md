@@ -1,5 +1,10 @@
 # Change log
 
+## 1.5.0
+
+- **[Breaking]** ACL endpoint change, consul.acl is now consul.acl.token
+- **feature:** add consul.acl.policy.list and acl.policy.read
+
 ## 1.4.1
 
 - **ci:** fix package publishing and update GH actions versions
