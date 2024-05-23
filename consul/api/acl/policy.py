@@ -1,3 +1,5 @@
+import json
+
 from consul.callback import CB
 
 
@@ -30,3 +32,29 @@ class Policy:
         if token:
             params.append(("token", token))
         return self.agent.http.get(CB.json(), f"/v1/acl/policy/{uuid}", params=params)
+
+    def create(self, name, token=None, description=None, rules=None):
+        """
+        Create a policy
+        This is a privileged endpoint, and requires a token with acl:write.
+        :param name: Specifies a name for the ACL policy.
+        :param token: token with acl:write capability
+        :param description: Free form human readable description of the policy.
+        :param rules: Specifies rules for the ACL policy.
+        :return: The cloned token information
+        """
+        params = []
+        token = token or self.agent.token
+        if token:
+            params.append(("token", token))
+        json_data = {"name": name}
+        if rules:
+            json_data["rules"] = json.dumps(rules)
+        if description:
+            json_data["Description"] = description
+        return self.agent.http.put(
+            CB.json(),
+            "/v1/acl/policy",
+            params=params,
+            data=json.dumps(json_data),
+        )
