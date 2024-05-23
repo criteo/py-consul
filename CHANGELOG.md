@@ -1,5 +1,10 @@
 # Change log
 
+## 1.5.1
+
+- **feature:** Implement creation of policies.
+- **feature:** Integrate policy addition during token creation.
+
 ## 1.5.0
 
 - **[Breaking]** ACL endpoint change, consul.acl is now consul.acl.token
