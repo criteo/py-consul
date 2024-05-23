@@ -67,7 +67,7 @@ class Token:
             data=json.dumps(json_data),
         )
 
-    def create(self, token=None, accessor_id=None, secret_id=None, description=""):
+    def create(self, token=None, accessor_id=None, secret_id=None, policies_id=None, description=""):
         """
         Create a token (optionally identified by *secret_id* and *accessor_id*).
         This is a privileged endpoint, and requires a token with acl:write.
@@ -75,6 +75,7 @@ class Token:
         :param accessor_id: The accessor ID of the token to create
         :param secret_id: The secret ID of the token to create
         :param description: Optional new token description
+        :param policies: Optional list of policies id
         :return: The cloned token information
         """
         params = []
@@ -89,6 +90,9 @@ class Token:
             json_data["SecretID"] = secret_id
         if description:
             json_data["Description"] = description
+        if policies_id:
+            json_data["Policies"] = [{"ID": policy} for policy in policies_id]
+
         return self.agent.http.put(
             CB.json(),
             "/v1/acl/token",
