@@ -117,7 +117,7 @@ class Agent:
 
         return self.agent.http.put(CB.bool(), f"/v1/agent/join/{address}", params=params)
 
-    def force_leave(self, node):
+    def force_leave(self, node, token=None):
         """
         This endpoint instructs the agent to force a node into the left
         state. If a node fails unexpectedly, then it will be in a failed
@@ -129,7 +129,13 @@ class Agent:
         *node* is the node to change state for.
         """
 
-        return self.agent.http.put(CB.bool(), f"/v1/agent/force-leave/{node}")
+        params = []
+
+        token = token or self.agent.token
+        if token:
+            params.append(("token", token))
+
+        return self.agent.http.put(CB.bool(), f"/v1/agent/force-leave/{node}", params=params)
 
     class Service:
         def __init__(self, agent):
