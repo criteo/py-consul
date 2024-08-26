@@ -87,7 +87,7 @@ def start_consul_container(version, acl_master_token=None):
         docker_config["environment"]["CONSUL_LOCAL_CONFIG"] = json.dumps(merged_config)
 
     container = client.containers.run(
-        f"hashicorp/consul:{version}", command="agent -dev -client=0.0.0.0", **docker_config
+        f"hashicorp/consul:{version}", command="agent -dev -client=0.0.0.0 -log-level trace", **docker_config
     )
 
     # Wait for Consul to be ready
