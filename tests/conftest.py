@@ -1,28 +1,25 @@
 import collections
 import json
 import os
-import shlex
 import socket
-import subprocess
-import tempfile
 import time
 import uuid
 
+import docker
 import pytest
 import requests
+from requests import RequestException
 
 from consul import Consul
 
-collect_ignore = []
-
-CONSUL_BINARIES = {
-    "1.13.8": "consul-1.13.8",
-    "1.15.4": "consul-1.15.4",
-    "1.16.1": "consul-1.16.1",
-    "1.17.3": "consul-1.17.3",
-}
+CONSUL_VERSIONS = ["1.16.1", "1.17.3"]
 
 ACLConsul = collections.namedtuple("ACLConsul", ["instance", "token", "version"])
+ConsulInstance = collections.namedtuple("ConsulInstance", ["container", "port", "version"])
+
+# Create a logs directory if it doesn't exist
+LOGS_DIR = os.path.join(os.path.dirname(__file__), "logs")
+os.makedirs(LOGS_DIR, exist_ok=True)
 
 
 def get_free_ports(num, host=None):
@@ -40,71 +37,91 @@ def get_free_ports(num, host=None):
     return ret
 
 
-def start_consul_instance(binary_name, acl_master_token=None):
+def start_consul_container(version, acl_master_token=None):
     """
-    starts a consul instance. if acl_master_token is None, acl will be disabled
+    Starts a Consul container. If acl_master_token is None, ACL will be disabled
     for this server, otherwise it will be enabled and the master token will be
-    set to the supplied token
+    set to the supplied token.
 
-    returns: a tuple of the instances process object and the http port the
-             instance is listening on
+    Returns: a tuple of the container object and the HTTP port the instance is listening on
     """
-    ports = dict(zip(["http", "server", "grpc", "serf_lan", "serf_wan", "https", "dns"], get_free_ports(5) + [-1] * 2))
-    if "1.13" not in binary_name:
-        ports["grpc_tls"] = -1
+    client = docker.from_env()
+    allocated_ports = get_free_ports(5)
+    ports = {
+        "http": allocated_ports[0],
+        "server": allocated_ports[1],
+        "grpc": allocated_ports[2],
+        "serf_lan": allocated_ports[3],
+        "serf_wan": allocated_ports[4],
+    }
 
-    config = {"ports": ports, "performance": {"raft_multiplier": 1}, "enable_script_checks": True}
+    base_config = {
+        "ports": {
+            "https": -1,
+            "dns": -1,
+            "grpc_tls": -1,
+        },
+        "performance": {"raft_multiplier": 1},
+        "enable_script_checks": True,
+    }
+    docker_config = {
+        "ports": {
+            8500: ports["http"],
+            8300: ports["server"],
+            8502: ports["grpc"],
+            8301: ports["serf_lan"],
+            8302: ports["serf_wan"],
+        },
+        "environment": {"CONSUL_LOCAL_CONFIG": json.dumps(base_config)},
+        "detach": True,
+        "name": f"consul_test_{uuid.uuid4().hex[:8]}",  # Add a unique name
+    }
+
+    # Extend the base config with required ACL fields if needed
     if acl_master_token:
-        config["primary_datacenter"] = "dc1"
-        config["acl"] = {"enabled": True, "tokens": {"initial_management": acl_master_token}}
+        acl_config = {
+            "primary_datacenter": "dc1",
+            "acl": {"enabled": True, "tokens": {"initial_management": acl_master_token}},
+        }
+        merged_config = {**base_config, **acl_config}
+        docker_config["environment"]["CONSUL_LOCAL_CONFIG"] = json.dumps(merged_config)
 
-    tmpdir = tempfile.mkdtemp()
-    config_path = os.path.join(tmpdir, "config.json")
-    print(config_path)
-    with open(config_path, "w", encoding="utf-8") as f:
-        json.dump(config, f)
+    container = client.containers.run(
+        f"hashicorp/consul:{version}", command="agent -dev -client=0.0.0.0", **docker_config
+    )
 
-    ext = "linux64"
-    binary = os.path.join(os.path.dirname(__file__), f"{binary_name}.{ext}")
-    command = f"{binary} agent -dev -bind=127.0.0.1 -config-dir={tmpdir}"
-    command = shlex.split(command)
-    log_file_path = os.path.join(tmpdir, "consul.log")
-
-    with open(log_file_path, "w", encoding="utf-8") as log_file:  # pylint: disable=unspecified-encoding
-        p = subprocess.Popen(command, stdout=log_file, stderr=subprocess.STDOUT)  # pylint: disable=consider-using-with
-
-    # wait for consul instance to bootstrap
+    # Wait for Consul to be ready
     base_uri = f"http://127.0.0.1:{ports['http']}/v1/"
     start_time = time.time()
-    global_timeout = 5
+    global_timeout = 10
 
     while True:
-        # Timeout at some point and read the log file to see what went wrong
         if time.time() - start_time > global_timeout:
-            with open(log_file_path, encoding="utf-8") as log_file:
-                print(log_file.read())
+            container.stop()
+            container.remove()
             raise TimeoutError("Global timeout reached")
         time.sleep(0.1)
         try:
-            response = requests.get(base_uri + "status/leader", timeout=10)
-        except requests.ConnectionError:
+            response = requests.get(base_uri + "status/leader", timeout=2)
+            if response.status_code == 200 and response.json():
+                break
+        except RequestException:
             continue
-        print(response.text)
-        if response.text.strip() != '""':
-            break
 
-    requests.put(base_uri + "agent/service/register", data='{"name": "foo"}', timeout=10)
+    # Additional check to ensure Consul is fully ready
+    for _ in range(10):
+        try:
+            requests.put(base_uri + "agent/service/register", json={"name": "test-service"}, timeout=2)
+            response = requests.get(base_uri + "health/service/test-service", timeout=2)
+            if response.status_code == 200 and response.json():
+                requests.put(base_uri + "agent/service/deregister/test-service", timeout=2)
+                return container, ports["http"]
+        except RequestException:
+            time.sleep(0.5)
 
-    while True:
-        response = requests.get(base_uri + "health/service/foo", timeout=10)
-        if response.text.strip() != "[]":
-            break
-        time.sleep(0.1)
-
-    requests.put(base_uri + "agent/service/deregister/foo", timeout=10)
-    # phew
-    time.sleep(2)
-    return p, ports["http"]
+    container.stop()
+    container.remove()
+    raise Exception("Failed to verify Consul startup")  # pylint: disable=broad-exception-raised
 
 
 def get_consul_version(port):
@@ -113,36 +130,46 @@ def get_consul_version(port):
     return response.json()["Config"]["Version"].strip()
 
 
-@pytest.fixture(params=CONSUL_BINARIES.keys())
-def consul_instance(request):
-    p, port = start_consul_instance(binary_name=CONSUL_BINARIES[request.param])
+def setup_and_teardown_consul(request, version, acl_master_token=None):
+    # Start the container, yield, get container logs, store them in logs/<test_name>.log, stop the container
+    container, port = start_consul_container(version=version, acl_master_token=acl_master_token)
     version = get_consul_version(port)
-    yield port, version
-    p.terminate()
+    instance = ConsulInstance(container, port, version)
+
+    yield instance if acl_master_token is None else (instance, acl_master_token)
+
+    logs = container.logs().decode("utf-8")
+    log_file = os.path.join(LOGS_DIR, f"{request.node.name}.log")
+    with open(log_file, "w", encoding="utf-8") as f:
+        f.write(logs)
+
+    container.stop()
+    container.remove()
 
 
-@pytest.fixture(params=CONSUL_BINARIES.keys())
+@pytest.fixture(params=CONSUL_VERSIONS)
+def consul_instance(request):
+    yield from setup_and_teardown_consul(request, version=request.param)
+
+
+@pytest.fixture(params=CONSUL_VERSIONS)
 def acl_consul_instance(request):
     acl_master_token = uuid.uuid4().hex
-    p, port = start_consul_instance(binary_name=CONSUL_BINARIES[request.param], acl_master_token=acl_master_token)
-    version = get_consul_version(port)
-    yield port, acl_master_token, version
-    p.terminate()
+    yield from setup_and_teardown_consul(request, version=request.param, acl_master_token=acl_master_token)
 
 
-@pytest.fixture()
+@pytest.fixture
 def consul_port(consul_instance):
-    port, version = consul_instance
-    return port, version
+    return consul_instance.port, consul_instance.version
 
 
-@pytest.fixture()
+@pytest.fixture
 def acl_consul(acl_consul_instance):
-    consul_port, token, version = acl_consul_instance
-    return ACLConsul(Consul(port=consul_port), token, version)
+    instance, token = acl_consul_instance
+    return ACLConsul(Consul(port=instance.port), token, instance.version)
 
 
-@pytest.fixture()
+@pytest.fixture
 def consul_obj(consul_port):
     consul_port, consul_version = consul_port
     c = Consul(port=consul_port)
