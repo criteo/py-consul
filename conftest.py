@@ -10,11 +10,8 @@ import pytest
 import requests
 from requests import RequestException
 
-from consul import Consul
-
 CONSUL_VERSIONS = ["1.16.1", "1.17.3"]
 
-ACLConsul = collections.namedtuple("ACLConsul", ["instance", "token", "version"])
 ConsulInstance = collections.namedtuple("ConsulInstance", ["container", "port", "version"])
 
 # Create a logs directory if it doesn't exist
@@ -167,16 +164,3 @@ def acl_consul_instance(request):
 @pytest.fixture
 def consul_port(consul_instance):
     return consul_instance.port, consul_instance.version
-
-
-@pytest.fixture
-def acl_consul(acl_consul_instance):
-    instance, token = acl_consul_instance
-    return ACLConsul(Consul(consistency="consistent", port=instance.port), token, instance.version)
-
-
-@pytest.fixture
-def consul_obj(consul_port):
-    consul_port, consul_version = consul_port
-    c = Consul(consistency="consistent", port=consul_port)
-    return c, consul_version
