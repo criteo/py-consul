@@ -37,6 +37,12 @@ def get_free_ports(num, host=None):
     return ret
 
 
+@pytest.fixture(scope="session", autouse=True)
+def _unset_consul_token():
+    if "CONSUL_HTTP_TOKEN" in os.environ:
+        del os.environ["CONSUL_HTTP_TOKEN"]
+
+
 def start_consul_container(version, acl_master_token=None):
     """
     Starts a Consul container. If acl_master_token is None, ACL will be disabled
