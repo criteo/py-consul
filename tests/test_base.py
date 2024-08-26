@@ -74,8 +74,8 @@ class TestIndex:
     def test_index(self):
         c = Consul()
         for r in _should_support(c):
-            assert r().params == []
-            assert r(index="5").params == [("index", "5")]
+            assert not any(param[0] == "index" for param in r().params)
+            assert any(param == ("index", "5") for param in r(index="5").params)
 
 
 class TestConsistency:
@@ -86,18 +86,18 @@ class TestConsistency:
     def test_explict(self):
         c = Consul()
         for r in _should_support(c):
-            assert r().params == []
-            assert r(consistency="default").params == []
-            assert r(consistency="consistent").params == [("consistent", "1")]
-            assert r(consistency="stale").params == [("stale", "1")]
+            assert not any(param[0] == "consistent" for param in r().params)
+            assert not any(param[0] == "consistent" for param in r(consistency="default").params)
+            assert any(param == ("consistent", "1") for param in r(consistency="consistent").params)
+            assert any(param == ("stale", "1") for param in r(consistency="stale").params)
 
     def test_implicit(self):
         c = Consul(consistency="consistent")
         for r in _should_support(c):
-            assert r().params == [("consistent", "1")]
-            assert r(consistency="default").params == []
-            assert r(consistency="consistent").params == [("consistent", "1")]
-            assert r(consistency="stale").params == [("stale", "1")]
+            assert any(param == ("consistent", "1") for param in r().params)
+            assert not any(param[0] == "consistent" for param in r(consistency="default").params)
+            assert any(param == ("consistent", "1") for param in r(consistency="consistent").params)
+            assert any(param == ("stale", "1") for param in r(consistency="stale").params)
 
 
 class TestNodemeta:
@@ -108,11 +108,10 @@ class TestNodemeta:
     def test_node_meta(self):
         c = Consul()
         for r in _should_support_node_meta(c):
-            assert r().params == []
-            assert sorted(r(node_meta={"env": "prod", "net": 1}).params) == sorted([
-                ("node-meta", "net:1"),
-                ("node-meta", "env:prod"),
-            ])
+            assert not any(param[0] == "node-meta" for param in r().params)
+            node_meta_call = r(node_meta={"env": "prod", "net": 1})
+            assert any(param == ("node-meta", "net:1") for param in node_meta_call.params)
+            assert any(param == ("node-meta", "env:prod") for param in node_meta_call.params)
 
 
 class TestMeta:

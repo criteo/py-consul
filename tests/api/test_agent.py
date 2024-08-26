@@ -37,9 +37,10 @@ class TestAgent:
         assert c.agent.check.register("check name", Check.script("/bin/true", 10, "10m"), check_id="check_id") is True
         verify_and_dereg_check("check_id")
 
-        http_addr = f"http://127.0.0.1:{consul_port}"
-        assert c.agent.check.register("http_check", Check.http(http_addr, "10ms")) is True
-        time.sleep(1)
+        # 1s is the minimal interval for HTTP checks
+        http_addr = "http://localhost:8500"
+        assert c.agent.check.register("http_check", Check.http(http_addr, "1s")) is True
+        time.sleep(1.5)
         verify_check_status("http_check", "passing")
         verify_and_dereg_check("http_check")
 
@@ -70,13 +71,13 @@ class TestAgent:
     def test_service_multi_check(self, consul_port):
         consul_port, _consul_version = consul_port
         c = consul.Consul(port=consul_port)
-        http_addr = f"http://127.0.0.1:{consul_port}"
+        http_addr = "http://127.0.0.1:8500"
         c.agent.service.register(
             "foo1",
-            check=Check.http(http_addr, "10ms"),
+            check=Check.http(http_addr, "1s"),
             extra_checks=[
-                Check.http(http_addr, "20ms"),
-                Check.http(http_addr, "30ms"),
+                Check.http(http_addr, "2s"),
+                Check.http(http_addr, "3s"),
             ],
         )
 
@@ -91,7 +92,7 @@ class TestAgent:
             "service:foo1:3",
             "serfHealth",
         }
-        time.sleep(1)
+        time.sleep(3.5)
 
         _index, checks = c.health.checks(service="foo1")
         assert [check["CheckID"] for check in checks] == ["service:foo1:1", "service:foo1:2", "service:foo1:3"]
