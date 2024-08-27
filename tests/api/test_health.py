@@ -15,9 +15,9 @@ class TestHealth:
 
         # register two nodes, one with a long ttl, the other shorter
         c.agent.service.register("foo", service_id="foo:1", check=Check.ttl("10s"), tags=["tag:foo:1"])
-        c.agent.service.register("foo", service_id="foo:2", check=Check.ttl("100ms"))
+        c.agent.service.register("foo", service_id="foo:2", check=Check.ttl("1s"))
 
-        time.sleep(40 / 1000.0)
+        time.sleep(0.2)
 
         # check the nodes show for the /health/service endpoint
         _index, nodes = c.health.service("foo")
@@ -31,14 +31,14 @@ class TestHealth:
         c.agent.check.ttl_pass("service:foo:1")
         c.agent.check.ttl_pass("service:foo:2")
 
-        time.sleep(40 / 1000.0)
+        time.sleep(0.2)
 
         # both nodes are now available
         _index, nodes = c.health.service("foo", passing=True)
         assert [node["Service"]["ID"] for node in nodes] == ["foo:1", "foo:2"]
 
         # wait until the short ttl node fails
-        time.sleep(120 / 1000.0)
+        time.sleep(3)
 
         # only one node available
         _index, nodes = c.health.service("foo", passing=True)
@@ -47,7 +47,7 @@ class TestHealth:
         # ping the failed node's health check
         c.agent.check.ttl_pass("service:foo:2")
 
-        time.sleep(40 / 1000.0)
+        time.sleep(0.2)
 
         # check both nodes are available
         _index, nodes = c.health.service("foo", passing=True)
@@ -61,7 +61,7 @@ class TestHealth:
         c.agent.service.deregister("foo:1")
         c.agent.service.deregister("foo:2")
 
-        time.sleep(40 / 1000.0)
+        time.sleep(0.2)
 
         _index, nodes = c.health.service("foo")
         assert nodes == []
@@ -76,9 +76,9 @@ class TestHealth:
 
         # register two nodes, one with a long ttl, the other shorter
         c.agent.service.register("foo", service_id="foo:1", check=Check.ttl("10s"))
-        c.agent.service.register("foo", service_id="foo:2", check=Check.ttl("100ms"))
+        c.agent.service.register("foo", service_id="foo:2", check=Check.ttl("1s"))
 
-        time.sleep(40 / 1000.0)
+        time.sleep(0.2)
 
         # check the nodes show for the /health/state/any endpoint
         _index, nodes = c.health.state("any")
@@ -92,14 +92,14 @@ class TestHealth:
         c.agent.check.ttl_pass("service:foo:1")
         c.agent.check.ttl_pass("service:foo:2")
 
-        time.sleep(40 / 1000.0)
+        time.sleep(0.2)
 
         # both nodes are now available
         _index, nodes = c.health.state("passing")
         assert {node["ServiceID"] for node in nodes} == {"", "foo:1", "foo:2"}
 
         # wait until the short ttl node fails
-        time.sleep(2200 / 1000.0)
+        time.sleep(3)
 
         # only one node available
         _index, nodes = c.health.state("passing")
@@ -108,7 +108,7 @@ class TestHealth:
         # ping the failed node's health check
         c.agent.check.ttl_pass("service:foo:2")
 
-        time.sleep(40 / 1000.0)
+        time.sleep(0.2)
 
         # check both nodes are available
         _index, nodes = c.health.state("passing")
@@ -118,7 +118,7 @@ class TestHealth:
         c.agent.service.deregister("foo:1")
         c.agent.service.deregister("foo:2")
 
-        time.sleep(40 / 1000.0)
+        time.sleep(0.2)
 
         _index, nodes = c.health.state("any")
         assert [node["ServiceID"] for node in nodes] == [""]

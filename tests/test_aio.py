@@ -12,7 +12,7 @@ import consul.check
 Check = consul.check.Check
 
 
-@pytest.fixture()
+@pytest.fixture
 async def consul_obj(consul_port):
     consul_port, consul_version = consul_port
     c = consul.aio.Consul(port=consul_port)
@@ -20,7 +20,7 @@ async def consul_obj(consul_port):
     await c.close()
 
 
-@pytest.fixture()
+@pytest.fixture
 async def consul_acl_obj(acl_consul):
     consul, token, consul_version = acl_consul
     consul.token = token

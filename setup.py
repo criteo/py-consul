@@ -1,11 +1,9 @@
 import glob
 import os
 import re
-import sys
 
 from setuptools import find_packages, setup
 from setuptools.command.install import install
-from setuptools.command.test import test as TestCommand
 
 with open("consul/__init__.py", encoding="utf-8") as f:
     metadata = dict(re.findall('__([a-z]+)__ = "([^"]+)"', f.read()))
@@ -26,20 +24,6 @@ py_modules = [os.path.splitext(x)[0] for x in glob.glob("consul/*.py")]
 class Install(install):
     def run(self):
         install.run(self)
-
-
-class PyTest(TestCommand):
-    # pylint: disable=attribute-defined-outside-init
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        import pytest  # pylint: disable=import-outside-toplevel
-
-        errno = pytest.main(self.test_args)
-        sys.exit(errno)
 
 
 with open("README.md", encoding="utf-8") as f1, open("CHANGELOG.md", encoding="utf-8") as f2:
@@ -64,7 +48,7 @@ setup(
     data_files=[(".", ["requirements.txt", "tests-requirements.txt"])],
     packages=find_packages(exclude=["tests*"]),
     tests_require=_read_reqs("tests-requirements.txt"),
-    cmdclass={"test": PyTest, "install": Install},
+    cmdclass={"install": Install},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
