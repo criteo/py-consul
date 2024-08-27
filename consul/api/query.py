@@ -19,13 +19,11 @@ class Query:
         *token* is an optional `ACL token`_ to apply to this request.
         """
         params = []
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
         if dc:
             params.append(("dc", dc))
 
-        return self.agent.http.get(CB.json(), "/v1/query", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(), "/v1/query", params=params, headers=headers)
 
     def _query_data(
         self,
@@ -165,12 +163,10 @@ class Query:
         default the datacenter of the host is used.
         """
         params = []
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
         if dc:
             params.append(("dc", dc))
-        return self.agent.http.get(CB.json(), f"/v1/query/{query_id}", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(), f"/v1/query/{query_id}", params=params, headers=headers)
 
     def delete(self, query_id, token=None, dc=None):
         """
@@ -184,12 +180,10 @@ class Query:
         default the datacenter of the host is used.
         """
         params = []
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
         if dc:
             params.append(("dc", dc))
-        return self.agent.http.delete(CB.bool(), f"/v1/query/{query_id}", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.delete(CB.bool(), f"/v1/query/{query_id}", params=params, headers=headers)
 
     def execute(self, query, token=None, dc=None, near=None, limit=None):
         """
@@ -209,16 +203,14 @@ class Query:
         of nodes. This is applied after any sorting or shuffling.
         """
         params = []
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
         if dc:
             params.append(("dc", dc))
         if near:
             params.append(("near", near))
         if limit:
             params.append(("limit", limit))
-        return self.agent.http.get(CB.json(), f"/v1/query/{query}/execute", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(), f"/v1/query/{query}/execute", params=params, headers=headers)
 
     def explain(self, query, token=None, dc=None):
         """
@@ -232,9 +224,7 @@ class Query:
         default the datacenter of the host is used.
         """
         params = []
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
         if dc:
             params.append(("dc", dc))
-        return self.agent.http.get(CB.json(), f"/v1/query/{query}/explain", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(), f"/v1/query/{query}/explain", params=params, headers=headers)

@@ -50,11 +50,9 @@ class Event:
             params.append(("service", service))
         if tag is not None:
             params.append(("tag", tag))
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
 
-        return self.agent.http.put(CB.json(), f"/v1/event/fire/{name}", params=params, data=body)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.put(CB.json(), f"/v1/event/fire/{name}", params=params, headers=headers, data=body)
 
     def list(self, name=None, index=None, wait=None):
         """

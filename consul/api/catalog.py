@@ -82,7 +82,11 @@ class Catalog:
         if node_meta:
             for nodemeta_name, nodemeta_value in node_meta.items():
                 params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
-        return self.agent.http.put(CB.bool(), "/v1/catalog/register", data=json.dumps(data), params=params)
+
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.put(
+            CB.bool(), "/v1/catalog/register", data=json.dumps(data), params=params, headers=headers
+        )
 
     def deregister(self, node, service_id=None, check_id=None, dc=None, token=None):
         """
@@ -112,7 +116,8 @@ class Catalog:
         token = token or self.agent.token
         if token:
             data["WriteRequest"] = {"Token": token}
-        return self.agent.http.put(CB.bool(), "/v1/catalog/deregister", data=json.dumps(data))
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.put(CB.bool(), "/v1/catalog/deregister", headers=headers, data=json.dumps(data))
 
     def datacenters(self):
         """
@@ -168,16 +173,15 @@ class Catalog:
                 params.append(("wait", wait))
         if near:
             params.append(("near", near))
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
+
         consistency = consistency or self.agent.consistency
         if consistency in ("consistent", "stale"):
             params.append((consistency, "1"))
         if node_meta:
             for nodemeta_name, nodemeta_value in node_meta.items():
                 params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
-        return self.agent.http.get(CB.json(index=True), "/v1/catalog/nodes", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(index=True), "/v1/catalog/nodes", params=params, headers=headers)
 
     def services(self, index=None, wait=None, consistency=None, dc=None, token=None, node_meta=None):
         """
@@ -223,16 +227,14 @@ class Catalog:
             params.append(("index", index))
             if wait:
                 params.append(("wait", wait))
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
         consistency = consistency or self.agent.consistency
         if consistency in ("consistent", "stale"):
             params.append((consistency, "1"))
         if node_meta:
             for nodemeta_name, nodemeta_value in node_meta.items():
                 params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
-        return self.agent.http.get(CB.json(index=True), "/v1/catalog/services", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(index=True), "/v1/catalog/services", params=params, headers=headers)
 
     def node(self, node, index=None, wait=None, consistency=None, dc=None, token=None):
         """
@@ -288,13 +290,11 @@ class Catalog:
             params.append(("index", index))
             if wait:
                 params.append(("wait", wait))
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
         consistency = consistency or self.agent.consistency
         if consistency in ("consistent", "stale"):
             params.append((consistency, "1"))
-        return self.agent.http.get(CB.json(index=True), f"/v1/catalog/node/{node}", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(index=True), f"/v1/catalog/node/{node}", params=params, headers=headers)
 
     def _service(
         self,
@@ -320,16 +320,14 @@ class Catalog:
                 params.append(("wait", wait))
         if near:
             params.append(("near", near))
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
         consistency = consistency or self.agent.consistency
         if consistency in ("consistent", "stale"):
             params.append((consistency, "1"))
         if node_meta:
             for nodemeta_name, nodemeta_value in node_meta.items():
                 params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
-        return self.agent.http.get(CB.json(index=True), internal_uri, params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(index=True), internal_uri, params=params, headers=headers)
 
     def service(self, service, **kwargs):
         """

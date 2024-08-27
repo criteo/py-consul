@@ -89,11 +89,9 @@ class Agent:
         params.append(("enable", enable))
         if reason:
             params.append(("reason", reason))
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
 
-        return self.agent.http.put(CB.bool(), "/v1/agent/maintenance", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.put(CB.bool(), "/v1/agent/maintenance", params=params, headers=headers)
 
     def join(self, address, wan=False, token=None):
         """
@@ -111,11 +109,8 @@ class Agent:
 
         if wan:
             params.append(("wan", 1))
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
-
-        return self.agent.http.put(CB.bool(), f"/v1/agent/join/{address}", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.put(CB.bool(), f"/v1/agent/join/{address}", params=params, headers=headers)
 
     def force_leave(self, node, token=None):
         """
@@ -131,11 +126,8 @@ class Agent:
 
         params = []
 
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
-
-        return self.agent.http.put(CB.bool(), f"/v1/agent/force-leave/{node}", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.put(CB.bool(), f"/v1/agent/force-leave/{node}", params=params, headers=headers)
 
     class Service:
         def __init__(self, agent):
@@ -231,11 +223,10 @@ class Agent:
                 )
 
             params = []
-            token = token or self.agent.token
-            if token:
-                params.append(("token", token))
-
-            return self.agent.http.put(CB.bool(), "/v1/agent/service/register", params=params, data=json.dumps(payload))
+            headers = self.agent.prepare_headers(token)
+            return self.agent.http.put(
+                CB.bool(), "/v1/agent/service/register", params=params, headers=headers, data=json.dumps(payload)
+            )
 
         def deregister(self, service_id, token=None):
             """
@@ -244,11 +235,11 @@ class Agent:
             there is an associated check, that is also deregistered.
             """
             params = []
-            token = token or self.agent.token
-            if token:
-                params.append(("token", token))
+            headers = self.agent.prepare_headers(token)
 
-            return self.agent.http.put(CB.bool(), f"/v1/agent/service/deregister/{service_id}", params=params)
+            return self.agent.http.put(
+                CB.bool(), f"/v1/agent/service/deregister/{service_id}", params=params, headers=headers
+            )
 
         def maintenance(self, service_id, enable, reason=None, token=None):
             """
@@ -271,11 +262,11 @@ class Agent:
             if reason:
                 params.append(("reason", reason))
 
-            token = token or self.agent.token
-            if token:
-                params.append(("token", token))
+            headers = self.agent.prepare_headers(token)
 
-            return self.agent.http.put(CB.bool(), f"/v1/agent/service/maintenance/{service_id}", params=params)
+            return self.agent.http.put(
+                CB.bool(), f"/v1/agent/service/maintenance/{service_id}", params=params, headers=headers
+            )
 
     class Check:
         def __init__(self, agent):
@@ -344,22 +335,21 @@ class Agent:
                 payload["serviceid"] = service_id
 
             params = []
-            token = token or self.agent.token
-            if token:
-                params.append(("token", token))
-
-            return self.agent.http.put(CB.bool(), "/v1/agent/check/register", params=params, data=json.dumps(payload))
+            headers = self.agent.prepare_headers(token)
+            return self.agent.http.put(
+                CB.bool(), "/v1/agent/check/register", params=params, headers=headers, data=json.dumps(payload)
+            )
 
         def deregister(self, check_id, token=None):
             """
             Remove a check from the local agent.
             """
             params = []
-            token = token or self.agent.token
-            if token:
-                params.append(("token", token))
+            headers = self.agent.prepare_headers(token)
 
-            return self.agent.http.put(CB.bool(), f"/v1/agent/check/deregister/{check_id}", params=params)
+            return self.agent.http.put(
+                CB.bool(), f"/v1/agent/check/deregister/{check_id}", params=params, headers=headers
+            )
 
         def ttl_pass(self, check_id, notes=None, token=None):
             """
@@ -369,11 +359,9 @@ class Agent:
             params = []
             if notes:
                 params.append(("note", notes))
-            token = token or self.agent.token
-            if token:
-                params.append(("token", token))
+            headers = self.agent.prepare_headers(token)
 
-            return self.agent.http.put(CB.bool(), f"/v1/agent/check/pass/{check_id}", params=params)
+            return self.agent.http.put(CB.bool(), f"/v1/agent/check/pass/{check_id}", params=params, headers=headers)
 
         def ttl_fail(self, check_id, notes=None, token=None):
             """
@@ -384,11 +372,9 @@ class Agent:
             params = []
             if notes:
                 params.append(("note", notes))
-            token = token or self.agent.token
-            if token:
-                params.append(("token", token))
+            headers = self.agent.prepare_headers(token)
 
-            return self.agent.http.put(CB.bool(), f"/v1/agent/check/fail/{check_id}", params=params)
+            return self.agent.http.put(CB.bool(), f"/v1/agent/check/fail/{check_id}", params=params, headers=headers)
 
         def ttl_warn(self, check_id, notes=None, token=None):
             """
@@ -399,11 +385,9 @@ class Agent:
             params = []
             if notes:
                 params.append(("note", notes))
-            token = token or self.agent.token
-            if token:
-                params.append(("token", token))
+            headers = self.agent.prepare_headers(token)
 
-            return self.agent.http.put(CB.bool(), f"/v1/agent/check/warn/{check_id}", params=params)
+            return self.agent.http.put(CB.bool(), f"/v1/agent/check/warn/{check_id}", params=params, headers=headers)
 
     class Connect:
         def __init__(self, agent):
@@ -429,12 +413,10 @@ class Agent:
             payload = {"Target": target, "ClientCertURI": client_cert_uri, "ClientCertSerial": client_cert_serial}
 
             params = []
-            token = token or self.agent.token
-            if token:
-                params.append(("token", token))
+            headers = self.agent.prepare_headers(token)
 
             return self.agent.http.put(
-                CB.json(), "/v1/agent/connect/authorize", params=params, data=json.dumps(payload)
+                CB.json(), "/v1/agent/connect/authorize", params=params, headers=headers, data=json.dumps(payload)
             )
 
         class CA:
@@ -446,8 +428,8 @@ class Agent:
 
             def leaf(self, service, token=None):
                 params = []
-                token = token or self.agent.token
-                if token:
-                    params.append(("token", token))
+                headers = self.agent.prepare_headers(token)
 
-                return self.agent.http.get(CB.json(), f"/v1/agent/connect/ca/leaf/{service}", params=params)
+                return self.agent.http.get(
+                    CB.json(), f"/v1/agent/connect/ca/leaf/{service}", params=params, headers=headers
+                )

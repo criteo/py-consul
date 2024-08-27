@@ -71,9 +71,6 @@ class KV:
                 params.append(("wait", wait))
         if recurse:
             params.append(("recurse", "1"))
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
         dc = dc or self.agent.dc
         if dc:
             params.append(("dc", dc))
@@ -95,8 +92,10 @@ class KV:
         http_kwargs = {}
         if connections_timeout:
             http_kwargs["connections_timeout"] = connections_timeout
+
+        headers = self.agent.prepare_headers(token)
         return self.agent.http.get(
-            CB.json(index=True, decode=decode, one=one), f"/v1/kv/{key}", params=params, **http_kwargs
+            CB.json(index=True, decode=decode, one=one), f"/v1/kv/{key}", params=params, headers=headers, **http_kwargs
         )
 
     def put(
@@ -156,16 +155,16 @@ class KV:
             params.append(("acquire", acquire))
         if release:
             params.append(("release", release))
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
         dc = dc or self.agent.dc
         if dc:
             params.append(("dc", dc))
         http_kwargs = {}
         if connections_timeout:
             http_kwargs["connections_timeout"] = connections_timeout
-        return self.agent.http.put(CB.json(), f"/v1/kv/{key}", params=params, data=value, **http_kwargs)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.put(
+            CB.json(), f"/v1/kv/{key}", params=params, headers=headers, data=value, **http_kwargs
+        )
 
     def delete(self, key, recurse=None, cas=None, token=None, dc=None, connections_timeout=None):
         """
@@ -193,13 +192,11 @@ class KV:
             params.append(("recurse", "1"))
         if cas is not None:
             params.append(("cas", cas))
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
         dc = dc or self.agent.dc
         if dc:
             params.append(("dc", dc))
         http_kwargs = {}
         if connections_timeout:
             http_kwargs["connections_timeout"] = connections_timeout
-        return self.agent.http.delete(CB.json(), f"/v1/kv/{key}", params=params, **http_kwargs)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.delete(CB.json(), f"/v1/kv/{key}", params=params, headers=headers, **http_kwargs)

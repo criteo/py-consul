@@ -3,6 +3,7 @@ import collections
 import logging
 import os
 import urllib
+from typing import Dict, Optional
 
 from consul.api.acl import ACL
 from consul.api.agent import Agent
@@ -45,19 +46,19 @@ class HTTPClient(metaclass=abc.ABCMeta):
         return uri
 
     @abc.abstractmethod
-    def get(self, callback, path, params=None):
+    def get(self, callback, path, params=None, headers: Optional[Dict[str, str]] = None):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def put(self, callback, path, params=None, data=""):
+    def put(self, callback, path, params=None, data="", headers: Optional[Dict[str, str]] = None):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete(self, callback, path, params=None):
+    def delete(self, callback, path, params=None, headers: Optional[Dict[str, str]] = None):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def post(self, callback, path, params=None, data=""):
+    def post(self, callback, path, params=None, data="", headers: Optional[Dict[str, str]] = None):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -151,3 +152,9 @@ class Consul:
     @abc.abstractmethod
     def http_connect(self, host, port, scheme, verify=True, cert=None):
         pass
+
+    def prepare_headers(self, token: Optional[str] = None) -> Dict[str, str]:
+        headers = {}
+        if token or self.token:
+            headers["X-Consul-Token"] = token or self.token
+        return headers

@@ -35,13 +35,11 @@ class Health:
             params.append(("dc", dc))
         if near:
             params.append(("near", near))
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
         if node_meta:
             for nodemeta_name, nodemeta_value in node_meta.items():
                 params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
-        return self.agent.http.get(CB.json(index=True), internal_uri, params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(index=True), internal_uri, params=params, headers=headers)
 
     def service(self, service, **kwargs):
         """
@@ -122,13 +120,11 @@ class Health:
             params.append(("dc", dc))
         if near:
             params.append(("near", near))
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
         if node_meta:
             for nodemeta_name, nodemeta_value in node_meta.items():
                 params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
-        return self.agent.http.get(CB.json(index=True), f"/v1/health/checks/{service}", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(index=True), f"/v1/health/checks/{service}", params=params, headers=headers)
 
     def state(self, name, index=None, wait=None, dc=None, near=None, token=None, node_meta=None):
         """
@@ -171,13 +167,11 @@ class Health:
             params.append(("dc", dc))
         if near:
             params.append(("near", near))
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
         if node_meta:
             for nodemeta_name, nodemeta_value in node_meta.items():
                 params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
-        return self.agent.http.get(CB.json(index=True), f"/v1/health/state/{name}", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(index=True), f"/v1/health/state/{name}", params=params, headers=headers)
 
     def node(self, node, index=None, wait=None, dc=None, token=None):
         """
@@ -205,8 +199,6 @@ class Health:
         dc = dc or self.agent.dc
         if dc:
             params.append(("dc", dc))
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
 
-        return self.agent.http.get(CB.json(index=True), f"/v1/health/node/{node}", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(index=True), f"/v1/health/node/{node}", params=params, headers=headers)

@@ -13,16 +13,12 @@ class Connect:
         def roots(self, pem=False, token=None):
             params = []
             params.append(("pem", int(pem)))
-            token = token or self.agent.token
-            if token:
-                params.append(("token", token))
 
-            return self.agent.http.get(CB.json(), "/v1/connect/ca/roots", params=params)
+            headers = self.agent.prepare_headers(token)
+            return self.agent.http.get(CB.json(), "/v1/connect/ca/roots", params=params, headers=headers)
 
         def configuration(self, token=None):
             params = []
-            token = token or self.agent.token
-            if token:
-                params.append(("token", token))
 
-            return self.agent.http.get(CB.json(), "/v1/connect/ca/configuration", params=params)
+            headers = self.agent.prepare_headers(token)
+            return self.agent.http.get(CB.json(), "/v1/connect/ca/configuration", params=params, headers=headers)
