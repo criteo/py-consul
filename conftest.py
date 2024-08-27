@@ -89,8 +89,27 @@ def start_consul_container(version, acl_master_token=None):
         merged_config = {**base_config, **acl_config}
         docker_config["environment"]["CONSUL_LOCAL_CONFIG"] = json.dumps(merged_config)
 
-    container = client.containers.run(
-        f"hashicorp/consul:{version}", command="agent -dev -client=0.0.0.0 -log-level trace", **docker_config
+    def start_consul_container_with_retry(client, command, version, docker_config, max_retries=3, retry_delay=2):  # pylint: disable=inconsistent-return-statements
+        """
+        Start a Consul container with retries as a few initial attempts sometimes fail.
+        """
+        for attempt in range(max_retries):
+            try:
+                container = client.containers.run(f"hashicorp/consul:{version}", command=command, **docker_config)
+                return container
+            except docker.errors.APIError:
+                # Cleanup that stray container as it might cause a naming conflict
+                try:
+                    container = client.containers.get(docker_config["name"])
+                    container.remove(force=True)
+                except docker.errors.NotFound:
+                    pass
+                if attempt == max_retries - 1:
+                    raise
+                time.sleep(retry_delay)
+
+    container = start_consul_container_with_retry(
+        client, command="agent -dev -client=0.0.0.0 -log-level trace", version=version, docker_config=docker_config
     )
 
     # Wait for Consul to be ready
