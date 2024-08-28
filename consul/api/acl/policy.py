@@ -15,10 +15,9 @@ class Policy:
         Requires a token with acl:read capability. ACLPermissionDenied raised otherwise
         """
         params = []
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
-        return self.agent.http.get(CB.json(), "/v1/acl/policies", params=params)
+
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(), "/v1/acl/policies", params=params, headers=headers)
 
     def read(self, uuid, token=None):
         """
@@ -28,10 +27,8 @@ class Policy:
         :return: selected Polic information
         """
         params = []
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
-        return self.agent.http.get(CB.json(), f"/v1/acl/policy/{uuid}", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(), f"/v1/acl/policy/{uuid}", params=params, headers=headers)
 
     def create(self, name, token=None, description=None, rules=None):
         """
@@ -44,17 +41,16 @@ class Policy:
         :return: The cloned token information
         """
         params = []
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
         json_data = {"name": name}
         if rules:
             json_data["rules"] = json.dumps(rules)
         if description:
             json_data["Description"] = description
+        headers = self.agent.prepare_headers(token)
         return self.agent.http.put(
             CB.json(),
             "/v1/acl/policy",
             params=params,
+            headers=headers,
             data=json.dumps(json_data),
         )

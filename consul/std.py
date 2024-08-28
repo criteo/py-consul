@@ -1,3 +1,5 @@
+from typing import Dict, Optional
+
 import requests
 
 from consul import base
@@ -14,21 +16,25 @@ class HTTPClient(base.HTTPClient):
         response.encoding = "utf-8"
         return base.Response(response.status_code, response.headers, response.text)
 
-    def get(self, callback, path, params=None):
+    def get(self, callback, path, params=None, headers: Optional[Dict[str, str]] = None):
         uri = self.uri(path, params)
-        return callback(self.response(self.session.get(uri, verify=self.verify, cert=self.cert)))
+        return callback(self.response(self.session.get(uri, headers=headers, verify=self.verify, cert=self.cert)))
 
-    def put(self, callback, path, params=None, data=""):
+    def put(self, callback, path, params=None, data="", headers: Optional[Dict[str, str]] = None):
         uri = self.uri(path, params)
-        return callback(self.response(self.session.put(uri, data=data, verify=self.verify, cert=self.cert)))
+        return callback(
+            self.response(self.session.put(uri, headers=headers, data=data, verify=self.verify, cert=self.cert))
+        )
 
-    def delete(self, callback, path, params=None):
+    def delete(self, callback, path, params=None, headers: Optional[Dict[str, str]] = None):
         uri = self.uri(path, params)
-        return callback(self.response(self.session.delete(uri, verify=self.verify, cert=self.cert)))
+        return callback(self.response(self.session.delete(uri, headers=headers, verify=self.verify, cert=self.cert)))
 
-    def post(self, callback, path, params=None, data=""):
+    def post(self, callback, path, params=None, data="", headers: Optional[Dict[str, str]] = None):
         uri = self.uri(path, params)
-        return callback(self.response(self.session.post(uri, data=data, verify=self.verify, cert=self.cert)))
+        return callback(
+            self.response(self.session.post(uri, headers=headers, data=data, verify=self.verify, cert=self.cert))
+        )
 
     def close(self):
         pass

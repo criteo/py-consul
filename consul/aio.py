@@ -1,4 +1,5 @@
 import asyncio
+from typing import Dict, Optional
 
 import aiohttp
 
@@ -23,33 +24,39 @@ class HTTPClient(base.HTTPClient):
             session_kwargs["timeout"] = timeout
         self._session = aiohttp.ClientSession(connector=connector, **session_kwargs)
 
-    async def _request(self, callback, method, uri, data=None, connections_timeout=None):
+    async def _request(
+        self, callback, method, uri, headers: Optional[Dict[str, str]], data=None, connections_timeout=None
+    ):
         session_kwargs = {}
         if connections_timeout:
             timeout = aiohttp.ClientTimeout(total=connections_timeout)
             session_kwargs["timeout"] = timeout
-        resp = await self._session.request(method, uri, data=data, **session_kwargs)
+        resp = await self._session.request(method, uri, headers=headers, data=data, **session_kwargs)
         body = await resp.text(encoding="utf-8")
         if resp.status == 599:
             raise Timeout
         r = base.Response(resp.status, resp.headers, body)
         return callback(r)
 
-    def get(self, callback, path, params=None, connections_timeout=None):
+    def get(self, callback, path, params=None, headers: Optional[Dict[str, str]] = None, connections_timeout=None):
         uri = self.uri(path, params)
-        return self._request(callback, "GET", uri, connections_timeout=connections_timeout)
+        return self._request(callback, "GET", uri, headers=headers, connections_timeout=connections_timeout)
 
-    def put(self, callback, path, params=None, data="", connections_timeout=None):
+    def put(
+        self, callback, path, params=None, data="", headers: Optional[Dict[str, str]] = None, connections_timeout=None
+    ):
         uri = self.uri(path, params)
-        return self._request(callback, "PUT", uri, data=data, connections_timeout=connections_timeout)
+        return self._request(callback, "PUT", uri, headers=headers, data=data, connections_timeout=connections_timeout)
 
-    def delete(self, callback, path, params=None, connections_timeout=None):
+    def delete(self, callback, path, params=None, headers: Optional[Dict[str, str]] = None, connections_timeout=None):
         uri = self.uri(path, params)
-        return self._request(callback, "DELETE", uri, connections_timeout=connections_timeout)
+        return self._request(callback, "DELETE", uri, headers=headers, connections_timeout=connections_timeout)
 
-    def post(self, callback, path, params=None, data="", connections_timeout=None):
+    def post(
+        self, callback, path, params=None, data="", headers: Optional[Dict[str, str]] = None, connections_timeout=None
+    ):
         uri = self.uri(path, params)
-        return self._request(callback, "POST", uri, data=data, connections_timeout=connections_timeout)
+        return self._request(callback, "POST", uri, headers=headers, data=data, connections_timeout=connections_timeout)
 
     def close(self):
         return self._session.close()

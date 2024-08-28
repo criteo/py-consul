@@ -6,21 +6,21 @@ import pytest
 import consul
 import consul.check
 
-Request = collections.namedtuple("Request", ["method", "path", "params", "data"])
+Request = collections.namedtuple("Request", ["method", "path", "params", "headers", "data"])
 
 
 class HTTPClient:
     def __init__(self, host=None, port=None, scheme=None, verify=True, cert=None):
         pass
 
-    def get(self, callback, path, params=None):  # pylint: disable=unused-argument
-        return Request("get", path, params, None)
+    def get(self, callback, path, params=None, headers=None):  # pylint: disable=unused-argument
+        return Request("get", path, params, headers, None)
 
-    def put(self, callback, path, params=None, data=""):  # pylint: disable=unused-argument
-        return Request("put", path, params, data)
+    def put(self, callback, path, params=None, headers=None, data=""):  # pylint: disable=unused-argument
+        return Request("put", path, params, headers, data)
 
-    def delete(self, callback, path, params=None):  # pylint: disable=unused-argument
-        return Request("delete", path, params, None)
+    def delete(self, callback, path, params=None, headers=None):  # pylint: disable=unused-argument
+        return Request("delete", path, params, headers, None)
 
 
 class Consul(consul.base.Consul):

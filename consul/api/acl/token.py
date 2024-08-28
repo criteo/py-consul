@@ -15,10 +15,8 @@ class Token:
         Requires a token with acl:read capability. ACLPermissionDenied raised otherwise
         """
         params = []
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
-        return self.agent.http.get(CB.json(), "/v1/acl/tokens", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(), "/v1/acl/tokens", params=params, headers=headers)
 
     def read(self, accessor_id, token=None):
         """
@@ -28,10 +26,8 @@ class Token:
         :return: selected token information
         """
         params = []
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
-        return self.agent.http.get(CB.json(), f"/v1/acl/token/{accessor_id}", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(), f"/v1/acl/token/{accessor_id}", params=params, headers=headers)
 
     def delete(self, accessor_id, token=None):
         """
@@ -41,10 +37,8 @@ class Token:
         :return: True if the token was deleted
         """
         params = []
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
-        return self.agent.http.delete(CB.bool(), f"/v1/acl/token/{accessor_id}", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.delete(CB.bool(), f"/v1/acl/token/{accessor_id}", params=params, headers=headers)
 
     def clone(self, accessor_id, token=None, description=""):
         """
@@ -55,15 +49,14 @@ class Token:
         :return: The cloned token information
         """
         params = []
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
 
         json_data = {"Description": description}
+        headers = self.agent.prepare_headers(token)
         return self.agent.http.put(
             CB.json(),
             f"/v1/acl/token/{accessor_id}/clone",
             params=params,
+            headers=headers,
             data=json.dumps(json_data),
         )
 
@@ -79,9 +72,6 @@ class Token:
         :return: The cloned token information
         """
         params = []
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
 
         json_data = {}
         if accessor_id:
@@ -93,10 +83,12 @@ class Token:
         if policies_id:
             json_data["Policies"] = [{"ID": policy} for policy in policies_id]
 
+        headers = self.agent.prepare_headers(token)
         return self.agent.http.put(
             CB.json(),
             "/v1/acl/token",
             params=params,
+            headers=headers,
             data=json.dumps(json_data),
         )
 
@@ -111,18 +103,17 @@ class Token:
         :return: The updated token information
         """
         params = []
-        token = token or self.agent.token
-        if token:
-            params.append(("token", token))
 
         json_data = {"AccessorID": accessor_id}
         if secret_id:
             json_data["SecretID"] = secret_id
         if description:
             json_data["Description"] = description
+        headers = self.agent.prepare_headers(token)
         return self.agent.http.put(
             CB.json(),
             f"/v1/acl/token/{accessor_id}",
             params=params,
+            headers=headers,
             data=json.dumps(json_data),
         )
