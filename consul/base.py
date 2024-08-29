@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import abc
 import collections
 import logging
 import os
 import urllib
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from consul.api.acl import ACL
 from consul.api.agent import Agent
@@ -39,7 +41,7 @@ class HTTPClient(metaclass=abc.ABCMeta):
         self.base_uri = f"{self.scheme}://{self.host}:{self.port}"
         self.cert = cert
 
-    def uri(self, path, params=None):
+    def uri(self, path: str, params: list[tuple[str, Any]] | None = None):
         uri = self.base_uri + urllib.parse.quote(path, safe="/:")
         if params:
             uri = f"{uri}?{urllib.parse.urlencode(params)}"
