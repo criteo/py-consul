@@ -1,22 +1,26 @@
+from __future__ import annotations
+
 import collections
 import json
+from typing import Any, Callable, Optional
 
 import pytest
 
-import consul
 import consul.check
 
 Request = collections.namedtuple("Request", ["method", "path", "params", "headers", "data"])
 
 
 class HTTPClient:
-    def __init__(self, host=None, port=None, scheme=None, verify=True, cert=None):
+    def __init__(
+        self, host: Optional[str] = None, port: Optional[int] = None, scheme=None, verify: bool = True, cert=None
+    ) -> None:
         pass
 
     def get(self, callback, path, params=None, headers=None):  # pylint: disable=unused-argument
         return Request("get", path, params, headers, None)
 
-    def put(self, callback, path, params=None, headers=None, data=""):  # pylint: disable=unused-argument
+    def put(self, callback, path, params=None, headers=None, data: str = ""):  # pylint: disable=unused-argument
         return Request("put", path, params, headers, data)
 
     def delete(self, callback, path, params=None, headers=None):  # pylint: disable=unused-argument
@@ -24,11 +28,11 @@ class HTTPClient:
 
 
 class Consul(consul.base.Consul):
-    def http_connect(self, host, port, scheme, verify=True, cert=None):
+    def http_connect(self, host: str, port: int, scheme, verify: bool = True, cert=None):
         return HTTPClient(host, port, scheme, verify=verify, cert=None)
 
 
-def _should_support(c):
+def _should_support(c: Consul) -> tuple[Callable[..., Any], ...]:
     return (
         # kv
         lambda **kw: c.kv.get("foo", **kw),
@@ -44,7 +48,7 @@ def _should_support(c):
     )
 
 
-def _should_support_node_meta(c):
+def _should_support_node_meta(c: Consul) -> tuple[Callable[..., Any], ...]:
     return (
         # catalog
         c.catalog.nodes,
@@ -58,7 +62,7 @@ def _should_support_node_meta(c):
     )
 
 
-def _should_support_meta(c):
+def _should_support_meta(c: Consul) -> tuple[Callable[..., Any], ...]:
     return (
         # agent
         lambda **kw: c.agent.service.register("foo", **kw),
@@ -71,7 +75,7 @@ class TestIndex:
     Tests read requests that should support blocking on an index
     """
 
-    def test_index(self):
+    def test_index(self) -> None:
         c = Consul()
         for r in _should_support(c):
             assert r().params == []
@@ -83,7 +87,7 @@ class TestConsistency:
     Tests read requests that should support consistency modes
     """
 
-    def test_explict(self):
+    def test_explict(self) -> None:
         c = Consul()
         for r in _should_support(c):
             assert r().params == []
@@ -91,7 +95,7 @@ class TestConsistency:
             assert r(consistency="consistent").params == [("consistent", "1")]
             assert r(consistency="stale").params == [("stale", "1")]
 
-    def test_implicit(self):
+    def test_implicit(self) -> None:
         c = Consul(consistency="consistent")
         for r in _should_support(c):
             assert r().params == [("consistent", "1")]
@@ -105,7 +109,7 @@ class TestNodemeta:
     Tests read requests that should support node_meta
     """
 
-    def test_node_meta(self):
+    def test_node_meta(self) -> None:
         c = Consul()
         for r in _should_support_node_meta(c):
             assert r().params == []
@@ -120,7 +124,7 @@ class TestMeta:
     Tests read requests that should support meta
     """
 
-    def test_meta(self):
+    def test_meta(self) -> None:
         c = Consul()
         for r in _should_support_meta(c):
             d = json.loads(r(meta={"env": "prod", "net": 1}).data)
@@ -199,7 +203,7 @@ class TestChecks:
             ),
         ],
     )
-    def test_http_check(self, url, interval, timeout, deregister, header, want):
+    def test_http_check(self, url, interval, timeout, deregister, header, want) -> None:
         ch = consul.check.Check.http(url, interval, timeout=timeout, deregister=deregister, header=header)
         assert ch == want
 
@@ -256,7 +260,7 @@ class TestChecks:
             ),
         ],
     )
-    def test_tcp_check(self, host, port, interval, timeout, deregister, want):
+    def test_tcp_check(self, host: str, port: int, interval, timeout, deregister, want) -> None:
         ch = consul.check.Check.tcp(host, port, interval, timeout=timeout, deregister=deregister)
         assert ch == want
 
@@ -292,10 +296,10 @@ class TestChecks:
             ),
         ],
     )
-    def test_docker_check(self, container_id, shell, script, interval, deregister, want):
+    def test_docker_check(self, container_id, shell, script, interval, deregister, want) -> None:
         ch = consul.check.Check.docker(container_id, shell, script, interval, deregister=deregister)
         assert ch == want
 
-    def test_ttl_check(self):
+    def test_ttl_check(self) -> None:
         ch = consul.check.Check.ttl("1m")
         assert ch == {"ttl": "1m"}

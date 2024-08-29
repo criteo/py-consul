@@ -1,46 +1,46 @@
+from __future__ import annotations
+
 import json
+import typing
 
 from consul.callback import CB
 
 
 class Token:
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
 
-    def list(self, token=None):
+    def list(self, token: str | None = None):
         """
         Lists all the active ACL tokens. This is a privileged endpoint, and
         requires a management token. *token* will override this client's
         default token.
         Requires a token with acl:read capability. ACLPermissionDenied raised otherwise
         """
-        params = []
         headers = self.agent.prepare_headers(token)
-        return self.agent.http.get(CB.json(), "/v1/acl/tokens", params=params, headers=headers)
+        return self.agent.http.get(CB.json(), "/v1/acl/tokens", headers=headers)
 
-    def read(self, accessor_id, token=None):
+    def read(self, accessor_id: str, token: str | None = None):
         """
         Returns the token information for *accessor_id*. Requires a token with acl:read capability.
         :param accessor_id: The accessor ID of the token to read
         :param token: token with acl:read capability
         :return: selected token information
         """
-        params = []
         headers = self.agent.prepare_headers(token)
-        return self.agent.http.get(CB.json(), f"/v1/acl/token/{accessor_id}", params=params, headers=headers)
+        return self.agent.http.get(CB.json(), f"/v1/acl/token/{accessor_id}", headers=headers)
 
-    def delete(self, accessor_id, token=None):
+    def delete(self, accessor_id: str, token: str | None = None):
         """
         Deletes the token with *accessor_id*. This is a privileged endpoint, and requires a token with acl:write.
         :param accessor_id: The accessor ID of the token to delete
         :param token: token with acl:write capability
         :return: True if the token was deleted
         """
-        params = []
         headers = self.agent.prepare_headers(token)
-        return self.agent.http.delete(CB.boolean(), f"/v1/acl/token/{accessor_id}", params=params, headers=headers)
+        return self.agent.http.delete(CB.boolean(), f"/v1/acl/token/{accessor_id}", headers=headers)
 
-    def clone(self, accessor_id, token=None, description=""):
+    def clone(self, accessor_id: str, token: str | None = None, description: str = ""):
         """
         Clones the token identified by *accessor_id*. This is a privileged endpoint, and requires a token with acl:write.
         :param accessor_id: The accessor ID of the token to clone
@@ -48,19 +48,24 @@ class Token:
         :param description: Optional new token description
         :return: The cloned token information
         """
-        params = []
 
         json_data = {"Description": description}
         headers = self.agent.prepare_headers(token)
         return self.agent.http.put(
             CB.json(),
             f"/v1/acl/token/{accessor_id}/clone",
-            params=params,
             headers=headers,
             data=json.dumps(json_data),
         )
 
-    def create(self, token=None, accessor_id=None, secret_id=None, policies_id=None, description=""):
+    def create(
+        self,
+        token: str | None = None,
+        accessor_id: str | None = None,
+        secret_id: str | None = None,
+        policies_id: typing.List[str] | None = None,
+        description: str = "",
+    ):
         """
         Create a token (optionally identified by *secret_id* and *accessor_id*).
         This is a privileged endpoint, and requires a token with acl:write.
@@ -68,12 +73,11 @@ class Token:
         :param accessor_id: The accessor ID of the token to create
         :param secret_id: The secret ID of the token to create
         :param description: Optional new token description
-        :param policies: Optional list of policies id
+        :param policies_id: Optional list of policies id
         :return: The cloned token information
         """
-        params = []
 
-        json_data = {}
+        json_data: dict[str, typing.Any] = {}
         if accessor_id:
             json_data["AccessorID"] = accessor_id
         if secret_id:
@@ -87,12 +91,11 @@ class Token:
         return self.agent.http.put(
             CB.json(),
             "/v1/acl/token",
-            params=params,
             headers=headers,
             data=json.dumps(json_data),
         )
 
-    def update(self, accessor_id, token=None, secret_id=None, description=""):
+    def update(self, accessor_id: str, token: str | None = None, secret_id: str | None = None, description: str = ""):
         """
         Update a token (optionally identified by *secret_id* and *accessor_id*).
         This is a privileged endpoint, and requires a token with acl:write.
@@ -102,7 +105,6 @@ class Token:
         :param description: Optional new token description
         :return: The updated token information
         """
-        params = []
 
         json_data = {"AccessorID": accessor_id}
         if secret_id:
@@ -113,7 +115,6 @@ class Token:
         return self.agent.http.put(
             CB.json(),
             f"/v1/acl/token/{accessor_id}",
-            params=params,
             headers=headers,
             data=json.dumps(json_data),
         )

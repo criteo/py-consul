@@ -1,5 +1,5 @@
 class testQuery:
-    def test_query(self, consul_obj):
+    def test_query(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
         # check that query list is empty

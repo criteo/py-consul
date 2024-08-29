@@ -1,13 +1,16 @@
+from __future__ import annotations
+
 import json
+from typing import Optional
 
 from consul.callback import CB
 
 
 class Query:
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
 
-    def list(self, dc=None, token=None):
+    def list(self, dc=None, token: str | None = None):
         """
         Lists all the active  queries. This is a privileged endpoint,
         therefore you will only be able to get the prepared queries
@@ -28,14 +31,14 @@ class Query:
     def _query_data(
         self,
         service=None,
-        name=None,
+        name: Optional[str] = None,
         session=None,
-        token=None,
+        token: str | None = None,
         nearestn=None,
         datacenters=None,
         onlypassing=None,
         tags=None,
-        ttl=None,
+        ttl: Optional[int] = None,
         regexp=None,
     ):
         service_body = {
@@ -68,15 +71,15 @@ class Query:
     def create(
         self,
         service,
-        name=None,
+        name: Optional[str] = None,
         dc=None,
         session=None,
-        token=None,
+        token: str | None = None,
         nearestn=None,
         datacenters=None,
         onlypassing=None,
         tags=None,
-        ttl=None,
+        ttl: Optional[int] = None,
         regexp=None,
     ):
         """
@@ -128,15 +131,15 @@ class Query:
         self,
         query_id,
         service=None,
-        name=None,
+        name: Optional[str] = None,
         dc=None,
         session=None,
-        token=None,
+        token: str | None = None,
         nearestn=None,
         datacenters=None,
         onlypassing=None,
         tags=None,
-        ttl=None,
+        ttl: Optional[int] = None,
         regexp=None,
     ):
         """
@@ -151,7 +154,7 @@ class Query:
         data = self._query_data(service, name, session, token, nearestn, datacenters, onlypassing, tags, ttl, regexp)
         return self.agent.http.put(CB.boolean(), path, params=params, data=data)
 
-    def get(self, query_id, token=None, dc=None):
+    def get(self, query_id, token: str | None = None, dc=None):
         """
         This endpoint will return information about a certain query
 
@@ -168,7 +171,7 @@ class Query:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(), f"/v1/query/{query_id}", params=params, headers=headers)
 
-    def delete(self, query_id, token=None, dc=None):
+    def delete(self, query_id, token: str | None = None, dc=None):
         """
         This endpoint will delete certain query
 
@@ -185,7 +188,7 @@ class Query:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.delete(CB.boolean(), f"/v1/query/{query_id}", params=params, headers=headers)
 
-    def execute(self, query, token=None, dc=None, near=None, limit=None):
+    def execute(self, query, token: str | None = None, dc=None, near=None, limit: Optional[int] = None):
         """
         This endpoint will execute certain query
 
@@ -212,7 +215,7 @@ class Query:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(), f"/v1/query/{query}/execute", params=params, headers=headers)
 
-    def explain(self, query, token=None, dc=None):
+    def explain(self, query, token: str | None = None, dc=None):
         """
         This endpoint shows a fully-rendered query for a given name
 

@@ -1,13 +1,15 @@
+from __future__ import annotations
+
 import json
 
 from consul.callback import CB
 
 
 class Catalog:
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
 
-    def register(self, node, address, service=None, check=None, dc=None, token=None, node_meta=None):
+    def register(self, node, address, service=None, check=None, dc=None, token: str | None = None, node_meta=None):
         """
         A low level mechanism for directly registering or updating entries
         in the catalog. It is usually recommended to use
@@ -88,7 +90,7 @@ class Catalog:
             CB.boolean(), "/v1/catalog/register", data=json.dumps(data), params=params, headers=headers
         )
 
-    def deregister(self, node, service_id=None, check_id=None, dc=None, token=None):
+    def deregister(self, node, service_id=None, check_id=None, dc=None, token: str | None = None):
         """
         A low level mechanism for directly removing entries in the catalog.
         It is usually recommended to use the agent APIs, as they are
@@ -125,7 +127,9 @@ class Catalog:
         """
         return self.agent.http.get(CB.json(), "/v1/catalog/datacenters")
 
-    def nodes(self, index=None, wait=None, consistency=None, dc=None, near=None, token=None, node_meta=None):
+    def nodes(
+        self, index=None, wait=None, consistency=None, dc=None, near=None, token: str | None = None, node_meta=None
+    ):
         """
         Returns a tuple of (*index*, *nodes*) of all nodes known
         about in the *dc* datacenter. *dc* defaults to the current
@@ -183,7 +187,7 @@ class Catalog:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(index=True), "/v1/catalog/nodes", params=params, headers=headers)
 
-    def services(self, index=None, wait=None, consistency=None, dc=None, token=None, node_meta=None):
+    def services(self, index=None, wait=None, consistency=None, dc=None, token: str | None = None, node_meta=None):
         """
         Returns a tuple of (*index*, *services*) of all services known
         about in the *dc* datacenter. *dc* defaults to the current
@@ -236,7 +240,7 @@ class Catalog:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(index=True), "/v1/catalog/services", params=params, headers=headers)
 
-    def node(self, node, index=None, wait=None, consistency=None, dc=None, token=None):
+    def node(self, node, index=None, wait=None, consistency=None, dc=None, token: str | None = None):
         """
         Returns a tuple of (*index*, *services*) of all services provided
         by *node*.
@@ -305,7 +309,7 @@ class Catalog:
         consistency=None,
         dc=None,
         near=None,
-        token=None,
+        token: str | None = None,
         node_meta=None,
     ):
         params = []
@@ -329,7 +333,7 @@ class Catalog:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(index=True), internal_uri, params=params, headers=headers)
 
-    def service(self, service, **kwargs):
+    def service(self, service: str, **kwargs):
         """
         Returns a tuple of (*index*, *nodes*) of the nodes providing
         *service* in the *dc* datacenter. *dc* defaults to the current
@@ -373,7 +377,7 @@ class Catalog:
         internal_uri = f"/v1/catalog/service/{service}"
         return self._service(internal_uri=internal_uri, **kwargs)
 
-    def connect(self, service, **kwargs):
+    def connect(self, service: str, **kwargs):
         """
         Returns a tuple of (*index*, *nodes*) of the nodes providing
         connect-capable *service* in the *dc* datacenter. *dc* defaults

@@ -6,7 +6,7 @@ Check = consul.check.Check
 
 
 class TestHealth:
-    def test_health_service(self, consul_obj):
+    def test_health_service(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
         # check there are no nodes for the service 'foo'
@@ -66,7 +66,7 @@ class TestHealth:
         _index, nodes = c.health.service("foo")
         assert nodes == []
 
-    def test_health_state(self, consul_obj):
+    def test_health_state(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
         # The empty string is for the Serf Health Status check, which has an
@@ -86,7 +86,7 @@ class TestHealth:
 
         # but that they aren't passing their health check
         _index, nodes = c.health.state("passing")
-        assert [node["ServiceID"] for node in nodes] != "foo"
+        assert "foo" not in [node["ServiceID"] for node in nodes]
 
         # ping the two node's health check
         c.agent.check.ttl_pass("service:foo:1")
@@ -123,14 +123,14 @@ class TestHealth:
         _index, nodes = c.health.state("any")
         assert [node["ServiceID"] for node in nodes] == [""]
 
-    def test_health_node(self, consul_obj):
+    def test_health_node(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         # grab local node name
         node = c.agent.self()["Config"]["NodeName"]
         _index, checks = c.health.node(node)
         assert node in [check["Node"] for check in checks]
 
-    def test_health_checks(self, consul_obj):
+    def test_health_checks(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
         c.agent.service.register("foobar", service_id="foobar", check=Check.ttl("10s"))
