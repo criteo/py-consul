@@ -122,7 +122,6 @@ max-complexity = 15
 keep-runtime-typing = true
 
 [tool.mypy]
-exclude = ["setup.py"]
 # error whenever it encounters a function definition without type annotations
 #disallow_untyped_defs = true
 # error whenever a function with type annotations calls a function defined without annotations
