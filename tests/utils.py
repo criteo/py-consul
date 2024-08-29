@@ -45,7 +45,7 @@ def find_recursive(list_or_single_dict: list[dict] | dict, wanted: list[dict] | 
     return all(any(matches_subdict(item, single_wanted) for item in list_or_single_dict) for single_wanted in wanted)
 
 
-def should_skip(version_str, comparator, ref_version_str):
+def should_skip(version_str: str, comparator: str, ref_version_str: str) -> bool:
     v = version.parse(version_str)
     ref_version = version.parse(ref_version_str)
     if (

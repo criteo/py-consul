@@ -15,6 +15,7 @@ setuptools
 tox
 tox-uv
 treq
+types-docker
 uv
 virtualenv
 wheel

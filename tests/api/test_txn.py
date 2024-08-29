@@ -2,7 +2,7 @@ import base64
 
 
 class TestTxn:
-    def test_transaction(self, consul_obj):
+    def test_transaction(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         value = base64.b64encode(b"1").decode("utf8")
         d = {"KV": {"Verb": "set", "Key": "asdf", "Value": value}}

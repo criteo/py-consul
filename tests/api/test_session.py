@@ -4,7 +4,7 @@ import consul
 
 
 class TestSession:
-    def test_session(self, consul_obj):
+    def test_session(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
         # session.create
@@ -36,7 +36,7 @@ class TestSession:
         _, sessions = c.session.list()
         assert sessions == []
 
-    def test_session_delete_ttl_renew(self, consul_obj):
+    def test_session_delete_ttl_renew(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
         s = c.session.create(behavior="delete", ttl=20)

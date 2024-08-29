@@ -93,6 +93,7 @@ fixable = [
     "SIM",
     "SIM",
     "UP",
+    "TCH",
 ]
 
 # Never enforce some rules

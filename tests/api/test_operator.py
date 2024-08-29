@@ -2,7 +2,7 @@ from packaging import version
 
 
 class TestOperator:
-    def test_operator(self, consul_obj):
+    def test_operator(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         config = c.operator.raft_config()
 

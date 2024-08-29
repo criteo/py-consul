@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import json
+from typing import Any, Optional
 
 from consul import Check
 from consul.callback import CB
@@ -12,7 +15,7 @@ class Agent:
     anti-entropy to recover from outages.
     """
 
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
         self.service = Agent.Service(agent)
         self.check = Agent.Check(agent)
@@ -24,7 +27,7 @@ class Agent:
         """
         return self.agent.http.get(CB.json(), "/v1/agent/self")
 
-    def services(self):
+    def services(self) -> Any:
         """
         Returns all the services that are registered with the local agent.
         These services were either provided through configuration files, or
@@ -44,7 +47,7 @@ class Agent:
         """
         return self.agent.http.get(CB.json(), f"/v1/agent/service/{service_id}")
 
-    def checks(self):
+    def checks(self) -> Any:
         """
         Returns all the checks that are registered with the local agent.
         These checks were either provided through configuration files, or
@@ -57,7 +60,7 @@ class Agent:
         """
         return self.agent.http.get(CB.json(), "/v1/agent/checks")
 
-    def members(self, wan=False):
+    def members(self, wan: bool = False):
         """
         Returns all the members that this agent currently sees. This may
         vary by agent, use the nodes api of Catalog to retrieve a cluster
@@ -72,7 +75,7 @@ class Agent:
             params.append(("wan", 1))
         return self.agent.http.get(CB.json(), "/v1/agent/members", params=params)
 
-    def maintenance(self, enable, reason=None, token=None):
+    def maintenance(self, enable: bool, reason: Optional[str] = None, token: str | None = None):
         """
         The node maintenance endpoint can place the agent into
         "maintenance mode".
@@ -84,7 +87,7 @@ class Agent:
         operators.
         """
 
-        params = []
+        params: list[tuple[str, Any]] = []
 
         params.append(("enable", enable))
         if reason:
@@ -93,7 +96,7 @@ class Agent:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.put(CB.boolean(), "/v1/agent/maintenance", params=params, headers=headers)
 
-    def join(self, address, wan=False, token=None):
+    def join(self, address: str, wan: bool = False, token: str | None = None):
         """
         This endpoint instructs the agent to attempt to connect to a
         given address.
@@ -112,7 +115,7 @@ class Agent:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.put(CB.boolean(), f"/v1/agent/join/{address}", params=params, headers=headers)
 
-    def force_leave(self, node, token=None):
+    def force_leave(self, node: str, token: str | None = None):
         """
         This endpoint instructs the agent to force a node into the left
         state. If a node fails unexpectedly, then it will be in a failed
@@ -124,33 +127,31 @@ class Agent:
         *node* is the node to change state for.
         """
 
-        params = []
-
         headers = self.agent.prepare_headers(token)
-        return self.agent.http.put(CB.boolean(), f"/v1/agent/force-leave/{node}", params=params, headers=headers)
+        return self.agent.http.put(CB.boolean(), f"/v1/agent/force-leave/{node}", headers=headers)
 
     class Service:
-        def __init__(self, agent):
+        def __init__(self, agent) -> None:
             self.agent = agent
 
         def register(
             self,
-            name,
+            name: str,
             service_id=None,
             address=None,
-            port=None,
+            port: Optional[int] = None,
             tags=None,
             check=None,
-            token=None,
+            token: str | None = None,
             meta=None,
             weights=None,
             # *deprecated* use check parameter
             script=None,
             interval=None,
-            ttl=None,
+            ttl: Optional[int] = None,
             http=None,
             timeout=None,
-            enable_tag_override=False,
+            enable_tag_override: bool = False,
             extra_checks=None,
             replace_existing_checks=False,
         ):
@@ -201,7 +202,7 @@ class Agent:
 
             if extra_checks is None:
                 extra_checks = []
-            payload = {}
+            payload: dict[str, Any] = {}
 
             payload["name"] = name
             if enable_tag_override:
@@ -234,20 +235,17 @@ class Agent:
                 CB.boolean(), "/v1/agent/service/register", params=params, headers=headers, data=json.dumps(payload)
             )
 
-        def deregister(self, service_id, token=None):
+        def deregister(self, service_id: str, token: str | None = None):
             """
             Used to remove a service from the local agent. The agent will
             take care of deregistering the service with the Catalog. If
             there is an associated check, that is also deregistered.
             """
-            params = []
             headers = self.agent.prepare_headers(token)
 
-            return self.agent.http.put(
-                CB.boolean(), f"/v1/agent/service/deregister/{service_id}", params=params, headers=headers
-            )
+            return self.agent.http.put(CB.boolean(), f"/v1/agent/service/deregister/{service_id}", headers=headers)
 
-        def maintenance(self, service_id, enable, reason=None, token=None):
+        def maintenance(self, service_id: str, enable: bool, reason: Optional[str] = None, token: str | None = None):
             """
             The service maintenance endpoint allows placing a given service
             into "maintenance mode".
@@ -262,7 +260,7 @@ class Agent:
             operators.
             """
 
-            params = []
+            params: list[tuple[str, Any]] = []
 
             params.append(("enable", enable))
             if reason:
@@ -275,21 +273,21 @@ class Agent:
             )
 
     class Check:
-        def __init__(self, agent):
+        def __init__(self, agent) -> None:
             self.agent = agent
 
         def register(
             self,
-            name,
+            name: str,
             check=None,
             check_id=None,
             notes=None,
             service_id=None,
-            token=None,
+            token: str | None = None,
             # *deprecated* use check parameter
             script=None,
             interval=None,
-            ttl=None,
+            ttl: Optional[int] = None,
             http=None,
             timeout=None,
         ):
@@ -340,24 +338,20 @@ class Agent:
             if service_id:
                 payload["serviceid"] = service_id
 
-            params = []
             headers = self.agent.prepare_headers(token)
             return self.agent.http.put(
-                CB.boolean(), "/v1/agent/check/register", params=params, headers=headers, data=json.dumps(payload)
+                CB.boolean(), "/v1/agent/check/register", headers=headers, data=json.dumps(payload)
             )
 
-        def deregister(self, check_id, token=None):
+        def deregister(self, check_id: str, token: str | None = None):
             """
             Remove a check from the local agent.
             """
-            params = []
             headers = self.agent.prepare_headers(token)
 
-            return self.agent.http.put(
-                CB.boolean(), f"/v1/agent/check/deregister/{check_id}", params=params, headers=headers
-            )
+            return self.agent.http.put(CB.boolean(), f"/v1/agent/check/deregister/{check_id}", headers=headers)
 
-        def ttl_pass(self, check_id, notes=None, token=None):
+        def ttl_pass(self, check_id: str, notes=None, token: str | None = None):
             """
             Mark a ttl based check as passing. Optional notes can be
             attached to describe the status of the check.
@@ -369,7 +363,7 @@ class Agent:
 
             return self.agent.http.put(CB.boolean(), f"/v1/agent/check/pass/{check_id}", params=params, headers=headers)
 
-        def ttl_fail(self, check_id, notes=None, token=None):
+        def ttl_fail(self, check_id: str, notes=None, token: str | None = None):
             """
             Mark a ttl based check as failing. Optional notes can be
             attached to describe why check is failing. The status of the
@@ -382,7 +376,7 @@ class Agent:
 
             return self.agent.http.put(CB.boolean(), f"/v1/agent/check/fail/{check_id}", params=params, headers=headers)
 
-        def ttl_warn(self, check_id, notes=None, token=None):
+        def ttl_warn(self, check_id: str, notes=None, token: str | None = None):
             """
             Mark a ttl based check with warning. Optional notes can be
             attached to describe the warning. The status of the
@@ -396,11 +390,11 @@ class Agent:
             return self.agent.http.put(CB.boolean(), f"/v1/agent/check/warn/{check_id}", params=params, headers=headers)
 
     class Connect:
-        def __init__(self, agent):
+        def __init__(self, agent) -> None:
             self.agent = agent
             self.ca = Agent.Connect.CA(agent)
 
-        def authorize(self, target, client_cert_uri, client_cert_serial, token=None):
+        def authorize(self, target, client_cert_uri, client_cert_serial, token: str | None = None):
             """
             Tests whether a connection attempt is authorized between
             two services.
@@ -418,24 +412,20 @@ class Agent:
 
             payload = {"Target": target, "ClientCertURI": client_cert_uri, "ClientCertSerial": client_cert_serial}
 
-            params = []
             headers = self.agent.prepare_headers(token)
 
             return self.agent.http.put(
-                CB.json(), "/v1/agent/connect/authorize", params=params, headers=headers, data=json.dumps(payload)
+                CB.json(), "/v1/agent/connect/authorize", headers=headers, data=json.dumps(payload)
             )
 
         class CA:
-            def __init__(self, agent):
+            def __init__(self, agent) -> None:
                 self.agent = agent
 
             def roots(self):
                 return self.agent.http.get(CB.json(), "/v1/agent/connect/ca/roots")
 
-            def leaf(self, service, token=None):
-                params = []
+            def leaf(self, service, token: str | None = None):
                 headers = self.agent.prepare_headers(token)
 
-                return self.agent.http.get(
-                    CB.json(), f"/v1/agent/connect/ca/leaf/{service}", params=params, headers=headers
-                )
+                return self.agent.http.get(CB.json(), f"/v1/agent/connect/ca/leaf/{service}", headers=headers)

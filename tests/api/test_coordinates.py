@@ -1,5 +1,5 @@
 class TestCoordinates:
-    def test_coordinate(self, consul_obj):
+    def test_coordinate(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         c.coordinate.nodes()
         c.coordinate.datacenters()
