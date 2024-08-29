@@ -149,7 +149,7 @@ class Query:
         path = f"/v1/query/{query_id}"
         params = None if dc is None else [("dc", dc)]
         data = self._query_data(service, name, session, token, nearestn, datacenters, onlypassing, tags, ttl, regexp)
-        return self.agent.http.put(CB.bool(), path, params=params, data=data)
+        return self.agent.http.put(CB.boolean(), path, params=params, data=data)
 
     def get(self, query_id, token=None, dc=None):
         """
@@ -183,7 +183,7 @@ class Query:
         if dc:
             params.append(("dc", dc))
         headers = self.agent.prepare_headers(token)
-        return self.agent.http.delete(CB.bool(), f"/v1/query/{query_id}", params=params, headers=headers)
+        return self.agent.http.delete(CB.boolean(), f"/v1/query/{query_id}", params=params, headers=headers)
 
     def execute(self, query, token=None, dc=None, near=None, limit=None):
         """

@@ -38,7 +38,7 @@ class Token:
         """
         params = []
         headers = self.agent.prepare_headers(token)
-        return self.agent.http.delete(CB.bool(), f"/v1/acl/token/{accessor_id}", params=params, headers=headers)
+        return self.agent.http.delete(CB.boolean(), f"/v1/acl/token/{accessor_id}", params=params, headers=headers)
 
     def clone(self, accessor_id, token=None, description=""):
         """
