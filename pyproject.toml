@@ -131,8 +131,6 @@ disallow_untyped_calls = true
 no_implicit_optional = true
 # error whenever your code uses an unnecessary cast that can safely be removed
 warn_redundant_casts = true
-# Warns about unneeded # type: ignore comments.
-warn_unused_ignores = true
 # Shows a warning when encountering any code inferred to be unreachable or redundant after performing type analysis.
 warn_unreachable = true
 # Prohibit equality checks, identity checks, and container checks between non-overlapping types.
