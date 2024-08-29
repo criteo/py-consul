@@ -1,6 +1,7 @@
 aiohttp
 asynctest
 docker
+mypy
 pre-commit
 pyOpenSSL
 pylint
