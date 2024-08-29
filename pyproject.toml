@@ -1,5 +1,5 @@
 [tool.pytest.ini_options]
-addopts = "--cov=. --cov-context=test --durations=0 --durations-min=1.0"
+addopts = "--cov=. --cov-context=test --durations=0 --durations-min=3.0"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 
