@@ -31,7 +31,7 @@ class HTTPClient(base.HTTPClient):
         if connections_timeout:
             timeout = aiohttp.ClientTimeout(total=connections_timeout)
             session_kwargs["timeout"] = timeout
-        resp = await self._session.request(method, uri, headers=headers, data=data, **session_kwargs)
+        resp = await self._session.request(method, uri, headers=headers, data=data, **session_kwargs)  # type: ignore
         body = await resp.text(encoding="utf-8")
         if resp.status == 599:
             raise Timeout
