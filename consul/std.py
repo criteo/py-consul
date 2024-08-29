@@ -1,6 +1,7 @@
 from typing import Dict, Optional
 
 import requests
+from requests import Response
 
 from consul import base
 
@@ -12,7 +13,7 @@ class HTTPClient(base.HTTPClient):
         super().__init__(*args, **kwargs)
         self.session = requests.session()
 
-    def response(self, response):
+    def response(self, response: Response):
         response.encoding = "utf-8"
         return base.Response(response.status_code, response.headers, response.text)
 

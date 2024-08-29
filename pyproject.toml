@@ -124,7 +124,7 @@ keep-runtime-typing = true
 # error whenever it encounters a function definition without type annotations
 #disallow_untyped_defs = true
 # error whenever a function with type annotations calls a function defined without annotations
-#disallow_untyped_calls = true
+disallow_untyped_calls = true
 # stop treating arguments with a None default value as having an implicit Optional type
 no_implicit_optional = true
 # error whenever your code uses an unnecessary cast that can safely be removed
