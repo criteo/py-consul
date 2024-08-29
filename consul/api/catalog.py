@@ -85,7 +85,7 @@ class Catalog:
 
         headers = self.agent.prepare_headers(token)
         return self.agent.http.put(
-            CB.bool(), "/v1/catalog/register", data=json.dumps(data), params=params, headers=headers
+            CB.boolean(), "/v1/catalog/register", data=json.dumps(data), params=params, headers=headers
         )
 
     def deregister(self, node, service_id=None, check_id=None, dc=None, token=None):
@@ -117,7 +117,7 @@ class Catalog:
         if token:
             data["WriteRequest"] = {"Token": token}
         headers = self.agent.prepare_headers(token)
-        return self.agent.http.put(CB.bool(), "/v1/catalog/deregister", headers=headers, data=json.dumps(data))
+        return self.agent.http.put(CB.boolean(), "/v1/catalog/deregister", headers=headers, data=json.dumps(data))
 
     def datacenters(self):
         """

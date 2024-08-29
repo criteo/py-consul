@@ -73,7 +73,7 @@ class Session:
         dc = dc or self.agent.dc
         if dc:
             params.append(("dc", dc))
-        return self.agent.http.put(CB.bool(), f"/v1/session/destroy/{session_id}", params=params)
+        return self.agent.http.put(CB.boolean(), f"/v1/session/destroy/{session_id}", params=params)
 
     def list(self, index=None, wait=None, consistency=None, dc=None):
         """

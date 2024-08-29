@@ -91,7 +91,7 @@ class Agent:
             params.append(("reason", reason))
 
         headers = self.agent.prepare_headers(token)
-        return self.agent.http.put(CB.bool(), "/v1/agent/maintenance", params=params, headers=headers)
+        return self.agent.http.put(CB.boolean(), "/v1/agent/maintenance", params=params, headers=headers)
 
     def join(self, address, wan=False, token=None):
         """
@@ -110,7 +110,7 @@ class Agent:
         if wan:
             params.append(("wan", 1))
         headers = self.agent.prepare_headers(token)
-        return self.agent.http.put(CB.bool(), f"/v1/agent/join/{address}", params=params, headers=headers)
+        return self.agent.http.put(CB.boolean(), f"/v1/agent/join/{address}", params=params, headers=headers)
 
     def force_leave(self, node, token=None):
         """
@@ -127,7 +127,7 @@ class Agent:
         params = []
 
         headers = self.agent.prepare_headers(token)
-        return self.agent.http.put(CB.bool(), f"/v1/agent/force-leave/{node}", params=params, headers=headers)
+        return self.agent.http.put(CB.boolean(), f"/v1/agent/force-leave/{node}", params=params, headers=headers)
 
     class Service:
         def __init__(self, agent):
@@ -225,7 +225,7 @@ class Agent:
             params = []
             headers = self.agent.prepare_headers(token)
             return self.agent.http.put(
-                CB.bool(), "/v1/agent/service/register", params=params, headers=headers, data=json.dumps(payload)
+                CB.boolean(), "/v1/agent/service/register", params=params, headers=headers, data=json.dumps(payload)
             )
 
         def deregister(self, service_id, token=None):
@@ -238,7 +238,7 @@ class Agent:
             headers = self.agent.prepare_headers(token)
 
             return self.agent.http.put(
-                CB.bool(), f"/v1/agent/service/deregister/{service_id}", params=params, headers=headers
+                CB.boolean(), f"/v1/agent/service/deregister/{service_id}", params=params, headers=headers
             )
 
         def maintenance(self, service_id, enable, reason=None, token=None):
@@ -265,7 +265,7 @@ class Agent:
             headers = self.agent.prepare_headers(token)
 
             return self.agent.http.put(
-                CB.bool(), f"/v1/agent/service/maintenance/{service_id}", params=params, headers=headers
+                CB.boolean(), f"/v1/agent/service/maintenance/{service_id}", params=params, headers=headers
             )
 
     class Check:
@@ -337,7 +337,7 @@ class Agent:
             params = []
             headers = self.agent.prepare_headers(token)
             return self.agent.http.put(
-                CB.bool(), "/v1/agent/check/register", params=params, headers=headers, data=json.dumps(payload)
+                CB.boolean(), "/v1/agent/check/register", params=params, headers=headers, data=json.dumps(payload)
             )
 
         def deregister(self, check_id, token=None):
@@ -348,7 +348,7 @@ class Agent:
             headers = self.agent.prepare_headers(token)
 
             return self.agent.http.put(
-                CB.bool(), f"/v1/agent/check/deregister/{check_id}", params=params, headers=headers
+                CB.boolean(), f"/v1/agent/check/deregister/{check_id}", params=params, headers=headers
             )
 
         def ttl_pass(self, check_id, notes=None, token=None):
@@ -361,7 +361,7 @@ class Agent:
                 params.append(("note", notes))
             headers = self.agent.prepare_headers(token)
 
-            return self.agent.http.put(CB.bool(), f"/v1/agent/check/pass/{check_id}", params=params, headers=headers)
+            return self.agent.http.put(CB.boolean(), f"/v1/agent/check/pass/{check_id}", params=params, headers=headers)
 
         def ttl_fail(self, check_id, notes=None, token=None):
             """
@@ -374,7 +374,7 @@ class Agent:
                 params.append(("note", notes))
             headers = self.agent.prepare_headers(token)
 
-            return self.agent.http.put(CB.bool(), f"/v1/agent/check/fail/{check_id}", params=params, headers=headers)
+            return self.agent.http.put(CB.boolean(), f"/v1/agent/check/fail/{check_id}", params=params, headers=headers)
 
         def ttl_warn(self, check_id, notes=None, token=None):
             """
@@ -387,7 +387,7 @@ class Agent:
                 params.append(("note", notes))
             headers = self.agent.prepare_headers(token)
 
-            return self.agent.http.put(CB.bool(), f"/v1/agent/check/warn/{check_id}", params=params, headers=headers)
+            return self.agent.http.put(CB.boolean(), f"/v1/agent/check/warn/{check_id}", params=params, headers=headers)
 
     class Connect:
         def __init__(self, agent):

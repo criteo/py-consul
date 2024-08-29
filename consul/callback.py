@@ -27,7 +27,7 @@ class CB:
             raise ConsulException(f"{response.code} {response.body}")
 
     @classmethod
-    def bool(cls):
+    def boolean(cls):
         # returns True on successful response
         def cb(response):
             CB._status(response)
