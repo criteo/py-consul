@@ -1,13 +1,23 @@
 import json
+from typing import Optional
 
 from consul.callback import CB
 
 
 class Session:
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
 
-    def create(self, name=None, node=None, checks=None, lock_delay=15, behavior="release", ttl=None, dc=None):
+    def create(
+        self,
+        name: Optional[str] = None,
+        node=None,
+        checks=None,
+        lock_delay: int = 15,
+        behavior: str = "release",
+        ttl: Optional[int] = None,
+        dc=None,
+    ):
         """
         Creates a new session. There is more documentation for sessions
         `here <https://consul.io/docs/internals/sessions.html>`_.
@@ -59,9 +69,9 @@ class Session:
         if ttl:
             assert 10 <= ttl <= 86400
             data["ttl"] = f"{ttl}s"
-        data = json.dumps(data) if data else ""
+        data_str = json.dumps(data) if data else ""
 
-        return self.agent.http.put(CB.json(is_id=True), "/v1/session/create", params=params, data=data)
+        return self.agent.http.put(CB.json(is_id=True), "/v1/session/create", params=params, data=data_str)
 
     def destroy(self, session_id, dc=None):
         """
@@ -73,7 +83,7 @@ class Session:
         dc = dc or self.agent.dc
         if dc:
             params.append(("dc", dc))
-        return self.agent.http.put(CB.bool(), f"/v1/session/destroy/{session_id}", params=params)
+        return self.agent.http.put(CB.boolean(), f"/v1/session/destroy/{session_id}", params=params)
 
     def list(self, index=None, wait=None, consistency=None, dc=None):
         """
@@ -120,7 +130,7 @@ class Session:
             params.append((consistency, "1"))
         return self.agent.http.get(CB.json(index=True), "/v1/session/list", params=params)
 
-    def node(self, node, index=None, wait=None, consistency=None, dc=None):
+    def node(self, node: str, index=None, wait=None, consistency=None, dc=None):
         """
         Returns a tuple of (*index*, *sessions*) as per *session.list*, but
         filters the sessions returned to only those active for *node*.
@@ -149,7 +159,7 @@ class Session:
             params.append((consistency, "1"))
         return self.agent.http.get(CB.json(index=True), f"/v1/session/node/{node}", params=params)
 
-    def info(self, session_id, index=None, wait=None, consistency=None, dc=None):
+    def info(self, session_id: str, index=None, wait=None, consistency=None, dc=None):
         """
         Returns a tuple of (*index*, *session*) for the session
         *session_id* in the *dc* datacenter. *dc* defaults to the current

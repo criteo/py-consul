@@ -6,7 +6,7 @@ from consul import ConsulException
 
 
 class TestConsul:
-    def test_kv(self, consul_obj):
+    def test_kv(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         _index, data = c.kv.get("foo")
         assert data is None
@@ -14,14 +14,14 @@ class TestConsul:
         _index, data = c.kv.get("foo")
         assert data["Value"] == b"bar"
 
-    def test_kv_wait(self, consul_obj):
+    def test_kv_wait(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         assert c.kv.put("foo", "bar") is True
         index, _data = c.kv.get("foo")
         check, _data = c.kv.get("foo", index=index, wait="20ms")
         assert index == check
 
-    def test_kv_encoding(self, consul_obj):
+    def test_kv_encoding(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
         # test binary
@@ -47,7 +47,7 @@ class TestConsul:
         # check unencoded values raises assert
         pytest.raises(AssertionError, c.kv.put, "foo", {1: 2})
 
-    def test_kv_put_cas(self, consul_obj):
+    def test_kv_put_cas(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         assert c.kv.put("foo", "bar", cas=50) is False
         assert c.kv.put("foo", "bar", cas=0) is True
@@ -58,7 +58,7 @@ class TestConsul:
         _index, data = c.kv.get("foo")
         assert data["Value"] == b"bar2"
 
-    def test_kv_put_flags(self, consul_obj):
+    def test_kv_put_flags(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         c.kv.put("foo", "bar")
         _index, data = c.kv.get("foo")
@@ -68,7 +68,7 @@ class TestConsul:
         _index, data = c.kv.get("foo")
         assert data["Flags"] == 50
 
-    def test_kv_recurse(self, consul_obj):
+    def test_kv_recurse(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         _index, data = c.kv.get("foo/", recurse=True)
         assert data is None
@@ -84,7 +84,7 @@ class TestConsul:
         assert [x["Key"] for x in data] == ["foo/", "foo/bar1", "foo/bar2", "foo/bar3"]
         assert [x["Value"] for x in data] == [None, b"1", b"2", b"3"]
 
-    def test_kv_delete(self, consul_obj):
+    def test_kv_delete(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         c.kv.put("foo1", "1")
         c.kv.put("foo2", "2")
@@ -99,7 +99,7 @@ class TestConsul:
         _index, data = c.kv.get("foo", recurse=True)
         assert data is None
 
-    def test_kv_delete_cas(self, consul_obj):
+    def test_kv_delete_cas(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
         c.kv.put("foo", "bar")
@@ -112,7 +112,7 @@ class TestConsul:
         index, data = c.kv.get("foo")
         assert data is None
 
-    def test_kv_acquire_release(self, consul_obj):
+    def test_kv_acquire_release(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
         pytest.raises(ConsulException, c.kv.put, "foo", "bar", acquire="foo")
@@ -130,7 +130,7 @@ class TestConsul:
         c.session.destroy(s1)
         c.session.destroy(s2)
 
-    def test_kv_keys_only(self, consul_obj):
+    def test_kv_keys_only(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
         assert c.kv.put("bar", "4") is True

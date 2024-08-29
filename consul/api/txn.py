@@ -9,7 +9,7 @@ class Txn:
     inside a single, atomic transaction.
     """
 
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
 
     def put(self, payload):

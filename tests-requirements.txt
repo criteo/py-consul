@@ -1,6 +1,7 @@
 aiohttp
 asynctest
 docker
+mypy
 pre-commit
 pyOpenSSL
 pylint
@@ -14,6 +15,8 @@ setuptools
 tox
 tox-uv
 treq
+types-docker
+types-setuptools
 uv
 virtualenv
 wheel

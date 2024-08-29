@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Optional
+
 from consul.callback import CB
 
 
@@ -16,10 +20,10 @@ class Event:
     An advantage however is that events can still be used even in the
     absence of server nodes or during an outage."""
 
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
 
-    def fire(self, name, body="", node=None, service=None, tag=None, token=None):
+    def fire(self, name: str, body: str = "", node=None, service=None, tag=None, token: str | None = None):
         """
         Sends an event to Consul's gossip protocol.
 
@@ -54,7 +58,7 @@ class Event:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.put(CB.json(), f"/v1/event/fire/{name}", params=params, headers=headers, data=body)
 
-    def list(self, name=None, index=None, wait=None):
+    def list(self, name: Optional[str] = None, index=None, wait=None):
         """
         Returns a tuple of (*index*, *events*)
             Note: Since Consul's event protocol uses gossip, there is no

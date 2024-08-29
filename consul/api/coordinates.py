@@ -2,7 +2,7 @@ from consul.callback import CB
 
 
 class Coordinate:
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
 
     def datacenters(self):

@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import logging
 import warnings
+from typing import Any, Optional
 
 log = logging.getLogger(__name__)
 
@@ -10,7 +13,7 @@ class Check:
     """
 
     @classmethod
-    def script(cls, args, interval, deregister=None):
+    def script(cls, args, interval, deregister=None) -> dict[str, Any]:
         """
         Run the script *args* every *interval* (e.g. "10s") to peform health
         check
@@ -24,7 +27,7 @@ class Check:
         return ret
 
     @classmethod
-    def http(cls, url, interval, timeout=None, deregister=None, header=None):
+    def http(cls, url, interval, timeout=None, deregister=None, header=None) -> dict[str, Any]:
         """
         Peform a HTTP GET against *url* every *interval* (e.g. "10s") to peform
         health check with an optional *timeout* and optional *deregister* after
@@ -43,7 +46,7 @@ class Check:
         return ret
 
     @classmethod
-    def tcp(cls, host, port, interval, timeout=None, deregister=None):
+    def tcp(cls, host: str, port: int, interval, timeout=None, deregister=None) -> dict[str, Any]:
         """
         Attempt to establish a tcp connection to the specified *host* and
         *port* at a specified *interval* with optional *timeout* and optional
@@ -58,7 +61,7 @@ class Check:
         return ret
 
     @classmethod
-    def ttl(cls, ttl):
+    def ttl(cls, ttl: str) -> dict[str, Any]:
         """
         Set check to be marked as critical after *ttl* (e.g. "10s") unless the
         check is periodically marked as passing.
@@ -66,7 +69,7 @@ class Check:
         return {"ttl": ttl}
 
     @classmethod
-    def docker(cls, container_id, shell, script, interval, deregister=None):
+    def docker(cls, container_id, shell, script, interval, deregister=None) -> dict[str, Any]:
         """
         Invoke *script* packaged within a running docker container with
         *container_id* at a specified *interval* on the configured
@@ -79,13 +82,15 @@ class Check:
         return ret
 
     @classmethod
-    def _compat(cls, script=None, interval=None, ttl=None, http=None, timeout=None, deregister=None):
+    def _compat(
+        cls, script=None, interval=None, ttl: Optional[int] = None, http=None, timeout=None, deregister=None
+    ) -> dict[str, Any]:
         if not script and not http and not ttl:
             return {}
 
         log.warning("DEPRECATED: use consul.Check.script/http/ttl to specify check")
 
-        ret = {"check": {}}
+        ret: dict[str, Any] = {"check": {}}
 
         if script:
             assert interval

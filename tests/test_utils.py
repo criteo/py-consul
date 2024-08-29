@@ -1,7 +1,7 @@
 from tests.utils import find_recursive, should_skip
 
 
-def test_find_recursive():
+def test_find_recursive() -> None:
     ret_value = [
         {
             "AccessorID": "accessorid",
@@ -51,7 +51,7 @@ def test_find_recursive():
     assert not find_recursive(ret_value, unwanted)
 
 
-def test_should_skip():
+def test_should_skip() -> None:
     test_cases = [
         ("1.0.0", "<=", "1.0.0", False),
         ("1.0.1", "<=", "1.0.0", True),

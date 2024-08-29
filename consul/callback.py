@@ -1,7 +1,13 @@
+from __future__ import annotations
+
 import base64
 import json
+from typing import TYPE_CHECKING, Callable
 
 from consul.exceptions import ACLDisabled, ACLPermissionDenied, BadRequest, ClientError, ConsulException, NotFound
+
+if TYPE_CHECKING:
+    from consul.base import Response
 
 #
 # Conveniences to create consistent callback handlers for endpoints
@@ -9,7 +15,7 @@ from consul.exceptions import ACLDisabled, ACLPermissionDenied, BadRequest, Clie
 
 class CB:
     @classmethod
-    def _status(cls, response, allow_404=True):
+    def _status(cls, response: Response, allow_404: bool = True) -> None:
         # status checking
         if 400 <= response.code < 500:
             if response.code == 400:
@@ -27,7 +33,7 @@ class CB:
             raise ConsulException(f"{response.code} {response.body}")
 
     @classmethod
-    def bool(cls):
+    def boolean(cls) -> Callable[[Response], bool]:
         # returns True on successful response
         def cb(response):
             CB._status(response)
@@ -36,7 +42,15 @@ class CB:
         return cb
 
     @classmethod
-    def json(cls, postprocess=None, allow_404=True, one=False, decode=False, is_id=False, index=False):
+    def json(
+        cls,
+        postprocess=None,
+        allow_404: bool = True,
+        one: bool = False,
+        decode: bool | str = False,
+        is_id: bool = False,
+        index: bool = False,
+    ):
         """
         *postprocess* is a function to apply to the final result.
 
