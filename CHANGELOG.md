@@ -1,5 +1,9 @@
 # Change log
 
+## 1.5.2
+
+- **feature:** add replace_existing_checks option to Catalog.register()
+
 ## 1.5.1
 
 - **feature:** Implement creation of policies.
