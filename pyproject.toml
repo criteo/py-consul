@@ -33,6 +33,7 @@ disable = [
     "R0914", # Too many local variables
     "W0511", # TODO
     "W0621", # redefined-outer-name
+    "R0917", # too many positional arguments
 ]
 
 [tool.ruff]
