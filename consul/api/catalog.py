@@ -7,7 +7,17 @@ class Catalog:
     def __init__(self, agent):
         self.agent = agent
 
-    def register(self, node, address, service=None, check=None, dc=None, token=None, node_meta=None):
+    def register(
+        self,
+        node,
+        address,
+        service=None,
+        check=None,
+        dc=None,
+        token=None,
+        node_meta=None,
+        replace_existing_checks=False,
+    ):
         """
         A low level mechanism for directly registering or updating entries
         in the catalog. It is usually recommended to use
@@ -60,6 +70,11 @@ class Catalog:
         *node_meta* is an optional meta data used for filtering, a
         dictionary formatted as {k1:v1, k2:v2}.
 
+        *replace_existing_checks* Missing health checks from the request will
+        be deleted from the agent.
+        Using this parameter allows to idempotently register a service and its
+        checks without having to manually deregister checks.
+
         This manipulates the health check entry, but does not setup a
         script or TTL to actually update the status. The full documentation
         is `here <https://consul.io/docs/agent/http.html#catalog>`_.
@@ -79,6 +94,8 @@ class Catalog:
         if token:
             data["WriteRequest"] = {"Token": token}
             params.append(("token", token))
+        if replace_existing_checks:
+            params.append(("replace-existing-checks", "true"))
         if node_meta:
             for nodemeta_name, nodemeta_value in node_meta.items():
                 params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
