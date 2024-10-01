@@ -152,6 +152,7 @@ class Agent:
             timeout=None,
             enable_tag_override=False,
             extra_checks=None,
+            replace_existing_checks=False,
         ):
             """
             Add a new service to the local agent. There is more
@@ -184,6 +185,11 @@ class Agent:
             *script*, *interval*, *ttl*, *http*, and *timeout* arguments
             are deprecated. use *check* instead.
 
+            *replace_existing_checks* Missing health checks from the request will
+            be deleted from the agent.
+            Using this parameter allows to idempotently register a service and its
+            checks without having to manually deregister checks.
+
             *enable_tag_override* is an optional bool that enable you
             to modify a service tags from servers(consul agent role server)
             Default is set to False.
@@ -214,15 +220,15 @@ class Agent:
                 payload["checks"] = [check] + extra_checks
             if weights:
                 payload["weights"] = weights
-
             else:
                 payload.update(
                     Check._compat(  # pylint: disable=protected-access
                         script=script, interval=interval, ttl=ttl, http=http, timeout=timeout
                     )
                 )
-
             params = []
+            if replace_existing_checks:
+                params.append(("replace-existing-checks", "true"))
             headers = self.agent.prepare_headers(token)
             return self.agent.http.put(
                 CB.bool(), "/v1/agent/service/register", params=params, headers=headers, data=json.dumps(payload)
