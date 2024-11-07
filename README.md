@@ -1,4 +1,4 @@
-# py-consul [![PyPi version](https://img.shields.io/pypi/v/py-consul.svg)](https://pypi.python.org/pypi/py-consul/) [![Python version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/) ![Status](https://img.shields.io/badge/status-maintained-green.svg)
+# py-consul [![PyPi version](https://img.shields.io/pypi/v/py-consul.svg)](https://pypi.python.org/pypi/py-consul/) [![Python version](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/) ![Status](https://img.shields.io/badge/status-maintained-green.svg)
 
 Status
 -----------
