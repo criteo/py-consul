@@ -2,7 +2,7 @@ from consul.callback import CB
 
 
 class Operator:
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
 
     def raft_config(self):

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from consul.callback import CB
 
 
@@ -8,18 +10,18 @@ class KV:
     way.
     """
 
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
 
     def get(
         self,
         key,
         index=None,
-        recurse=False,
+        recurse: bool = False,
         wait=None,
-        token=None,
+        token: str | None = None,
         consistency=None,
-        keys=False,
+        keys: bool = False,
         separator=None,
         dc=None,
         connections_timeout=None,
@@ -83,7 +85,7 @@ class KV:
             params.append((consistency, "1"))
 
         one = False
-        decode = False
+        decode: bool | str = False
 
         if not keys:
             decode = "Value"
@@ -106,7 +108,7 @@ class KV:
         flags=None,
         acquire=None,
         release=None,
-        token=None,
+        token: str | None = None,
         dc=None,
         connections_timeout=None,
     ):
@@ -166,7 +168,7 @@ class KV:
             CB.json(), f"/v1/kv/{key}", params=params, headers=headers, data=value, **http_kwargs
         )
 
-    def delete(self, key, recurse=None, cas=None, token=None, dc=None, connections_timeout=None):
+    def delete(self, key, recurse=None, cas=None, token: str | None = None, dc=None, connections_timeout=None):
         """
         Deletes a single key or if *recurse* is True, all keys sharing a
         prefix.

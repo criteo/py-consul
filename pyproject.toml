@@ -1,5 +1,5 @@
 [tool.pytest.ini_options]
-addopts = "--cov=. --cov-context=test --durations=0 --durations-min=1.0"
+addopts = "--cov=. --cov-context=test --durations=0 --durations-min=3.0"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 
@@ -93,6 +93,7 @@ fixable = [
     "SIM",
     "SIM",
     "UP",
+    "TCH",
 ]
 
 # Never enforce some rules
@@ -119,3 +120,17 @@ max-complexity = 15
 [tool.ruff.lint.pyupgrade]
 # Preserve types, even if a file imports `from __future__ import annotations`.
 keep-runtime-typing = true
+
+[tool.mypy]
+# error whenever it encounters a function definition without type annotations
+#disallow_untyped_defs = true
+# error whenever a function with type annotations calls a function defined without annotations
+disallow_untyped_calls = true
+# stop treating arguments with a None default value as having an implicit Optional type
+no_implicit_optional = true
+# error whenever your code uses an unnecessary cast that can safely be removed
+warn_redundant_casts = true
+# Shows a warning when encountering any code inferred to be unreachable or redundant after performing type analysis.
+warn_unreachable = true
+# Prohibit equality checks, identity checks, and container checks between non-overlapping types.
+strict_equality = true

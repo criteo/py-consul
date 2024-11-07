@@ -1,5 +1,5 @@
 class TestStatus:
-    def test_status_leader(self, consul_obj):
+    def test_status_leader(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
         agent_self = c.agent.self()
@@ -8,7 +8,7 @@ class TestStatus:
 
         assert leader == addr_port, f"Leader value was {leader}, expected value was {addr_port}"
 
-    def test_status_peers(self, consul_obj):
+    def test_status_peers(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
         agent_self = c.agent.self()

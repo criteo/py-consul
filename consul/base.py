@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import abc
 import collections
 import logging
 import os
 import urllib
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Type
 
 from consul.api.acl import ACL
 from consul.api.agent import Agent
@@ -20,6 +22,9 @@ from consul.api.status import Status
 from consul.api.txn import Txn
 from consul.exceptions import ConsulException
 
+if TYPE_CHECKING:
+    from types import TracebackType
+
 log = logging.getLogger(__name__)
 
 
@@ -31,7 +36,9 @@ Response = collections.namedtuple("Response", ["code", "headers", "body"])
 
 
 class HTTPClient(metaclass=abc.ABCMeta):
-    def __init__(self, host="127.0.0.1", port=8500, scheme="http", verify=True, cert=None):
+    def __init__(
+        self, host: str = "127.0.0.1", port: int = 8500, scheme: str = "http", verify: bool = True, cert=None
+    ) -> None:
         self.host = host
         self.port = port
         self.scheme = scheme
@@ -39,7 +46,7 @@ class HTTPClient(metaclass=abc.ABCMeta):
         self.base_uri = f"{self.scheme}://{self.host}:{self.port}"
         self.cert = cert
 
-    def uri(self, path, params=None):
+    def uri(self, path: str, params: list[tuple[str, Any]] | None = None):
         uri = self.base_uri + urllib.parse.quote(path, safe="/:")
         if params:
             uri = f"{uri}?{urllib.parse.urlencode(params)}"
@@ -50,7 +57,7 @@ class HTTPClient(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def put(self, callback, path, params=None, data="", headers: Optional[Dict[str, str]] = None):
+    def put(self, callback, path, params=None, data: str = "", headers: Optional[Dict[str, str]] = None):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -58,7 +65,7 @@ class HTTPClient(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def post(self, callback, path, params=None, data="", headers: Optional[Dict[str, str]] = None):
+    def post(self, callback, path, params=None, data: str = "", headers: Optional[Dict[str, str]] = None):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -69,15 +76,15 @@ class HTTPClient(metaclass=abc.ABCMeta):
 class Consul:
     def __init__(
         self,
-        host="127.0.0.1",
-        port=8500,
-        token=None,
-        scheme="http",
-        consistency="default",
+        host: str = "127.0.0.1",
+        port: int = 8500,
+        token: str | None = None,
+        scheme: str = "http",
+        consistency: str = "default",
         dc=None,
-        verify=True,
+        verify: bool = True,
         cert=None,
-    ):
+    ) -> None:
         """
         *token* is an optional `ACL token`_. If supplied it will be used by
         default for all requests made with this client session. It's still
@@ -101,7 +108,7 @@ class Consul:
 
         if os.getenv("CONSUL_HTTP_ADDR"):
             try:
-                host, port = os.getenv("CONSUL_HTTP_ADDR").split(":")
+                host, port = os.getenv("CONSUL_HTTP_ADDR").split(":")  # type: ignore
             except ValueError as err:
                 raise ConsulException(
                     f"CONSUL_HTTP_ADDR ({os.getenv('CONSUL_HTTP_ADDR')}) invalid, does not match <host>:<port>"
@@ -143,18 +150,22 @@ class Consul:
     async def __aenter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self, exc_type: Optional[Type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
+    ) -> None:
         self.http.close()
 
-    async def __aexit__(self, exc_type, exc, tb):
+    async def __aexit__(
+        self, exc_type: Optional[Type[BaseException]], exc: Optional[BaseException], tb: Optional[TracebackType]
+    ) -> None:
         await self.http.close()
 
     @abc.abstractmethod
-    def http_connect(self, host, port, scheme, verify=True, cert=None):
+    def http_connect(self, host: str, port: int, scheme, verify: bool = True, cert=None):
         pass
 
     def prepare_headers(self, token: Optional[str] = None) -> Dict[str, str]:
         headers = {}
         if token or self.token:
             headers["X-Consul-Token"] = token or self.token
-        return headers
+        return headers  # type: ignore

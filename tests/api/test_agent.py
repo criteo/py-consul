@@ -10,16 +10,16 @@ Check = consul.check.Check
 
 
 class TestAgent:
-    def test_agent_checks(self, consul_port):
+    def test_agent_checks(self, consul_port) -> None:
         consul_port, _consul_version = consul_port
         c = consul.Consul(port=consul_port)
 
-        def verify_and_dereg_check(check_id):
+        def verify_and_dereg_check(check_id) -> None:
             assert set(c.agent.checks().keys()) == {check_id}
             assert c.agent.check.deregister(check_id) is True
             assert set(c.agent.checks().keys()) == set()
 
-        def verify_check_status(check_id, status, notes=None):
+        def verify_check_status(check_id, status, notes=None) -> None:
             checks = c.agent.checks()
             assert checks[check_id]["Status"] == status
             if notes:
@@ -68,7 +68,7 @@ class TestAgent:
         verify_check_status("ttl_check", "critical")
         verify_and_dereg_check("ttl_check")
 
-    def test_service_multi_check(self, consul_port):
+    def test_service_multi_check(self, consul_port) -> None:
         consul_port, _consul_version = consul_port
         c = consul.Consul(port=consul_port)
         http_addr = "http://127.0.0.1:8500"
@@ -98,7 +98,7 @@ class TestAgent:
         assert [check["CheckID"] for check in checks] == ["service:foo1:1", "service:foo1:2", "service:foo1:3"]
         assert [check["Status"] for check in checks] == ["passing", "passing", "passing"]
 
-    def test_service_dereg_issue_156(self, consul_port):
+    def test_service_dereg_issue_156(self, consul_port) -> None:
         consul_port, _consul_version = consul_port
         # https://github.com/cablehead/python-consul/issues/156
         service_name = "app#127.0.0.1#3000"
@@ -118,7 +118,7 @@ class TestAgent:
         _index, nodes = c.health.service(service_name)
         assert [node["Service"]["ID"] for node in nodes] == []
 
-    def test_agent_checks_service_id(self, consul_obj):
+    def test_agent_checks_service_id(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         c.agent.service.register("foo1")
 
@@ -146,7 +146,7 @@ class TestAgent:
 
         time.sleep(40 / 1000.0)
 
-    def test_agent_register_check_no_service_id(self, consul_obj):
+    def test_agent_register_check_no_service_id(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         _index, nodes = c.health.service("foo1")
         assert nodes == []
@@ -166,7 +166,7 @@ class TestAgent:
 
         time.sleep(40 / 1000.0)
 
-    def test_agent_register_enable_tag_override(self, consul_obj):
+    def test_agent_register_enable_tag_override(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         _index, nodes = c.health.service("foo1")
         assert nodes == []
@@ -177,7 +177,7 @@ class TestAgent:
         # Cleanup tasks
         c.agent.check.deregister("foo")
 
-    def test_agent_service_maintenance(self, consul_obj):
+    def test_agent_service_maintenance(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
         c.agent.service.register("foo", check=Check.ttl("100ms"))
@@ -204,7 +204,7 @@ class TestAgent:
 
         time.sleep(40 / 1000.0)
 
-    def test_agent_node_maintenance(self, consul_obj):
+    def test_agent_node_maintenance(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
         c.agent.maintenance("true", "test")
@@ -222,7 +222,7 @@ class TestAgent:
         checks_post = c.agent.checks()
         assert "_node_maintenance" not in checks_post
 
-    def test_agent_members(self, consul_obj):
+    def test_agent_members(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         members = c.agent.members()
         for x in members:
@@ -235,7 +235,7 @@ class TestAgent:
         for x in wan_members:
             assert "dc1" in x["Name"]
 
-    def test_agent_self(self, consul_obj):
+    def test_agent_self(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
         EXPECTED = {
@@ -247,7 +247,7 @@ class TestAgent:
             expected = EXPECTED["v2"]
         assert set(c.agent.self().keys()) == expected
 
-    def test_agent_services(self, consul_obj):
+    def test_agent_services(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         assert c.agent.service.register("foo") is True
         assert set(c.agent.services().keys()) == {"foo"}

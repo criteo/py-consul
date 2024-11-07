@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import collections
 import json
 import os
@@ -8,6 +10,8 @@ import uuid
 import docker
 import pytest
 import requests
+from docker import DockerClient
+from docker.errors import APIError, NotFound
 from requests import RequestException
 
 CONSUL_VERSIONS = ["1.16.1", "1.17.3"]
@@ -19,7 +23,7 @@ LOGS_DIR = os.path.join(os.path.dirname(__file__), "logs")
 os.makedirs(LOGS_DIR, exist_ok=True)
 
 
-def get_free_ports(num, host=None):
+def get_free_ports(num: int, host=None) -> list[int]:
     if not host:
         host = "127.0.0.1"
     sockets = []
@@ -40,7 +44,7 @@ def _unset_consul_token():
         del os.environ["CONSUL_HTTP_TOKEN"]
 
 
-def start_consul_container(version, acl_master_token=None):
+def start_consul_container(version: str, acl_master_token: str | None = None):
     """
     Starts a Consul container. If acl_master_token is None, ACL will be disabled
     for this server, otherwise it will be enabled and the master token will be
@@ -87,9 +91,16 @@ def start_consul_container(version, acl_master_token=None):
             "acl": {"enabled": True, "tokens": {"initial_management": acl_master_token}},
         }
         merged_config = {**base_config, **acl_config}
-        docker_config["environment"]["CONSUL_LOCAL_CONFIG"] = json.dumps(merged_config)
+        docker_config["environment"]["CONSUL_LOCAL_CONFIG"] = json.dumps(merged_config)  # type: ignore
 
-    def start_consul_container_with_retry(client, command, version, docker_config, max_retries=3, retry_delay=2):  # pylint: disable=inconsistent-return-statements
+    def start_consul_container_with_retry(  # pylint: disable=inconsistent-return-statements
+        client: DockerClient,
+        command: str,
+        version: str,
+        docker_config: dict,
+        max_retries: int = 3,
+        retry_delay: int = 2,
+    ):
         """
         Start a Consul container with retries as a few initial attempts sometimes fail.
         """
@@ -97,12 +108,12 @@ def start_consul_container(version, acl_master_token=None):
             try:
                 container = client.containers.run(f"hashicorp/consul:{version}", command=command, **docker_config)
                 return container
-            except docker.errors.APIError:
+            except APIError:
                 # Cleanup that stray container as it might cause a naming conflict
                 try:
                     container = client.containers.get(docker_config["name"])
                     container.remove(force=True)
-                except docker.errors.NotFound:
+                except NotFound:
                     pass
                 if attempt == max_retries - 1:
                     raise
@@ -146,13 +157,13 @@ def start_consul_container(version, acl_master_token=None):
     raise Exception("Failed to verify Consul startup")  # pylint: disable=broad-exception-raised
 
 
-def get_consul_version(port):
+def get_consul_version(port: int) -> str:
     base_uri = f"http://127.0.0.1:{port}/v1/"
     response = requests.get(base_uri + "agent/self", timeout=10)
     return response.json()["Config"]["Version"].strip()
 
 
-def setup_and_teardown_consul(request, version, acl_master_token=None):
+def setup_and_teardown_consul(request, version, acl_master_token: str | None = None):
     # Start the container, yield, get container logs, store them in logs/<test_name>.log, stop the container
     container, port = start_consul_container(version=version, acl_master_token=acl_master_token)
     version = get_consul_version(port)

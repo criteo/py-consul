@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from consul.callback import CB
 
 
 class Health:
     # TODO: All of the health endpoints support all consistency modes
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
 
     def _service(
@@ -15,7 +17,7 @@ class Health:
         tag=None,
         dc=None,
         near=None,
-        token=None,
+        token: str | None = None,
         node_meta=None,
     ):
         params = []
@@ -41,7 +43,7 @@ class Health:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(index=True), internal_uri, params=params, headers=headers)
 
-    def service(self, service, **kwargs):
+    def service(self, service: str, **kwargs):
         """
         Returns a tuple of (*index*, *nodes*)
 
@@ -85,7 +87,7 @@ class Health:
         internal_uri = f"/v1/health/connect/{service}"
         return self._service(internal_uri=internal_uri, **kwargs)
 
-    def checks(self, service, index=None, wait=None, dc=None, near=None, token=None, node_meta=None):
+    def checks(self, service, index=None, wait=None, dc=None, near=None, token: str | None = None, node_meta=None):
         """
         Returns a tuple of (*index*, *checks*) with *checks* being the
         checks associated with the service.
@@ -126,7 +128,7 @@ class Health:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(index=True), f"/v1/health/checks/{service}", params=params, headers=headers)
 
-    def state(self, name, index=None, wait=None, dc=None, near=None, token=None, node_meta=None):
+    def state(self, name: str, index=None, wait=None, dc=None, near=None, token: str | None = None, node_meta=None):
         """
         Returns a tuple of (*index*, *nodes*)
 
@@ -173,7 +175,7 @@ class Health:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(index=True), f"/v1/health/state/{name}", params=params, headers=headers)
 
-    def node(self, node, index=None, wait=None, dc=None, token=None):
+    def node(self, node, index=None, wait=None, dc=None, token: str | None = None):
         """
         Returns a tuple of (*index*, *checks*)
 

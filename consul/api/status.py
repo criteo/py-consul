@@ -7,7 +7,7 @@ class Status:
      of the Consul cluster.
     """
 
-    def __init__(self, agent):
+    def __init__(self, agent) -> None:
         self.agent = agent
 
     def leader(self):

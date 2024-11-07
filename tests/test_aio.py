@@ -29,7 +29,7 @@ async def consul_acl_obj(acl_consul):
 
 
 class TestAsyncioConsul:
-    async def test_kv(self, consul_obj):
+    async def test_kv(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         _index, data = await c.kv.get("foo")
         assert data is None
@@ -38,22 +38,22 @@ class TestAsyncioConsul:
         _index, data = await c.kv.get("foo")
         assert data["Value"] == b"bar"
 
-    async def test_consul_ctor(self, consul_obj):
+    async def test_consul_ctor(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         await c.kv.put("foo", struct.pack("i", 1000))
         _index, data = await c.kv.get("foo")
         assert struct.unpack("i", data["Value"]) == (1000,)
 
-    async def test_kv_binary(self, consul_obj):
+    async def test_kv_binary(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         await c.kv.put("foo", struct.pack("i", 1000))
         _index, data = await c.kv.get("foo")
         assert struct.unpack("i", data["Value"]) == (1000,)
 
-    async def test_kv_missing(self, consul_obj):
+    async def test_kv_missing(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
-        async def put():
+        async def put() -> None:
             await asyncio.sleep(2.0 / 100)
             await c.kv.put("foo", "bar")
 
@@ -66,7 +66,7 @@ class TestAsyncioConsul:
         await fut
         await c.close()
 
-    async def test_kv_put_flags(self, consul_obj):
+    async def test_kv_put_flags(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         await c.kv.put("foo", "bar")
         _index, data = await c.kv.get("foo")
@@ -77,7 +77,7 @@ class TestAsyncioConsul:
         _index, data = await c.kv.get("foo")
         assert data["Flags"] == 50
 
-    async def test_kv_delete(self, consul_obj):
+    async def test_kv_delete(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         await c.kv.put("foo1", "1")
         await c.kv.put("foo2", "2")
@@ -94,10 +94,10 @@ class TestAsyncioConsul:
         _index, data = await c.kv.get("foo", recurse=True)
         assert data is None
 
-    async def test_kv_subscribe(self, consul_obj):
+    async def test_kv_subscribe(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
-        async def put():
+        async def put() -> None:
             await asyncio.sleep(1.0 / 100)
             response = await c.kv.put("foo", "bar")
             assert response is True
@@ -109,7 +109,7 @@ class TestAsyncioConsul:
         assert data["Value"] == b"bar"
         await fut
 
-    async def test_transaction(self, consul_obj):
+    async def test_transaction(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         value = base64.b64encode(b"1").decode("utf8")
         d = {"KV": {"Verb": "set", "Key": "asdf", "Value": value}}
@@ -120,7 +120,7 @@ class TestAsyncioConsul:
         r = await c.txn.put([d])
         assert r["Results"][0]["KV"]["Value"] == value
 
-    async def test_agent_services(self, consul_obj):
+    async def test_agent_services(self, consul_obj) -> None:
         c, _consul_version = consul_obj
         EXPECTED = {
             "v1": {
@@ -195,10 +195,10 @@ class TestAsyncioConsul:
     #     assert [x["Node"] for x in nodes] == []
     #     await fut
 
-    async def test_session(self, consul_obj):
+    async def test_session(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
-        async def register():
+        async def register() -> None:
             await asyncio.sleep(1.0 / 100)
             session_id = await c.session.create()
             await asyncio.sleep(50 / 1000.0)
