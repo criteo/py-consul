@@ -22,6 +22,8 @@ class KV:
         keys=False,
         separator=None,
         dc=None,
+        ns=None,
+        partition=None,
         connections_timeout=None,
     ):
         """
@@ -42,6 +44,14 @@ class KV:
 
         *dc* is the optional datacenter that you wish to communicate with.
         If None is provided, defaults to the agent's datacenter.
+
+        *ns* is the optional namespace to use for the request.
+        If None is provided, the namespace is inherited from the namespace
+        of request's ACL token, or defaults to the default namespace.
+
+        *partition* is the optional Admin Partition to use for the request.
+        If None is provided, the partition is inferred from the
+        request's ACL token, or defaults to the default partition.
 
         The *value* returned is for the specified key, or if *recurse* is
         True a list of *values* for all keys with the given prefix is
@@ -81,6 +91,10 @@ class KV:
         consistency = consistency or self.agent.consistency
         if consistency in ("consistent", "stale"):
             params.append((consistency, "1"))
+        if ns:
+            params.append(("ns", ns))
+        if partition:
+            params.append(("partition", partition))
 
         one = False
         decode = False
@@ -108,6 +122,8 @@ class KV:
         release=None,
         token=None,
         dc=None,
+        ns=None,
+        partition=None,
         connections_timeout=None,
     ):
         """
@@ -140,6 +156,14 @@ class KV:
         *dc* is the optional datacenter that you wish to communicate with.
         If None is provided, defaults to the agent's datacenter.
 
+        *ns* is the optional namespace to use for the request.
+        If None is provided, the namespace is inherited from the namespace
+        of request's ACL token, or defaults to the default namespace.
+
+        *partition* is the optional Admin Partition to use for the request.
+        If None is provided, the partition is inferred from the
+        request's ACL token, or defaults to the default partition.
+
         The return value is simply either True or False. If False is
         returned, then the update has not taken place.
         """
@@ -158,6 +182,10 @@ class KV:
         dc = dc or self.agent.dc
         if dc:
             params.append(("dc", dc))
+        if ns:
+            params.append(("ns", ns))
+        if partition:
+            params.append(("partition", partition))
         http_kwargs = {}
         if connections_timeout:
             http_kwargs["connections_timeout"] = connections_timeout
@@ -166,7 +194,16 @@ class KV:
             CB.json(), f"/v1/kv/{key}", params=params, headers=headers, data=value, **http_kwargs
         )
 
-    def delete(self, key, recurse=None, cas=None, token=None, dc=None, connections_timeout=None):
+    def delete(
+        self,
+        key,
+        recurse=None,
+        cas=None,
+        token=None,
+        dc=None,
+        ns=None,
+        partition=None,
+        connections_timeout=None):
         """
         Deletes a single key or if *recurse* is True, all keys sharing a
         prefix.
@@ -184,6 +221,14 @@ class KV:
 
         *dc* is the optional datacenter that you wish to communicate with.
         If None is provided, defaults to the agent's datacenter.
+
+        *ns* is the optional namespace to use for the request.
+        If None is provided, the namespace is inherited from the namespace
+        of request's ACL token, or defaults to the default namespace.
+
+        *partition* is the optional Admin Partition to use for the request.
+        If None is provided, the partition is inferred from the
+        request's ACL token, or defaults to the default partition.
         """
         assert not key.startswith("/"), "keys should not start with a forward slash"
 
@@ -195,6 +240,10 @@ class KV:
         dc = dc or self.agent.dc
         if dc:
             params.append(("dc", dc))
+        if ns:
+            params.append(("ns", ns))
+        if partition:
+            params.append(("partition", partition))
         http_kwargs = {}
         if connections_timeout:
             http_kwargs["connections_timeout"] = connections_timeout
