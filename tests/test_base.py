@@ -15,7 +15,8 @@ class HTTPClient:
     def __init__(
         self, host: Optional[str] = None, port: Optional[int] = None, scheme=None, verify: bool = True, cert=None
     ) -> None:
-        pass
+        self.host = host
+        self.port = int(port)
 
     def get(self, callback, path, params=None, headers=None):  # pylint: disable=unused-argument
         return Request("get", path, params, headers, None)
@@ -68,6 +69,84 @@ def _should_support_meta(c: Consul) -> tuple[Callable[..., Any], ...]:
         lambda **kw: c.agent.service.register("foo", **kw),
         lambda **kw: c.agent.service.register("foo", "bar", **kw),
     )
+
+
+class TestBaseInit:
+    """
+    Tests that connection arguments are handled
+    """
+
+    @pytest.mark.parametrize(
+        ("env", "host", "port", "want"),
+        [
+            (
+                None,
+                None,
+                None,
+                {
+                    "host": "127.0.0.1",
+                    "port": 8500,
+                },
+            ),
+            (
+                "127.0.0.1:443",
+                None,
+                None,
+                {
+                    "host": "127.0.0.1",
+                    "port": 443,
+                },
+            ),
+            (
+                None,
+                "consul.domain.tld",
+                None,
+                {
+                    "host": "consul.domain.tld",
+                    "port": 8500,
+                },
+            ),
+            (
+                "consul.domain.tld:443",
+                "127.0.0.1",
+                None,
+                {
+                    "host": "127.0.0.1",
+                    "port": 8500,
+                },
+            ),
+            (
+                "consul.domain.tld:443",
+                "127.0.0.1",
+                8080,
+                {
+                    "host": "127.0.0.1",
+                    "port": 8080,
+                },
+            ),
+            (
+                "bad",
+                "127.0.0.1",
+                8080,
+                {
+                    "host": "127.0.0.1",
+                    "port": 8080,
+                },
+            ),
+        ],
+    )
+    def test_base_init(self, monkeypatch, env, host, port, want) -> None:
+        if env:
+            monkeypatch.setenv("CONSUL_HTTP_ADDR", env)
+        else:
+            try:
+                monkeypatch.delenv("CONSUL_HTTP_ADDR")
+            except KeyError:
+                pass
+
+        c = Consul(host=host, port=port)
+        assert c.http.host == want["host"]
+        assert c.http.port == want["port"]
 
 
 class TestIndex:

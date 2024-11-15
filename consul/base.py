@@ -76,8 +76,8 @@ class HTTPClient(metaclass=abc.ABCMeta):
 class Consul:
     def __init__(
         self,
-        host: str = "127.0.0.1",
-        port: int = 8500,
+        host: str | None = None,
+        port: int | None = None,
         token: str | None = None,
         scheme: str = "http",
         consistency: str = "default",
@@ -106,13 +106,18 @@ class Consul:
 
         # TODO: Status
 
-        if os.getenv("CONSUL_HTTP_ADDR"):
+        if os.getenv("CONSUL_HTTP_ADDR") and not (host or port):
             try:
                 host, port = os.getenv("CONSUL_HTTP_ADDR").split(":")  # type: ignore
             except ValueError as err:
                 raise ConsulException(
                     f"CONSUL_HTTP_ADDR ({os.getenv('CONSUL_HTTP_ADDR')}) invalid, does not match <host>:<port>"
                 ) from err
+        if not host:
+            host = "127.0.0.1"
+        if not port:
+            port = 8500
+
         use_ssl = os.getenv("CONSUL_HTTP_SSL")
         if use_ssl is not None:
             scheme = "https" if use_ssl == "true" else "http"
