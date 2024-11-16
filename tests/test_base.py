@@ -17,6 +17,8 @@ class HTTPClient:
     ) -> None:
         self.host = host
         self.port = int(port)
+        self.scheme = scheme
+        self.verify = verify
 
     def get(self, callback, path, params=None, headers=None):  # pylint: disable=unused-argument
         return Request("get", path, params, headers, None)
@@ -30,7 +32,7 @@ class HTTPClient:
 
 class Consul(consul.base.Consul):
     def http_connect(self, host: str, port: int, scheme, verify: bool = True, cert=None):
-        return HTTPClient(host, port, scheme, verify=verify, cert=None)
+        return HTTPClient(host=host, port=port, scheme=scheme, verify=verify, cert=None)
 
 
 def _should_support(c: Consul) -> tuple[Callable[..., Any], ...]:
@@ -135,7 +137,7 @@ class TestBaseInit:
             ),
         ],
     )
-    def test_base_init(self, monkeypatch, env, host, port, want) -> None:
+    def test_base_init_addr(self, monkeypatch, env, host, port, want) -> None:
         if env:
             monkeypatch.setenv("CONSUL_HTTP_ADDR", env)
         else:
@@ -147,6 +149,80 @@ class TestBaseInit:
         c = Consul(host=host, port=port)
         assert c.http.host == want["host"]
         assert c.http.port == want["port"]
+
+    @pytest.mark.parametrize(
+        ("env", "scheme", "want"),
+        [
+            (
+                "true",
+                None,
+                "https"
+            ),
+            (
+                "false",
+                None,
+                "http"
+            ),
+            (
+                None,
+                "https",
+                "https"
+            ),
+            (
+                None,
+                "http",
+                "http"
+            ),
+            (
+                "http",
+                "https",
+                "https"
+            ),
+        ],
+    )
+    def test_base_init_scheme(self, monkeypatch, env, scheme, want) -> None:
+        if env:
+            monkeypatch.setenv("CONSUL_HTTP_SSL", env)
+        else:
+            try:
+                monkeypatch.delenv("CONSUL_HTTP_SSL")
+            except KeyError:
+                pass
+
+        c = Consul(scheme=scheme)
+        assert c.http.scheme == want
+
+    @pytest.mark.parametrize(
+        ("env", "verify", "want"),
+        [
+            (
+                "true",
+                None,
+                True
+            ),
+            (
+                None,
+                True,
+                True
+            ),
+            (
+                "false",
+                True,
+                True
+            ),
+        ],
+    )
+    def test_base_init_verify(self, monkeypatch, env, verify, want) -> None:
+        if env:
+            monkeypatch.setenv("CONSUL_HTTP_SSL_VERIFY", env)
+        else:
+            try:
+                monkeypatch.delenv("CONSUL_HTTP_SSL_VERIFY")
+            except KeyError:
+                pass
+
+        c = Consul(verify=verify)
+        assert c.http.verify == want
 
 
 class TestIndex:

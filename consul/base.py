@@ -79,10 +79,10 @@ class Consul:
         host: str | None = None,
         port: int | None = None,
         token: str | None = None,
-        scheme: str = "http",
+        scheme: str | None = None,
         consistency: str = "default",
         dc=None,
-        verify: bool = True,
+        verify: bool | None = None,
         cert=None,
     ) -> None:
         """
@@ -118,11 +118,19 @@ class Consul:
         if not port:
             port = 8500
 
-        use_ssl = os.getenv("CONSUL_HTTP_SSL")
-        if use_ssl is not None:
-            scheme = "https" if use_ssl == "true" else "http"
-        if os.getenv("CONSUL_HTTP_SSL_VERIFY") is not None:
-            verify = os.getenv("CONSUL_HTTP_SSL_VERIFY") == "true"
+        if scheme is None:
+            use_ssl = os.getenv("CONSUL_HTTP_SSL")
+            if use_ssl:
+                scheme = "https" if use_ssl.lower() == "true" else "http"
+            else:
+                scheme = "http"
+
+        if verify is None:
+            ssl_verify = os.getenv("CONSUL_HTTP_SSL_VERIFY")
+            if ssl_verify:
+                verify = ssl_verify.lower() == "true"
+            else:
+                verify = True
 
         self.http = self.http_connect(host, port, scheme, verify, cert)
         self.token = os.getenv("CONSUL_HTTP_TOKEN", token)
