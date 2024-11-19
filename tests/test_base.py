@@ -17,7 +17,7 @@ class HTTPClient:
         self, host: Optional[str] = None, port: Optional[int] = None, scheme=None, verify: bool = True, cert=None
     ) -> None:
         self.host = host
-        self.port = port if port else None
+        self.port = int(port) if port else None
         self.scheme = scheme
         self.verify = verify
         self.cert = cert
