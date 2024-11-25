@@ -76,13 +76,13 @@ class HTTPClient(metaclass=abc.ABCMeta):
 class Consul:
     def __init__(
         self,
-        host: str = "127.0.0.1",
-        port: int = 8500,
+        host: str | None = None,
+        port: int | None = None,
         token: str | None = None,
-        scheme: str = "http",
+        scheme: str | None = None,
         consistency: str = "default",
         dc=None,
-        verify: bool = True,
+        verify: bool | None = None,
         cert=None,
     ) -> None:
         """
@@ -106,18 +106,25 @@ class Consul:
 
         # TODO: Status
 
-        if os.getenv("CONSUL_HTTP_ADDR"):
+        if os.getenv("CONSUL_HTTP_ADDR") and not (host or port):
             try:
                 host, port = os.getenv("CONSUL_HTTP_ADDR").split(":")  # type: ignore
             except ValueError as err:
                 raise ConsulException(
                     f"CONSUL_HTTP_ADDR ({os.getenv('CONSUL_HTTP_ADDR')}) invalid, does not match <host>:<port>"
                 ) from err
-        use_ssl = os.getenv("CONSUL_HTTP_SSL")
-        if use_ssl is not None:
-            scheme = "https" if use_ssl == "true" else "http"
-        if os.getenv("CONSUL_HTTP_SSL_VERIFY") is not None:
-            verify = os.getenv("CONSUL_HTTP_SSL_VERIFY") == "true"
+        if not host:
+            host = "127.0.0.1"
+        if not port:
+            port = 8500
+
+        if scheme is None:
+            use_ssl = os.getenv("CONSUL_HTTP_SSL")
+            scheme = ("https" if use_ssl.lower() == "true" else "http") if use_ssl else "http"
+
+        if verify is None:
+            ssl_verify = os.getenv("CONSUL_HTTP_SSL_VERIFY")
+            verify = ssl_verify.lower() == "true" if ssl_verify else True
 
         self.http = self.http_connect(host, port, scheme, verify, cert)
         self.token = os.getenv("CONSUL_HTTP_TOKEN", token)

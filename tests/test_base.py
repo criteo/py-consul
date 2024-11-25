@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import collections
+import contextlib
 import json
 from typing import Any, Callable, Optional
 
@@ -15,7 +16,11 @@ class HTTPClient:
     def __init__(
         self, host: Optional[str] = None, port: Optional[int] = None, scheme=None, verify: bool = True, cert=None
     ) -> None:
-        pass
+        self.host = host
+        self.port = int(port) if port else None
+        self.scheme = scheme
+        self.verify = verify
+        self.cert = cert
 
     def get(self, callback, path, params=None, headers=None):  # pylint: disable=unused-argument
         return Request("get", path, params, headers, None)
@@ -29,7 +34,7 @@ class HTTPClient:
 
 class Consul(consul.base.Consul):
     def http_connect(self, host: str, port: int, scheme, verify: bool = True, cert=None):
-        return HTTPClient(host, port, scheme, verify=verify, cert=None)
+        return HTTPClient(host=host, port=port, scheme=scheme, verify=verify, cert=None)
 
 
 def _should_support(c: Consul) -> tuple[Callable[..., Any], ...]:
@@ -68,6 +73,120 @@ def _should_support_meta(c: Consul) -> tuple[Callable[..., Any], ...]:
         lambda **kw: c.agent.service.register("foo", **kw),
         lambda **kw: c.agent.service.register("foo", "bar", **kw),
     )
+
+
+class TestBaseInit:
+    """
+    Tests that connection arguments are handled
+    """
+
+    @pytest.mark.parametrize(
+        ("env", "host", "port", "want"),
+        [
+            (
+                None,
+                None,
+                None,
+                {
+                    "host": "127.0.0.1",
+                    "port": 8500,
+                },
+            ),
+            (
+                "127.0.0.1:443",
+                None,
+                None,
+                {
+                    "host": "127.0.0.1",
+                    "port": 443,
+                },
+            ),
+            (
+                None,
+                "consul.domain.tld",
+                None,
+                {
+                    "host": "consul.domain.tld",
+                    "port": 8500,
+                },
+            ),
+            (
+                "consul.domain.tld:443",
+                "127.0.0.1",
+                None,
+                {
+                    "host": "127.0.0.1",
+                    "port": 8500,
+                },
+            ),
+            (
+                "consul.domain.tld:443",
+                "127.0.0.1",
+                8080,
+                {
+                    "host": "127.0.0.1",
+                    "port": 8080,
+                },
+            ),
+            (
+                "bad",
+                "127.0.0.1",
+                8080,
+                {
+                    "host": "127.0.0.1",
+                    "port": 8080,
+                },
+            ),
+        ],
+    )
+    def test_base_init_addr(self, monkeypatch, env, host, port, want) -> None:
+        if env:
+            monkeypatch.setenv("CONSUL_HTTP_ADDR", env)
+        else:
+            with contextlib.suppress(KeyError):
+                monkeypatch.delenv("CONSUL_HTTP_ADDR")
+
+        c = Consul(host=host, port=port)
+        assert c.http.host == want["host"]
+        assert c.http.port == want["port"]
+
+    @pytest.mark.parametrize(
+        ("env", "scheme", "want"),
+        [
+            ("true", None, "https"),
+            ("false", None, "http"),
+            (None, "https", "https"),
+            (None, "http", "http"),
+            ("http", "https", "https"),
+        ],
+    )
+    def test_base_init_scheme(self, monkeypatch, env, scheme, want) -> None:
+        if env:
+            monkeypatch.setenv("CONSUL_HTTP_SSL", env)
+        else:
+            with contextlib.suppress(KeyError):
+                monkeypatch.delenv("CONSUL_HTTP_SSL")
+
+        c = Consul(scheme=scheme)
+        assert c.http.scheme == want
+
+    @pytest.mark.parametrize(
+        ("env", "verify", "want"),
+        [
+            ("true", None, True),
+            (None, True, True),
+            ("false", True, True),
+        ],
+    )
+    def test_base_init_verify(self, monkeypatch, env, verify, want) -> None:
+        if env:
+            monkeypatch.setenv("CONSUL_HTTP_SSL_VERIFY", env)
+        else:
+            with contextlib.suppress(KeyError):
+                monkeypatch.delenv("CONSUL_HTTP_SSL_VERIFY")
+
+        c = Consul(verify=verify)
+        assert c.http.verify == want
 
 
 class TestIndex:
