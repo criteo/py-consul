@@ -79,11 +79,8 @@ class CB:
                             item[decode] = base64.b64decode(item[decode])
                 if is_id:
                     data = data["ID"]
-                if one:
-                    if data == []:
-                        data = None
-                    if data is not None:
-                        data = data[0]
+                if one and isinstance(data, list):
+                    data = data[0] if data else None
                 if postprocess:
                     data = postprocess(data)
             if index:
