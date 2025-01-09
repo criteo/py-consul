@@ -1,5 +1,10 @@
 # Change log
 
+## 1.5.4
+
+- **feature:**  Improve robustness of JSON decoding
+- **feature:**  Add support for honoring additional arguments in consul.Consul()
+
 ## 1.5.3
 
 - **feature:** add replace_existing_checks option to agent.service.register()
