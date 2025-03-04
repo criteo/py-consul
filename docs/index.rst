@@ -58,7 +58,7 @@ result of each API call. This client is available in *consul.aio*.
     import consul.aio
 
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
 
     @asyncio.coroutine
     def go():
