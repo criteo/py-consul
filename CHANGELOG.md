@@ -1,5 +1,11 @@
 # Change log
 
+
+## 1.5.5
+
+- **fix:**  Simplify loop handling in async Consul client
+
+
 ## 1.5.4
 
 - **feature:**  Improve robustness of JSON decoding

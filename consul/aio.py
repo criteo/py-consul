@@ -1,4 +1,3 @@
-import asyncio
 from typing import Dict, Optional
 
 import aiohttp
@@ -13,11 +12,11 @@ class HTTPClient(base.HTTPClient):
 
     def __init__(self, *args, loop=None, connections_limit=None, connections_timeout=None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self._loop = loop or asyncio.get_event_loop()
+        self.loop = loop
         connector_kwargs = {}
         if connections_limit:
             connector_kwargs["limit"] = connections_limit
-        connector = aiohttp.TCPConnector(loop=self._loop, verify_ssl=self.verify, **connector_kwargs)
+        connector = aiohttp.TCPConnector(loop=self.loop, verify_ssl=self.verify, **connector_kwargs)
         session_kwargs = {}
         if connections_timeout:
             timeout = aiohttp.ClientTimeout(total=connections_timeout)
@@ -76,7 +75,7 @@ class HTTPClient(base.HTTPClient):
 
 class Consul(base.Consul):
     def __init__(self, *args, loop=None, connections_limit=None, connections_timeout=None, **kwargs) -> None:
-        self._loop = loop or asyncio.get_event_loop()
+        self.loop = loop
         self.connections_limit = connections_limit
         self.connections_timeout = connections_timeout
         super().__init__(*args, **kwargs)
@@ -86,7 +85,7 @@ class Consul(base.Consul):
             host,
             port,
             scheme,
-            loop=self._loop,
+            loop=self.loop,
             connections_limit=self.connections_limit,
             connections_timeout=self.connections_timeout,
             verify=verify,
