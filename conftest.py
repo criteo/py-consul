@@ -14,7 +14,7 @@ from docker import DockerClient
 from docker.errors import APIError, NotFound
 from requests import RequestException
 
-CONSUL_VERSIONS = ["1.16.1", "1.17.3"]
+CONSUL_VERSIONS = ["1.17.3", "1.19.2", "1.20.2"]
 
 ConsulInstance = collections.namedtuple("ConsulInstance", ["container", "port", "version"])
 
