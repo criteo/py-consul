@@ -5,7 +5,7 @@ Status
 This project is maintained and actively developed by Criteo.
 We aim at converging towards a full compatibility with the official Consul API.
 
-We're currently supporting consul 1.13 up to 1.17. Due to quite a few changes 
+We're currently supporting consul 1.17 up to 1.20. Due to quite a few changes
 since our development started (see section "A bit of history"), some endpoints are 
 still partially handled.
 

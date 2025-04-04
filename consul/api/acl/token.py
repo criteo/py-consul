@@ -5,6 +5,9 @@ import typing
 
 from consul.callback import CB
 
+if typing.TYPE_CHECKING:
+    import builtins
+
 
 class Token:
     def __init__(self, agent) -> None:
@@ -63,7 +66,7 @@ class Token:
         token: str | None = None,
         accessor_id: str | None = None,
         secret_id: str | None = None,
-        policies_id: typing.List[str] | None = None,
+        policies_id: builtins.list[str] | None = None,
         description: str = "",
     ):
         """
