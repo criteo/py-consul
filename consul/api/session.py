@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from typing import Optional
 
@@ -17,6 +19,7 @@ class Session:
         behavior: str = "release",
         ttl: Optional[int] = None,
         dc=None,
+        token: str | None = None,
     ):
         """
         Creates a new session. There is more documentation for sessions
@@ -45,6 +48,9 @@ class Session:
         renewed before the TTL expires.  If specified, it is an integer of
         seconds.  Currently it must be between 10 and 86400 seconds.
 
+        *token* is an optional `ACL token` to apply to this request. ACL
+        required : session:write
+
         By default the session will be created in the current datacenter
         but an optional *dc* can be provided.
 
@@ -71,11 +77,17 @@ class Session:
             data["ttl"] = f"{ttl}s"
         data_str = json.dumps(data) if data else ""
 
-        return self.agent.http.put(CB.json(is_id=True), "/v1/session/create", params=params, data=data_str)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.put(
+            CB.json(is_id=True), "/v1/session/create", params=params, headers=headers, data=data_str
+        )
 
-    def destroy(self, session_id, dc=None):
+    def destroy(self, session_id, dc=None, token: str | None = None):
         """
         Destroys the session *session_id*
+
+        *token* is an optional `ACL token` to apply to this request. ACL
+        required : session:write
 
         Returns *True* on success.
         """
@@ -83,9 +95,10 @@ class Session:
         dc = dc or self.agent.dc
         if dc:
             params.append(("dc", dc))
-        return self.agent.http.put(CB.boolean(), f"/v1/session/destroy/{session_id}", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.put(CB.boolean(), f"/v1/session/destroy/{session_id}", headers=headers, params=params)
 
-    def list(self, index=None, wait=None, consistency=None, dc=None):
+    def list(self, index=None, wait=None, consistency=None, dc=None, token: str | None = None):
         """
         Returns a tuple of (*index*, *sessions*) of all active sessions in
         the *dc* datacenter. *dc* defaults to the current datacenter of
@@ -101,6 +114,9 @@ class Session:
         *consistency* can be either 'default', 'consistent' or 'stale'. if
         not specified *consistency* will the consistency level this client
         was configured with.
+
+        *token* is an optional `ACL token` to apply to this request. ACL
+        required : session:read
 
         The response looks like this::
 
@@ -128,9 +144,10 @@ class Session:
         consistency = consistency or self.agent.consistency
         if consistency in ("consistent", "stale"):
             params.append((consistency, "1"))
-        return self.agent.http.get(CB.json(index=True), "/v1/session/list", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(index=True), "/v1/session/list", headers=headers, params=params)
 
-    def node(self, node: str, index=None, wait=None, consistency=None, dc=None):
+    def node(self, node: str, index=None, wait=None, consistency=None, dc=None, token: str | None = None):
         """
         Returns a tuple of (*index*, *sessions*) as per *session.list*, but
         filters the sessions returned to only those active for *node*.
@@ -145,6 +162,9 @@ class Session:
         *consistency* can be either 'default', 'consistent' or 'stale'. if
         not specified *consistency* will the consistency level this client
         was configured with.
+
+        *token* is an optional `ACL token` to apply to this request. ACL
+        required : session:read
         """
         params = []
         dc = dc or self.agent.dc
@@ -157,9 +177,10 @@ class Session:
         consistency = consistency or self.agent.consistency
         if consistency in ("consistent", "stale"):
             params.append((consistency, "1"))
-        return self.agent.http.get(CB.json(index=True), f"/v1/session/node/{node}", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(index=True), f"/v1/session/node/{node}", headers=headers, params=params)
 
-    def info(self, session_id: str, index=None, wait=None, consistency=None, dc=None):
+    def info(self, session_id: str, index=None, wait=None, consistency=None, dc=None, token: str | None = None):
         """
         Returns a tuple of (*index*, *session*) for the session
         *session_id* in the *dc* datacenter. *dc* defaults to the current
@@ -175,6 +196,9 @@ class Session:
         *consistency* can be either 'default', 'consistent' or 'stale'. if
         not specified *consistency* will the consistency level this client
         was configured with.
+
+        *token* is an optional `ACL token` to apply to this request. ACL
+        required : session:read
         """
         params = []
         dc = dc or self.agent.dc
@@ -187,9 +211,12 @@ class Session:
         consistency = consistency or self.agent.consistency
         if consistency in ("consistent", "stale"):
             params.append((consistency, "1"))
-        return self.agent.http.get(CB.json(index=True, one=True), f"/v1/session/info/{session_id}", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(
+            CB.json(index=True, one=True), f"/v1/session/info/{session_id}", headers=headers, params=params
+        )
 
-    def renew(self, session_id, dc=None):
+    def renew(self, session_id, dc=None, token: str | None = None):
         """
         This is used with sessions that have a TTL, and it extends the
         expiration by the TTL.
@@ -197,10 +224,16 @@ class Session:
         *dc* is the optional datacenter that you wish to communicate with.
         If None is provided, defaults to the agent's datacenter.
 
+        *token* is an optional `ACL token` to apply to this request. ACL
+        required : session:write
+
         Returns the session.
         """
         params = []
         dc = dc or self.agent.dc
         if dc:
             params.append(("dc", dc))
-        return self.agent.http.put(CB.json(one=True, allow_404=False), f"/v1/session/renew/{session_id}", params=params)
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.put(
+            CB.json(one=True, allow_404=False), f"/v1/session/renew/{session_id}", headers=headers, params=params
+        )
