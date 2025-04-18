@@ -49,11 +49,11 @@ setup(
     packages=find_packages(exclude=["tests*"]),
     tests_require=_read_reqs("tests-requirements.txt"),
     cmdclass={"install": Install},
+    python_requires=">=3.9",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
