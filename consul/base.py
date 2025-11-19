@@ -5,6 +5,7 @@ import collections
 import logging
 import os
 import urllib
+import urllib.parse
 from typing import TYPE_CHECKING, Any, Optional
 
 from consul.api.acl import ACL
@@ -105,17 +106,29 @@ class Consul:
         """
 
         # TODO: Status
+        if host is None and port is None and os.getenv("CONSUL_HTTP_ADDR"):
+            env_conf: str = os.getenv("CONSUL_HTTP_ADDR")  # type: ignore
+            # Urllib.parse requires a // for addresses that do not have a schema supplied
+            if "//" not in env_conf:
+                env_conf = "//" + env_conf
+            prs = urllib.parse.urlparse(env_conf)
 
-        if os.getenv("CONSUL_HTTP_ADDR") and not (host or port):
+            # urllib doesn't throw exceptions, so we do a little bit of checking as suggested
+            # and catch errors
             try:
-                host, port = os.getenv("CONSUL_HTTP_ADDR").split(":")  # type: ignore
+                host = str(prs.hostname)
+                port = int(prs.port)  # type: ignore
+                # CONSUL_HTTP_SSL variable has precedence for schema definition
+                if not os.getenv("CONSUL_HTTP_SSL") and prs.scheme:
+                    scheme = str(prs.scheme)
             except ValueError as err:
                 raise ConsulException(
-                    f"CONSUL_HTTP_ADDR ({os.getenv('CONSUL_HTTP_ADDR')}) invalid, does not match <host>:<port>"
+                    f"CONSUL_HTTP_ADDR ({env_conf}) invalid, does not match <host>:<port> or <scheme>://<host>:<port>"
                 ) from err
-        if not host:
+
+        if host is None:
             host = "127.0.0.1"
-        if not port:
+        if port is None:
             port = 8500
 
         if scheme is None:
