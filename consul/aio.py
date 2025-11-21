@@ -1,4 +1,4 @@
-from __future__ import annotations
+import ssl
 
 import aiohttp
 
@@ -16,7 +16,17 @@ class HTTPClient(base.HTTPClient):
         connector_kwargs = {}
         if connections_limit:
             connector_kwargs["limit"] = connections_limit
-        connector = aiohttp.TCPConnector(loop=self.loop, verify_ssl=self.verify, **connector_kwargs)
+        if self.verify:
+            ssl_context = ssl.create_default_context()
+            if self.cert:
+                if isinstance(self.cert, tuple):
+                    ssl_context.load_cert_chain(*self.cert)
+                else:
+                    ssl_context.load_cert_chain(self.cert)
+            if isinstance(self.verify, str):
+                ssl_context.load_verify_locations(self.verify)
+            connector_kwargs["ssl_context"] = ssl_context
+        connector = aiohttp.TCPConnector(loop=self.loop, verify_ssl=bool(self.verify), **connector_kwargs)
         session_kwargs = {}
         if connections_timeout:
             timeout = aiohttp.ClientTimeout(total=connections_timeout)
@@ -80,7 +90,7 @@ class Consul(base.Consul):
         self.connections_timeout = connections_timeout
         super().__init__(*args, **kwargs)
 
-    def http_connect(self, host: str, port: int, scheme, verify: bool = True, cert=None):
+    def http_connect(self, host: str, port: int, scheme, verify: bool | str = True, cert=None):
         return HTTPClient(
             host,
             port,

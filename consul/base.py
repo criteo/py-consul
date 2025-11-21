@@ -38,7 +38,7 @@ Response = collections.namedtuple("Response", ["code", "headers", "body"])
 
 class HTTPClient(metaclass=abc.ABCMeta):
     def __init__(
-        self, host: str = "127.0.0.1", port: int = 8500, scheme: str = "http", verify: bool = True, cert=None
+        self, host: str = "127.0.0.1", port: int = 8500, scheme: str = "http", verify: bool | str = True, cert=None
     ) -> None:
         self.host = host
         self.port = port
@@ -83,7 +83,7 @@ class Consul:
         scheme: str | None = None,
         consistency: str = "default",
         dc=None,
-        verify: bool | None = None,
+        verify: bool | str | None = None,
         cert=None,
     ) -> None:
         """
@@ -181,7 +181,7 @@ class Consul:
         await self.http.close()
 
     @abc.abstractmethod
-    def http_connect(self, host: str, port: int, scheme, verify: bool = True, cert=None):
+    def http_connect(self, host: str, port: int, scheme, verify: bool | str = True, cert=None):
         pass
 
     def prepare_headers(self, token: str | None = None) -> dict[str, str]:
