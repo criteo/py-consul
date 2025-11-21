@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from typing import Optional
 
 from consul.callback import CB
 
@@ -31,14 +30,14 @@ class Query:
     def _query_data(
         self,
         service=None,
-        name: Optional[str] = None,
+        name: str | None = None,
         session=None,
         token: str | None = None,
         nearestn=None,
         datacenters=None,
         onlypassing=None,
         tags=None,
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
         regexp=None,
     ):
         service_body = {
@@ -71,7 +70,7 @@ class Query:
     def create(
         self,
         service,
-        name: Optional[str] = None,
+        name: str | None = None,
         dc=None,
         session=None,
         token: str | None = None,
@@ -79,7 +78,7 @@ class Query:
         datacenters=None,
         onlypassing=None,
         tags=None,
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
         regexp=None,
     ):
         """
@@ -131,7 +130,7 @@ class Query:
         self,
         query_id,
         service=None,
-        name: Optional[str] = None,
+        name: str | None = None,
         dc=None,
         session=None,
         token: str | None = None,
@@ -139,7 +138,7 @@ class Query:
         datacenters=None,
         onlypassing=None,
         tags=None,
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
         regexp=None,
     ):
         """
@@ -188,7 +187,7 @@ class Query:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.delete(CB.boolean(), f"/v1/query/{query_id}", params=params, headers=headers)
 
-    def execute(self, query, token: str | None = None, dc=None, near=None, limit: Optional[int] = None):
+    def execute(self, query, token: str | None = None, dc=None, near=None, limit: int | None = None):
         """
         This endpoint will execute certain query
 

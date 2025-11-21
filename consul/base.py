@@ -6,7 +6,7 @@ import logging
 import os
 import urllib
 import urllib.parse
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from consul.api.acl import ACL
 from consul.api.agent import Agent
@@ -54,19 +54,19 @@ class HTTPClient(metaclass=abc.ABCMeta):
         return uri
 
     @abc.abstractmethod
-    def get(self, callback, path, params=None, headers: Optional[dict[str, str]] = None):
+    def get(self, callback, path, params=None, headers: dict[str, str] | None = None):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def put(self, callback, path, params=None, data: str = "", headers: Optional[dict[str, str]] = None):
+    def put(self, callback, path, params=None, data: str = "", headers: dict[str, str] | None = None):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete(self, callback, path, params=None, headers: Optional[dict[str, str]] = None):
+    def delete(self, callback, path, params=None, headers: dict[str, str] | None = None):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def post(self, callback, path, params=None, data: str = "", headers: Optional[dict[str, str]] = None):
+    def post(self, callback, path, params=None, data: str = "", headers: dict[str, str] | None = None):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -171,12 +171,12 @@ class Consul:
         return self
 
     def __exit__(
-        self, exc_type: Optional[type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> None:
         self.http.close()
 
     async def __aexit__(
-        self, exc_type: Optional[type[BaseException]], exc: Optional[BaseException], tb: Optional[TracebackType]
+        self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None
     ) -> None:
         await self.http.close()
 
@@ -184,7 +184,7 @@ class Consul:
     def http_connect(self, host: str, port: int, scheme, verify: bool = True, cert=None):
         pass
 
-    def prepare_headers(self, token: Optional[str] = None) -> dict[str, str]:
+    def prepare_headers(self, token: str | None = None) -> dict[str, str]:
         headers = {}
         if token or self.token:
             headers["X-Consul-Token"] = token or self.token
