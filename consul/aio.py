@@ -1,4 +1,3 @@
-from typing import Optional
 import ssl
 import aiohttp
 
@@ -29,7 +28,7 @@ class HTTPClient(base.HTTPClient):
         self._session = aiohttp.ClientSession(connector=connector, **session_kwargs)  # type: ignore
 
     async def _request(
-        self, callback, method, uri, headers: Optional[dict[str, str]], data=None, connections_timeout=None
+        self, callback, method, uri, headers: dict[str, str] | None, data=None, connections_timeout=None
     ):
         session_kwargs = {}
         if connections_timeout:
@@ -42,7 +41,7 @@ class HTTPClient(base.HTTPClient):
         r = base.Response(resp.status, resp.headers, body)
         return callback(r)
 
-    def get(self, callback, path, params=None, headers: Optional[dict[str, str]] = None, connections_timeout=None):
+    def get(self, callback, path, params=None, headers: dict[str, str] | None = None, connections_timeout=None):
         uri = self.uri(path, params)
         return self._request(callback, "GET", uri, headers=headers, connections_timeout=connections_timeout)
 
@@ -52,13 +51,13 @@ class HTTPClient(base.HTTPClient):
         path,
         params=None,
         data: str = "",
-        headers: Optional[dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
         connections_timeout=None,
     ):
         uri = self.uri(path, params)
         return self._request(callback, "PUT", uri, headers=headers, data=data, connections_timeout=connections_timeout)
 
-    def delete(self, callback, path, params=None, headers: Optional[dict[str, str]] = None, connections_timeout=None):
+    def delete(self, callback, path, params=None, headers: dict[str, str] | None = None, connections_timeout=None):
         uri = self.uri(path, params)
         return self._request(callback, "DELETE", uri, headers=headers, connections_timeout=connections_timeout)
 
@@ -68,7 +67,7 @@ class HTTPClient(base.HTTPClient):
         path,
         params=None,
         data: str = "",
-        headers: Optional[dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
         connections_timeout=None,
     ):
         uri = self.uri(path, params)

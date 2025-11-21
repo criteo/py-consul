@@ -5,7 +5,8 @@ import collections
 import logging
 import os
 import urllib
-from typing import TYPE_CHECKING, Any, Optional
+import urllib.parse
+from typing import TYPE_CHECKING, Any
 
 from consul.api.acl import ACL
 from consul.api.agent import Agent
@@ -53,19 +54,19 @@ class HTTPClient(metaclass=abc.ABCMeta):
         return uri
 
     @abc.abstractmethod
-    def get(self, callback, path, params=None, headers: Optional[dict[str, str]] = None):
+    def get(self, callback, path, params=None, headers: dict[str, str] | None = None):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def put(self, callback, path, params=None, data: str = "", headers: Optional[dict[str, str]] = None):
+    def put(self, callback, path, params=None, data: str = "", headers: dict[str, str] | None = None):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete(self, callback, path, params=None, headers: Optional[dict[str, str]] = None):
+    def delete(self, callback, path, params=None, headers: dict[str, str] | None = None):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def post(self, callback, path, params=None, data: str = "", headers: Optional[dict[str, str]] = None):
+    def post(self, callback, path, params=None, data: str = "", headers: dict[str, str] | None = None):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -105,17 +106,29 @@ class Consul:
         """
 
         # TODO: Status
+        if host is None and port is None and os.getenv("CONSUL_HTTP_ADDR"):
+            env_conf: str = os.getenv("CONSUL_HTTP_ADDR")  # type: ignore
+            # Urllib.parse requires a // for addresses that do not have a schema supplied
+            if "//" not in env_conf:
+                env_conf = "//" + env_conf
+            prs = urllib.parse.urlparse(env_conf)
 
-        if os.getenv("CONSUL_HTTP_ADDR") and not (host or port):
+            # urllib doesn't throw exceptions, so we do a little bit of checking as suggested
+            # and catch errors
             try:
-                host, port = os.getenv("CONSUL_HTTP_ADDR").split(":")  # type: ignore
+                host = str(prs.hostname)
+                port = int(prs.port)  # type: ignore
+                # CONSUL_HTTP_SSL variable has precedence for schema definition
+                if not os.getenv("CONSUL_HTTP_SSL") and prs.scheme:
+                    scheme = str(prs.scheme)
             except ValueError as err:
                 raise ConsulException(
-                    f"CONSUL_HTTP_ADDR ({os.getenv('CONSUL_HTTP_ADDR')}) invalid, does not match <host>:<port>"
+                    f"CONSUL_HTTP_ADDR ({env_conf}) invalid, does not match <host>:<port> or <scheme>://<host>:<port>"
                 ) from err
-        if not host:
+
+        if host is None:
             host = "127.0.0.1"
-        if not port:
+        if port is None:
             port = 8500
 
         if scheme is None:
@@ -158,12 +171,12 @@ class Consul:
         return self
 
     def __exit__(
-        self, exc_type: Optional[type[BaseException]], exc_val: Optional[BaseException], exc_tb: Optional[TracebackType]
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> None:
         self.http.close()
 
     async def __aexit__(
-        self, exc_type: Optional[type[BaseException]], exc: Optional[BaseException], tb: Optional[TracebackType]
+        self, exc_type: type[BaseException] | None, exc: BaseException | None, tb: TracebackType | None
     ) -> None:
         await self.http.close()
 
@@ -171,7 +184,7 @@ class Consul:
     def http_connect(self, host: str, port: int, scheme, verify: bool = True, cert=None):
         pass
 
-    def prepare_headers(self, token: Optional[str] = None) -> dict[str, str]:
+    def prepare_headers(self, token: str | None = None) -> dict[str, str]:
         headers = {}
         if token or self.token:
             headers["X-Consul-Token"] = token or self.token

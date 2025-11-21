@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Optional
+from typing import Any
 
 from consul import Check
 from consul.callback import CB
@@ -75,7 +75,7 @@ class Agent:
             params.append(("wan", 1))
         return self.agent.http.get(CB.json(), "/v1/agent/members", params=params)
 
-    def maintenance(self, enable: bool, reason: Optional[str] = None, token: str | None = None):
+    def maintenance(self, enable: bool, reason: str | None = None, token: str | None = None):
         """
         The node maintenance endpoint can place the agent into
         "maintenance mode".
@@ -139,7 +139,7 @@ class Agent:
             name: str,
             service_id=None,
             address=None,
-            port: Optional[int] = None,
+            port: int | None = None,
             tags=None,
             check=None,
             token: str | None = None,
@@ -148,12 +148,13 @@ class Agent:
             # *deprecated* use check parameter
             script=None,
             interval=None,
-            ttl: Optional[int] = None,
+            ttl: int | None = None,
             http=None,
             timeout=None,
             enable_tag_override: bool = False,
             extra_checks=None,
             replace_existing_checks=False,
+            tagged_addresses: dict | None = None,
         ):
             """
             Add a new service to the local agent. There is more
@@ -182,6 +183,9 @@ class Agent:
 
             *weights* specifies weights for the service; default to
             {"Passing": 1, "Warning": 1}.
+
+            *tagged_addresses* specifies alternative addresses for the service,
+            e.g. for use with Connect. Formatted as { "lan": "<address>", "wan": "<address>" }.
 
             *script*, *interval*, *ttl*, *http*, and *timeout* arguments
             are deprecated. use *check* instead.
@@ -227,6 +231,8 @@ class Agent:
                         script=script, interval=interval, ttl=ttl, http=http, timeout=timeout
                     )
                 )
+            if tagged_addresses:
+                payload["tagged_addresses"] = tagged_addresses
             params = []
             if replace_existing_checks:
                 params.append(("replace-existing-checks", "true"))
@@ -245,7 +251,7 @@ class Agent:
 
             return self.agent.http.put(CB.boolean(), f"/v1/agent/service/deregister/{service_id}", headers=headers)
 
-        def maintenance(self, service_id: str, enable: bool, reason: Optional[str] = None, token: str | None = None):
+        def maintenance(self, service_id: str, enable: bool, reason: str | None = None, token: str | None = None):
             """
             The service maintenance endpoint allows placing a given service
             into "maintenance mode".
@@ -287,7 +293,7 @@ class Agent:
             # *deprecated* use check parameter
             script=None,
             interval=None,
-            ttl: Optional[int] = None,
+            ttl: int | None = None,
             http=None,
             timeout=None,
         ):

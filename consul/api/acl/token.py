@@ -68,6 +68,10 @@ class Token:
         secret_id: str | None = None,
         policies_id: builtins.list[str] | None = None,
         description: str = "",
+        policies_name: builtins.list[str] | None = None,
+        roles_id: builtins.list[str] | None = None,
+        roles_name: builtins.list[str] | None = None,
+        templated_policies: builtins.dict[str, builtins.dict[str, str]] | None = None,
     ):
         """
         Create a token (optionally identified by *secret_id* and *accessor_id*).
@@ -77,6 +81,10 @@ class Token:
         :param secret_id: The secret ID of the token to create
         :param description: Optional new token description
         :param policies_id: Optional list of policies id
+        :param roles_id: Optional list of roles id
+        :param roles_name: Optional list of roles name
+        :param templated_policies: Optional dict of templated policies,
+            with template name as key and template key/variables as value
         :return: The cloned token information
         """
 
@@ -87,8 +95,28 @@ class Token:
             json_data["SecretID"] = secret_id
         if description:
             json_data["Description"] = description
+
+        policies: list[dict[str, str]] = []
         if policies_id:
-            json_data["Policies"] = [{"ID": policy} for policy in policies_id]
+            policies.extend({"ID": policy} for policy in policies_id)
+        if policies_name:
+            policies.extend({"Name": policy} for policy in policies_name)
+        if policies:
+            json_data["Policies"] = policies
+
+        roles: list[dict[str, str]] = []
+        if roles_id:
+            roles.extend({"ID": role} for role in roles_id)
+        if roles_name:
+            roles.extend({"Name": role} for role in roles_name)
+        if roles:
+            json_data["Roles"] = roles
+
+        if templated_policies is not None:
+            json_data["TemplatedPolicies"] = []
+            for name, variables in templated_policies.items():
+                policy = {"TemplateName": name, "TemplateVariables": variables}
+                json_data["TemplatedPolicies"].append(policy)
 
         headers = self.agent.prepare_headers(token)
         return self.agent.http.put(
@@ -98,7 +126,18 @@ class Token:
             data=json.dumps(json_data),
         )
 
-    def update(self, accessor_id: str, token: str | None = None, secret_id: str | None = None, description: str = ""):
+    def update(
+        self,
+        accessor_id: str,
+        token: str | None = None,
+        secret_id: str | None = None,
+        description: str = "",
+        policies_id: builtins.list[str] | None = None,
+        policies_name: builtins.list[str] | None = None,
+        roles_id: builtins.list[str] | None = None,
+        roles_name: builtins.list[str] | None = None,
+        templated_policies: builtins.dict[str, builtins.dict[str, str]] | None = None,
+    ):
         """
         Update a token (optionally identified by *secret_id* and *accessor_id*).
         This is a privileged endpoint, and requires a token with acl:write.
@@ -106,14 +145,42 @@ class Token:
         :param token: token with acl:write capability
         :param secret_id: Optional secret ID of the token to update
         :param description: Optional new token description
+        :param policies_id: Optional list of policies id
+        :param roles_id: Optional list of roles id
+        :param roles_name: Optional list of roles name
+        :param templated_policies: Optional dict of templated policies,
+            with template name as key and template key/variables as value
         :return: The updated token information
         """
 
-        json_data = {"AccessorID": accessor_id}
+        json_data: dict[str, typing.Any] = {"AccessorID": accessor_id}
         if secret_id:
             json_data["SecretID"] = secret_id
         if description:
             json_data["Description"] = description
+
+        policies: list[dict[str, str]] = []
+        if policies_id:
+            policies.extend({"ID": policy} for policy in policies_id)
+        if policies_name:
+            policies.extend({"Name": policy} for policy in policies_name)
+        if policies:
+            json_data["Policies"] = policies
+
+        roles: list[dict[str, str]] = []
+        if roles_id:
+            roles.extend({"ID": role} for role in roles_id)
+        if roles_name:
+            roles.extend({"Name": role} for role in roles_name)
+        if roles:
+            json_data["Roles"] = roles
+
+        if templated_policies is not None:
+            json_data["TemplatedPolicies"] = []
+            for name, variables in templated_policies.items():
+                policy = {"TemplateName": name, "TemplateVariables": variables}
+                json_data["TemplatedPolicies"].append(policy)
+
         headers = self.agent.prepare_headers(token)
         return self.agent.http.put(
             CB.json(),

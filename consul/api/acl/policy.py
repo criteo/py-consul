@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from typing import Optional
 
 from consul.callback import CB
 
@@ -31,7 +30,7 @@ class Policy:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(), f"/v1/acl/policy/{uuid}", headers=headers)
 
-    def create(self, name: str, token: str | None = None, description: Optional[str] = None, rules=None):
+    def create(self, name: str, token: str | None = None, description: str | None = None, rules=None):
         """
         Create a policy
         This is a privileged endpoint, and requires a token with acl:write.

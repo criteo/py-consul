@@ -3,7 +3,6 @@ from __future__ import annotations
 import collections
 import json
 import os
-import socket
 import time
 import uuid
 
@@ -14,28 +13,13 @@ from docker import DockerClient
 from docker.errors import APIError, NotFound
 from requests import RequestException
 
-CONSUL_VERSIONS = ["1.17.3", "1.19.2", "1.20.2"]
+CONSUL_VERSIONS = ["1.20.6", "1.21.5", "1.22.0"]
 
 ConsulInstance = collections.namedtuple("ConsulInstance", ["container", "port", "version"])
 
 # Create a logs directory if it doesn't exist
 LOGS_DIR = os.path.join(os.path.dirname(__file__), "logs")
 os.makedirs(LOGS_DIR, exist_ok=True)
-
-
-def get_free_ports(num: int, host=None) -> list[int]:
-    if not host:
-        host = "127.0.0.1"
-    sockets = []
-    ret = []
-    for _ in range(num):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((host, 0))
-        ret.append(s.getsockname()[1])
-        sockets.append(s)
-    for s in sockets:
-        s.close()
-    return ret
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -53,14 +37,6 @@ def start_consul_container(version: str, acl_master_token: str | None = None):
     Returns: a tuple of the container object and the HTTP port the instance is listening on
     """
     client = docker.from_env()
-    allocated_ports = get_free_ports(5)
-    ports = {
-        "http": allocated_ports[0],
-        "server": allocated_ports[1],
-        "grpc": allocated_ports[2],
-        "serf_lan": allocated_ports[3],
-        "serf_wan": allocated_ports[4],
-    }
 
     base_config = {
         "ports": {
@@ -73,11 +49,7 @@ def start_consul_container(version: str, acl_master_token: str | None = None):
     }
     docker_config = {
         "ports": {
-            8500: ports["http"],
-            8300: ports["server"],
-            8502: ports["grpc"],
-            8301: ports["serf_lan"],
-            8302: ports["serf_wan"],
+            8500: None,
         },
         "environment": {"CONSUL_LOCAL_CONFIG": json.dumps(base_config)},
         "detach": True,
@@ -122,6 +94,11 @@ def start_consul_container(version: str, acl_master_token: str | None = None):
     container = start_consul_container_with_retry(
         client, command="agent -dev -client=0.0.0.0 -log-level trace", version=version, docker_config=docker_config
     )
+
+    container.reload()
+    ports = {
+        "http": int(container.attrs["NetworkSettings"]["Ports"]["8500/tcp"][0]["HostPort"]),
+    }
 
     # Wait for Consul to be ready
     base_uri = f"http://127.0.0.1:{ports['http']}/v1/"

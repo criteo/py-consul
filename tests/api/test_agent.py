@@ -1,7 +1,6 @@
 import time
 
 import pytest
-from packaging import version
 
 import consul.check
 from tests.utils import should_skip
@@ -238,14 +237,7 @@ class TestAgent:
     def test_agent_self(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
-        EXPECTED = {
-            "v1": {"Member", "Stats", "Config", "Coord", "DebugConfig", "Meta"},
-            "v2": {"Member", "xDS", "Stats", "Config", "Coord", "DebugConfig", "Meta"},
-        }
-        expected = EXPECTED["v1"]
-        if version.parse(_consul_version) >= version.parse("1.13.8"):
-            expected = EXPECTED["v2"]
-        assert set(c.agent.self().keys()) == expected
+        assert set(c.agent.self().keys()) == {"Member", "xDS", "Stats", "Config", "Coord", "DebugConfig", "Meta"}
 
     def test_agent_services(self, consul_obj) -> None:
         c, _consul_version = consul_obj
@@ -258,3 +250,23 @@ class TestAgent:
         assert c.agent.service.register("foo", address="10.10.10.1") is True
         assert [v["Address"] for k, v in c.agent.services().items() if k == "foo"][0] == "10.10.10.1"
         assert c.agent.service.deregister("foo") is True
+
+    def test_agent_service_tagged_addresses(self, consul_obj) -> None:
+        c, _consul_version = consul_obj
+
+        tagged_addresses = {
+            "lan": {"address": "10.10.10.1", "port": 8080},
+            "wan": {"address": "192.168.1.1", "port": 80},
+        }
+        expected_tagged_addresses = {
+            "lan": {"Address": "10.10.10.1", "Port": 8080},
+            "wan": {"Address": "192.168.1.1", "Port": 80},
+        }
+
+        assert c.agent.service.register("foo_tagged", tagged_addresses=tagged_addresses) is True
+
+        services = c.agent.services()
+        assert "foo_tagged" in services
+        assert services["foo_tagged"]["TaggedAddresses"] == expected_tagged_addresses
+
+        assert c.agent.service.deregister("foo_tagged") is True

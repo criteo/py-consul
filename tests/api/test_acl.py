@@ -192,6 +192,25 @@ class TestConsulAcl:
         policy = c.acl.policy.read(uuid="00000000-0000-0000-0000-000000000001", token=master_token)
         assert find_recursive(policy, {"ID": "00000000-0000-0000-0000-000000000001", "Name": "global-management"})
 
+    def test_acl_token_create_templated(self, acl_consul) -> None:
+        c, master_token, _consul_version = acl_consul
+
+        policy_name = "builtin/service"
+        templated_policies = {policy_name: {"Name": "my-service"}}
+
+        token_info = c.acl.token.create(
+            description="templated token", templated_policies=templated_policies, token=master_token
+        )
+
+        expected = {"TemplatedPolicies": [{"TemplateName": policy_name, "TemplateVariables": {"name": "my-service"}}]}
+
+        # Check immediate response
+        assert find_recursive(token_info, expected)
+
+        # Check read
+        token_read = c.acl.token.read(accessor_id=token_info["AccessorID"], token=master_token)
+        assert find_recursive(token_read, expected)
+
     #
     # def test_acl_token_implicit_token_use(self, acl_consul):
     #     # configure client to use the master token by default
