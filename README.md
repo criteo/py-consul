@@ -1,11 +1,11 @@
-# py-consul [![PyPi version](https://img.shields.io/pypi/v/py-consul.svg)](https://pypi.python.org/pypi/py-consul/) [![Python version](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/) ![Status](https://img.shields.io/badge/status-maintained-green.svg)
+# py-consul [![PyPi version](https://img.shields.io/pypi/v/py-consul.svg)](https://pypi.python.org/pypi/py-consul/) [![Python version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/) ![Status](https://img.shields.io/badge/status-maintained-green.svg)
 
 Status
 -----------
 This project is maintained and actively developed by Criteo.
 We aim at converging towards a full compatibility with the official Consul API.
 
-We're currently supporting consul 1.17 up to 1.20. Due to quite a few changes
+We're currently supporting consul 1.20 up to 1.22. Due to quite a few changes
 since our development started (see section "A bit of history"), some endpoints are 
 still partially handled.
 
