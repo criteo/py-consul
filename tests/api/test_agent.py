@@ -270,3 +270,18 @@ class TestAgent:
         assert services["foo_tagged"]["TaggedAddresses"] == expected_tagged_addresses
 
         assert c.agent.service.deregister("foo_tagged") is True
+
+    def test_agent_service_connect(self, consul_obj) -> None:
+        c, _consul_version = consul_obj
+
+        connect: dict[str, dict] = {"sidecar_service": {}}
+
+        assert c.agent.service.register("foo_connect", connect=connect) is True
+
+        services = c.agent.services()
+        assert "foo_connect" in services
+
+        # When using sidecar_service, Consul registers a separate service.
+        assert "foo_connect-sidecar-proxy" in services
+
+        assert c.agent.service.deregister("foo_connect") is True
