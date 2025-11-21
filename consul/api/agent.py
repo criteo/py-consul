@@ -154,6 +154,7 @@ class Agent:
             enable_tag_override: bool = False,
             extra_checks=None,
             replace_existing_checks=False,
+            tagged_addresses: dict | None = None,
         ):
             """
             Add a new service to the local agent. There is more
@@ -182,6 +183,9 @@ class Agent:
 
             *weights* specifies weights for the service; default to
             {"Passing": 1, "Warning": 1}.
+
+            *tagged_addresses* specifies alternative addresses for the service,
+            e.g. for use with Connect. Formatted as { "lan": "<address>", "wan": "<address>" }.
 
             *script*, *interval*, *ttl*, *http*, and *timeout* arguments
             are deprecated. use *check* instead.
@@ -227,6 +231,8 @@ class Agent:
                         script=script, interval=interval, ttl=ttl, http=http, timeout=timeout
                     )
                 )
+            if tagged_addresses:
+                payload["tagged_addresses"] = tagged_addresses
             params = []
             if replace_existing_checks:
                 params.append(("replace-existing-checks", "true"))
