@@ -17,8 +17,13 @@ class HTTPClient(base.HTTPClient):
             connector_kwargs["limit"] = connections_limit
         if self.verify:
             ssl_context = ssl.create_default_context()
-            ssl_context.load_cert_chain(*self.cert) if self.cert else None
-            ssl_context.load_verify_locations(self.verify) if isinstance(self.verify, str) else None
+            if self.cert:
+                if isinstance(self.cert, tuple):
+                    ssl_context.load_cert_chain(*self.cert)
+                else:
+                    ssl_context.load_cert_chain(self.cert)
+            if isinstance(self.verify, str):
+                ssl_context.load_verify_locations(self.verify)
             connector_kwargs["ssl_context"] = ssl_context
         connector = aiohttp.TCPConnector(loop=self.loop, verify_ssl=self.verify, **connector_kwargs)
         session_kwargs = {}
