@@ -3,7 +3,6 @@ import base64
 import struct
 
 import pytest
-from packaging import version
 
 import consul
 import consul.aio
@@ -122,37 +121,6 @@ class TestAsyncioConsul:
 
     async def test_agent_services(self, consul_obj) -> None:
         c, _consul_version = consul_obj
-        EXPECTED = {
-            "v1": {
-                "foo": {
-                    "Port": 0,
-                    "ID": "foo",
-                    "CreateIndex": 0,
-                    "ModifyIndex": 0,
-                    "EnableTagOverride": False,
-                    "Service": "foo",
-                    "Tags": [],
-                    "Meta": {},
-                    "Address": "",
-                }
-            },
-            "v2": {
-                "foo": {
-                    "Address": "",
-                    "Datacenter": "dc1",
-                    "EnableTagOverride": False,
-                    "ID": "foo",
-                    "Meta": {},
-                    "Port": 0,
-                    "Service": "foo",
-                    "Tags": [],
-                    "Weights": {"Passing": 1, "Warning": 1},
-                }
-            },
-        }
-        expected = EXPECTED["v1"]
-        if version.parse(_consul_version) >= version.parse("1.13.8"):
-            expected = EXPECTED["v2"]
 
         services = await c.agent.services()
         assert services == {}
@@ -160,7 +128,19 @@ class TestAsyncioConsul:
         assert response is True
         services = await c.agent.services()
 
-        assert services == expected
+        assert services == {
+            "foo": {
+                "Address": "",
+                "Datacenter": "dc1",
+                "EnableTagOverride": False,
+                "ID": "foo",
+                "Meta": {},
+                "Port": 0,
+                "Service": "foo",
+                "Tags": [],
+                "Weights": {"Passing": 1, "Warning": 1},
+            }
+        }
         response = await c.agent.service.deregister("foo")
         assert response is True
         services = await c.agent.services()

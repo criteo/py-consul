@@ -1,7 +1,6 @@
 import time
 
 import pytest
-from packaging import version
 
 import consul.check
 from tests.utils import should_skip
@@ -238,14 +237,7 @@ class TestAgent:
     def test_agent_self(self, consul_obj) -> None:
         c, _consul_version = consul_obj
 
-        EXPECTED = {
-            "v1": {"Member", "Stats", "Config", "Coord", "DebugConfig", "Meta"},
-            "v2": {"Member", "xDS", "Stats", "Config", "Coord", "DebugConfig", "Meta"},
-        }
-        expected = EXPECTED["v1"]
-        if version.parse(_consul_version) >= version.parse("1.13.8"):
-            expected = EXPECTED["v2"]
-        assert set(c.agent.self().keys()) == expected
+        assert set(c.agent.self().keys()) == {"Member", "xDS", "Stats", "Config", "Coord", "DebugConfig", "Meta"}
 
     def test_agent_services(self, consul_obj) -> None:
         c, _consul_version = consul_obj
