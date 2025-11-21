@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from typing import Optional
 
 from consul.callback import CB
 
@@ -12,12 +11,12 @@ class Session:
 
     def create(
         self,
-        name: Optional[str] = None,
+        name: str | None = None,
         node=None,
         checks=None,
         lock_delay: int = 15,
         behavior: str = "release",
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
         dc=None,
         token: str | None = None,
     ):

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any, Optional
+from typing import Any
 
 from consul import Check
 from consul.callback import CB
@@ -75,7 +75,7 @@ class Agent:
             params.append(("wan", 1))
         return self.agent.http.get(CB.json(), "/v1/agent/members", params=params)
 
-    def maintenance(self, enable: bool, reason: Optional[str] = None, token: str | None = None):
+    def maintenance(self, enable: bool, reason: str | None = None, token: str | None = None):
         """
         The node maintenance endpoint can place the agent into
         "maintenance mode".
@@ -139,7 +139,7 @@ class Agent:
             name: str,
             service_id=None,
             address=None,
-            port: Optional[int] = None,
+            port: int | None = None,
             tags=None,
             check=None,
             token: str | None = None,
@@ -148,7 +148,7 @@ class Agent:
             # *deprecated* use check parameter
             script=None,
             interval=None,
-            ttl: Optional[int] = None,
+            ttl: int | None = None,
             http=None,
             timeout=None,
             enable_tag_override: bool = False,
@@ -245,7 +245,7 @@ class Agent:
 
             return self.agent.http.put(CB.boolean(), f"/v1/agent/service/deregister/{service_id}", headers=headers)
 
-        def maintenance(self, service_id: str, enable: bool, reason: Optional[str] = None, token: str | None = None):
+        def maintenance(self, service_id: str, enable: bool, reason: str | None = None, token: str | None = None):
             """
             The service maintenance endpoint allows placing a given service
             into "maintenance mode".
@@ -287,7 +287,7 @@ class Agent:
             # *deprecated* use check parameter
             script=None,
             interval=None,
-            ttl: Optional[int] = None,
+            ttl: int | None = None,
             http=None,
             timeout=None,
         ):

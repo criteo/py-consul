@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import warnings
-from typing import Any, Optional
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ class Check:
 
     @classmethod
     def _compat(
-        cls, script=None, interval=None, ttl: Optional[int] = None, http=None, timeout=None, deregister=None
+        cls, script=None, interval=None, ttl: int | None = None, http=None, timeout=None, deregister=None
     ) -> dict[str, Any]:
         if not script and not http and not ttl:
             return {}

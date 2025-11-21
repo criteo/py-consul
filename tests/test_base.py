@@ -3,18 +3,21 @@ from __future__ import annotations
 import collections
 import contextlib
 import json
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any
 
 import pytest
 
 import consul.check
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 Request = collections.namedtuple("Request", ["method", "path", "params", "headers", "data"])
 
 
 class HTTPClient:
     def __init__(
-        self, host: Optional[str] = None, port: Optional[int] = None, scheme=None, verify: bool = True, cert=None
+        self, host: str | None = None, port: int | None = None, scheme=None, verify: bool = True, cert=None
     ) -> None:
         self.host = host
         self.port = int(port) if port else None

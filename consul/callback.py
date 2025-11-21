@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import base64
 import json
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 from consul.exceptions import ACLDisabled, ACLPermissionDenied, BadRequest, ClientError, ConsulException, NotFound
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from consul.base import Response
 
 #

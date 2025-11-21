@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from consul.callback import CB
 
 
@@ -58,7 +56,7 @@ class Event:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.put(CB.json(), f"/v1/event/fire/{name}", params=params, headers=headers, data=body)
 
-    def list(self, name: Optional[str] = None, index=None, wait=None):
+    def list(self, name: str | None = None, index=None, wait=None):
         """
         Returns a tuple of (*index*, *events*)
             Note: Since Consul's event protocol uses gossip, there is no
