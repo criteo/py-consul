@@ -196,7 +196,7 @@ class TestConsulAcl:
         c, master_token, _consul_version = acl_consul
 
         policy_name = "builtin/service"
-        templated_policies = {policy_name: {"Name": "my-service"}}
+        templated_policies = [{policy_name: {"Name": "my-service"}}]
 
         token_info = c.acl.token.create(
             description="templated token", templated_policies=templated_policies, token=master_token
