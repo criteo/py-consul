@@ -134,6 +134,7 @@ class Agent:
         def __init__(self, agent) -> None:
             self.agent = agent
 
+        # pylint: disable=too-many-branches
         def register(
             self,
             name: str,
@@ -155,6 +156,7 @@ class Agent:
             extra_checks=None,
             replace_existing_checks=False,
             tagged_addresses: dict | None = None,
+            connect: dict[str, Any] | None = None,
         ):
             """
             Add a new service to the local agent. There is more
@@ -186,6 +188,8 @@ class Agent:
 
             *tagged_addresses* specifies alternative addresses for the service,
             e.g. for use with Connect. Formatted as { "lan": "<address>", "wan": "<address>" }.
+
+            *connect* specifies configuration for Connect. Formatted as { "sidecar_service": {} }.
 
             *script*, *interval*, *ttl*, *http*, and *timeout* arguments
             are deprecated. use *check* instead.
@@ -233,6 +237,8 @@ class Agent:
                 )
             if tagged_addresses:
                 payload["tagged_addresses"] = tagged_addresses
+            if connect:
+                payload["connect"] = connect
             params = []
             if replace_existing_checks:
                 params.append(("replace-existing-checks", "true"))
