@@ -181,7 +181,7 @@ class Consul:
         await self.http.close()
 
     @abc.abstractmethod
-    def http_connect(self, host: str, port: int, scheme, verify: bool = True, cert=None):
+    def http_connect(self, host: str, port: int, scheme, verify: bool | str = True, cert=None):
         pass
 
     def prepare_headers(self, token: str | None = None) -> dict[str, str]:

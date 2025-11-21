@@ -1,4 +1,5 @@
 import ssl
+
 import aiohttp
 
 from consul import Timeout, base
@@ -25,7 +26,7 @@ class HTTPClient(base.HTTPClient):
             if isinstance(self.verify, str):
                 ssl_context.load_verify_locations(self.verify)
             connector_kwargs["ssl_context"] = ssl_context
-        connector = aiohttp.TCPConnector(loop=self.loop, verify_ssl=self.verify, **connector_kwargs)
+        connector = aiohttp.TCPConnector(loop=self.loop, verify_ssl=bool(self.verify), **connector_kwargs)
         session_kwargs = {}
         if connections_timeout:
             timeout = aiohttp.ClientTimeout(total=connections_timeout)
@@ -89,7 +90,7 @@ class Consul(base.Consul):
         self.connections_timeout = connections_timeout
         super().__init__(*args, **kwargs)
 
-    def http_connect(self, host: str, port: int, scheme, verify: bool = True, cert=None):
+    def http_connect(self, host: str, port: int, scheme, verify: bool | str = True, cert=None):
         return HTTPClient(
             host,
             port,

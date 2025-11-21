@@ -17,7 +17,7 @@ Request = collections.namedtuple("Request", ["method", "path", "params", "header
 
 class HTTPClient:
     def __init__(
-        self, host: str | None = None, port: int | None = None, scheme=None, verify: bool = True, cert=None
+        self, host: str | None = None, port: int | None = None, scheme=None, verify: bool | str = True, cert=None
     ) -> None:
         self.host = host
         self.port = int(port) if port else None
@@ -36,7 +36,7 @@ class HTTPClient:
 
 
 class Consul(consul.base.Consul):
-    def http_connect(self, host: str, port: int, scheme, verify: bool = True, cert=None):
+    def http_connect(self, host: str, port: int, scheme, verify: bool | str = True, cert=None):
         return HTTPClient(host=host, port=port, scheme=scheme, verify=verify, cert=None)
 
 
