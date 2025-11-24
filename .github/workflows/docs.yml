@@ -35,7 +35,7 @@ jobs:
           uv pip install --system -r docs/requirements.txt
 
       - name: Generate API documentation
-        run: sphinx-apidoc -f -o docs consul
+        run: sphinx-apidoc -f -o docs consul --separate
 
       - name: Build Sphinx documentation
         run: sphinx-build -b html docs docs/_build/html
