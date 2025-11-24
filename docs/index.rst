@@ -1,4 +1,5 @@
-.. include:: ../README.rst
+.. include:: ../README.md
+   :parser: myst_parser.sphinx_
 
 Clients
 -------
@@ -172,48 +173,48 @@ Consul
 Consul.acl
 ++++++++++
 
-.. autoclass:: consul.base::Consul.ACL()
+.. autoclass:: consul.api.acl.ACL
    :members:
    :undoc-members:
 
 Consul.agent
 ++++++++++++
 
-.. autoclass:: consul.base::Consul.Agent()
+.. autoclass:: consul.api.agent.Agent
    :members:
-   :exclude-members: Service
+   :exclude-members: Service, Check, Connect
 
-.. autoclass:: consul.base::Consul.Agent.Service()
+.. autoclass:: consul.api.agent.Agent.Service
    :members:
 
-.. autoclass:: consul.base::Consul.Agent.Check()
+.. autoclass:: consul.api.agent.Agent.Check
    :members:
 
 Consul.catalog
 ++++++++++++++
 
-.. autoclass:: consul.base::Consul.Catalog()
+.. autoclass:: consul.api.catalog.Catalog
    :members:
    :undoc-members:
 
 Consul.event
 ++++++++++++
 
-.. autoclass:: consul.base::Consul.Event()
+.. autoclass:: consul.api.event.Event
    :members:
    :undoc-members:
 
 Consul.coordinate
 +++++++++++++++++
 
-.. autoclass:: consul.base::Consul.Coordinate()
+.. autoclass:: consul.api.coordinates.Coordinate
    :members:
    :undoc-members:
 
 Consul.health
 +++++++++++++
 
-.. autoclass:: consul.base::Consul.Health()
+.. autoclass:: consul.api.health.Health
    :members:
    :undoc-members:
    :exclude-members: Check
@@ -221,35 +222,35 @@ Consul.health
 Consul.kv
 +++++++++
 
-.. autoclass:: consul.base::Consul.KV()
+.. autoclass:: consul.api.kv.KV
    :members:
    :undoc-members:
 
 Consul.query
 ++++++++++++
 
-.. autoclass:: consul.base::Consul.Query()
+.. autoclass:: consul.api.query.Query
    :members:
    :undoc-members:
 
 Consul.session
 ++++++++++++++
 
-.. autoclass:: consul.base::Consul.Session()
+.. autoclass:: consul.api.session.Session
    :members:
    :undoc-members:
 
 Consul.status
 +++++++++++++
 
-.. autoclass:: consul.base::Consul.Status()
+.. autoclass:: consul.api.status.Status
    :members:
    :undoc-members:
 
 Consul.txn
 ++++++++++
 
-.. autoclass:: consul.base::Consul.Txn()
+.. autoclass:: consul.api.txn.Txn
    :members:
    :undoc-members:
 

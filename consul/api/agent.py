@@ -161,7 +161,7 @@ class Agent:
             """
             Add a new service to the local agent. There is more
             documentation on services
-            `here <http://www.consul.io/docs/agent/services.html>`_.
+            `here <http://www.consul.io/docs/agent/services.html>`__.
 
             *name* is the name of the service.
 
@@ -306,7 +306,7 @@ class Agent:
             """
             Register a new check with the local agent. More documentation
             on checks can be found `here
-            <http://www.consul.io/docs/agent/checks.html>`_.
+            <http://www.consul.io/docs/agent/checks.html>`__.
 
             *name* is the name of the check.
 
@@ -411,7 +411,7 @@ class Agent:
             Tests whether a connection attempt is authorized between
             two services.
             More information is available
-            `here <https://www.consul.io/api-docs/agent/connect>`_.
+            `here <https://www.consul.io/api-docs/agent/connect>`__.
 
             *target* is the name of the service that is being requested.
 

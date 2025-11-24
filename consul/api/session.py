@@ -22,7 +22,7 @@ class Session:
     ):
         """
         Creates a new session. There is more documentation for sessions
-        `here <https://consul.io/docs/internals/sessions.html>`_.
+        `here <https://consul.io/docs/internals/sessions.html>`__.
 
         *name* is an optional human readable name for the session.
 
