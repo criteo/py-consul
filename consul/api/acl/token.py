@@ -71,7 +71,7 @@ class Token:
         policies_name: builtins.list[str] | None = None,
         roles_id: builtins.list[str] | None = None,
         roles_name: builtins.list[str] | None = None,
-        templated_policies: builtins.dict[str, builtins.dict[str, str]] | None = None,
+        templated_policies: builtins.list[builtins.dict[str, builtins.dict[str, str]]] | None = None,
     ):
         """
         Create a token (optionally identified by *secret_id* and *accessor_id*).
@@ -83,8 +83,7 @@ class Token:
         :param policies_id: Optional list of policies id
         :param roles_id: Optional list of roles id
         :param roles_name: Optional list of roles name
-        :param templated_policies: Optional dict of templated policies,
-            with template name as key and template key/variables as value
+        :param templated_policies: Optional list of templated policies,
         :return: The cloned token information
         """
 
@@ -114,9 +113,10 @@ class Token:
 
         if templated_policies is not None:
             json_data["TemplatedPolicies"] = []
-            for name, variables in templated_policies.items():
-                policy = {"TemplateName": name, "TemplateVariables": variables}
-                json_data["TemplatedPolicies"].append(policy)
+            for templated_policy in templated_policies:
+                for name, variables in templated_policy.items():
+                    policy_dict = {"TemplateName": name, "TemplateVariables": variables}
+                    json_data["TemplatedPolicies"].append(policy_dict)
 
         headers = self.agent.prepare_headers(token)
         return self.agent.http.put(
@@ -136,7 +136,7 @@ class Token:
         policies_name: builtins.list[str] | None = None,
         roles_id: builtins.list[str] | None = None,
         roles_name: builtins.list[str] | None = None,
-        templated_policies: builtins.dict[str, builtins.dict[str, str]] | None = None,
+        templated_policies: builtins.list[builtins.dict[str, builtins.dict[str, str]]] | None = None,
     ):
         """
         Update a token (optionally identified by *secret_id* and *accessor_id*).
@@ -148,8 +148,7 @@ class Token:
         :param policies_id: Optional list of policies id
         :param roles_id: Optional list of roles id
         :param roles_name: Optional list of roles name
-        :param templated_policies: Optional dict of templated policies,
-            with template name as key and template key/variables as value
+        :param templated_policies: Optional list of templated policies
         :return: The updated token information
         """
 
@@ -177,9 +176,10 @@ class Token:
 
         if templated_policies is not None:
             json_data["TemplatedPolicies"] = []
-            for name, variables in templated_policies.items():
-                policy = {"TemplateName": name, "TemplateVariables": variables}
-                json_data["TemplatedPolicies"].append(policy)
+            for templated_policy in templated_policies:
+                for name, variables in templated_policy.items():
+                    policy_dict = {"TemplateName": name, "TemplateVariables": variables}
+                    json_data["TemplatedPolicies"].append(policy_dict)
 
         headers = self.agent.prepare_headers(token)
         return self.agent.http.put(
