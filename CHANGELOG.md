@@ -1,5 +1,6 @@
 # Change log
 
+Since version 1.5.6, please refer to [Releases](https://github.com/criteo-forks/py-consul/releases)
 
 ## 1.5.5
 
