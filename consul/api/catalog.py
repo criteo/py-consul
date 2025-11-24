@@ -64,7 +64,7 @@ class Catalog:
 
         This manipulates the health check entry, but does not setup a
         script or TTL to actually update the status. The full documentation
-        is `here <https://consul.io/docs/agent/http.html#catalog>`__.
+        is `here <https://developer.hashicorp.com/consul/api-docs/catalog>`_.
 
         Returns *True* on success.
         """

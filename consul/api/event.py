@@ -67,7 +67,7 @@ class Event:
 
         *index* is the current event Consul index, suitable for making
         subsequent calls to wait for changes since this query was last run.
-        Check https://consul.io/docs/agent/http/event.html#event_list for
+        Check https://developer.hashicorp.com/consul/api-docs/event for
         more infos about indexes on events.
 
         *wait* the maximum duration to wait (e.g. '10s') to retrieve
