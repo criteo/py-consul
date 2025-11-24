@@ -161,7 +161,7 @@ class Agent:
             """
             Add a new service to the local agent. There is more
             documentation on services
-            `here <http://www.consul.io/docs/agent/services.html>`_.
+            `here <https://developer.hashicorp.com/consul/docs/fundamentals/service>`_.
 
             *name* is the name of the service.
 
@@ -205,7 +205,7 @@ class Agent:
             This option is only for >=v0.6.0 version on both agent and
             servers.
             for more information
-            https://www.consul.io/docs/agent/services.html
+            https://developer.hashicorp.com/consul/docs/fundamentals/service
             """
 
             if extra_checks is None:
@@ -306,7 +306,7 @@ class Agent:
             """
             Register a new check with the local agent. More documentation
             on checks can be found `here
-            <http://www.consul.io/docs/agent/checks.html>`_.
+            <https://developer.hashicorp.com/consul/docs/register/health-check/vm>`_.
 
             *name* is the name of the check.
 
@@ -411,7 +411,7 @@ class Agent:
             Tests whether a connection attempt is authorized between
             two services.
             More information is available
-            `here <https://www.consul.io/api-docs/agent/connect>`_.
+            `here <https://developer.hashicorp.com/consul/api-docs/agent/connect>`_.
 
             *target* is the name of the service that is being requested.
 

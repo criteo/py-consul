@@ -119,7 +119,7 @@ class Query:
         enter an empty string.
 
         For more information about query
-        https://www.consul.io/docs/agent/http/query.html
+        https://developer.hashicorp.com/consul/api-docs/query
         """
         path = "/v1/query"
         params = None if dc is None else [("dc", dc)]
