@@ -387,6 +387,133 @@ class TestChecks:
         assert ch == want
 
     @pytest.mark.parametrize(
+        ("url", "interval", "use_tls", "tls_skip_verify", "timeout", "deregister", "want"),
+        [
+            (
+                "localhost:10055",
+                "10s",
+                None,
+                None,
+                None,
+                None,
+                {
+                    "grpc": "localhost:10055",
+                    "interval": "10s",
+                },
+            ),
+            (
+                "localhost:10055/:example.Service",
+                "10s",
+                None,
+                None,
+                None,
+                None,
+                {
+                    "grpc": "localhost:10055/:example.Service",
+                    "interval": "10s",
+                },
+            ),
+            (
+                "localhost:10055",
+                "10s",
+                True,
+                None,
+                None,
+                None,
+                {
+                    "grpc": "localhost:10055",
+                    "interval": "10s",
+                    "grpc_use_tls": True,
+                },
+            ),
+            (
+                "localhost:10055",
+                "10s",
+                False,
+                None,
+                None,
+                None,
+                {
+                    "grpc": "localhost:10055",
+                    "interval": "10s",
+                    "grpc_use_tls": False,
+                },
+            ),
+            (
+                "localhost:10055",
+                "10s",
+                None,
+                True,
+                None,
+                None,
+                {
+                    "grpc": "localhost:10055",
+                    "interval": "10s",
+                    "tls_skip_verify": True,
+                },
+            ),
+            (
+                "localhost:10055",
+                "10s",
+                None,
+                False,
+                None,
+                None,
+                {
+                    "grpc": "localhost:10055",
+                    "interval": "10s",
+                    "tls_skip_verify": False,
+                },
+            ),
+            (
+                "localhost:10055",
+                "10s",
+                None,
+                None,
+                "1s",
+                None,
+                {
+                    "grpc": "localhost:10055",
+                    "interval": "10s",
+                    "timeout": "1s",
+                },
+            ),
+            (
+                "localhost:10055",
+                "10s",
+                None,
+                None,
+                None,
+                "1m",
+                {
+                    "grpc": "localhost:10055",
+                    "interval": "10s",
+                    "DeregisterCriticalServiceAfter": "1m",
+                },
+            ),
+            (
+                "localhost:10055",
+                "10s",
+                True,
+                False,
+                "1s",
+                "1m",
+                {
+                    "grpc": "localhost:10055",
+                    "interval": "10s",
+                    "grpc_use_tls": True,
+                    "tls_skip_verify": False,
+                    "timeout": "1s",
+                    "DeregisterCriticalServiceAfter": "1m",
+                },
+            ),
+        ],
+    )
+    def test_grpc_check(self, url, interval, use_tls, tls_skip_verify, timeout, deregister, want) -> None:
+        ch = consul.check.Check.grpc(url, interval, use_tls, tls_skip_verify, timeout=timeout, deregister=deregister)
+        assert ch == want
+
+    @pytest.mark.parametrize(
         ("container_id", "shell", "script", "interval", "deregister", "want"),
         [
             (
