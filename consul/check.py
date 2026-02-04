@@ -61,6 +61,35 @@ class Check:
         return ret
 
     @classmethod
+    def grpc(
+        cls, url: str, interval, use_tls=None, tls_skip_verify=None, timeout=None, deregister=None
+    ) -> dict[str, Any]:
+        """
+        Configures a gRPC health check that periodically assesses a service's health status.
+
+        This check performs a gRPC health check against the specified *url* at each *interval*
+        (e.g., "10s"). An optional *timeout* sets the maximum duration for each check attempt.
+        The *deregister* parameter specifies the time after which a consistently failing service
+        is automatically deregistered from Consul.
+
+        See also: consul grpc protocol
+            - https://github.com/grpc/grpc/blob/master/doc/health-checking.md
+        """
+        ret = {
+            "grpc": url,
+            "interval": interval,
+        }
+        if use_tls is not None:
+            ret["grpc_use_tls"] = use_tls
+        if tls_skip_verify is not None:
+            ret["tls_skip_verify"] = tls_skip_verify
+        if timeout:
+            ret["timeout"] = timeout
+        if deregister:
+            ret["DeregisterCriticalServiceAfter"] = deregister
+        return ret
+
+    @classmethod
     def ttl(cls, ttl: str) -> dict[str, Any]:
         """
         Set check to be marked as critical after *ttl* (e.g. "10s") unless the
