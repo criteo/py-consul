@@ -187,7 +187,7 @@ class Catalog:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(index=True), "/v1/catalog/nodes", params=params, headers=headers)
 
-    def services(self, index=None, wait=None, consistency=None, dc=None, token: str | None = None, node_meta=None):
+    def services(self, index=None, wait=None, consistency=None, dc=None, tag=None, token: str | None = None, node_meta=None):
         """
         Returns a tuple of (*index*, *services*) of all services known
         about in the *dc* datacenter. *dc* defaults to the current
@@ -203,6 +203,9 @@ class Catalog:
         *consistency* can be either 'default', 'consistent' or 'stale'. if
         not specified *consistency* will the consistency level this client
         was configured with.
+
+        If *tag* is provided, the list of services returned will be filtered
+        on that tag.
 
         *token* is an optional `ACL token`_ to apply to this request.
 
@@ -224,6 +227,7 @@ class Catalog:
         known tags for a given service.
         """
         params = []
+        results = {}
         dc = dc or self.agent.dc
         if dc:
             params.append(("dc", dc))
@@ -238,7 +242,14 @@ class Catalog:
             for nodemeta_name, nodemeta_value in node_meta.items():
                 params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
         headers = self.agent.prepare_headers(token)
-        return self.agent.http.get(CB.json(index=True), "/v1/catalog/services", params=params, headers=headers)
+        index, consul_services = self.agent.http.get(CB.json(index=True), "/v1/catalog/services", params=params, headers=headers)
+        if tag:
+            for key in consul_services:
+                for consul_tag in consul_services[key]:
+                    if consul_tag == tag:
+                            results[key] = consul_services[key]
+            return (index, results)
+        return (index, consul_services)
 
     def node(self, node, index=None, wait=None, consistency=None, dc=None, token: str | None = None):
         """
