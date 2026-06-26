@@ -1,3 +1,5 @@
+import typing
+
 import pytest
 
 import consul
@@ -102,11 +104,16 @@ class TestConsulAcl:
             description="some token!",
             token=master_token,
         )
+        c.acl.token.create(
+            accessor_id="00000000-0000-DEAF-0000-000000000000",
+            node_identities=["deaf:dc1"],
+            token=master_token,
+        )
 
         assert c.acl.token.read(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
         assert c.acl.token.read(accessor_id="00000000-0000-A5A5-0000-000000000000", token=master_token)
 
-        expected = [
+        expected: list[dict[typing.Any, typing.Any]] = [
             {
                 "AccessorID": "00000000-DEAD-BEEF-0000-000000000000",
                 "Description": "",
@@ -119,6 +126,15 @@ class TestConsulAcl:
                 "AccessorID": "00000000-0000-A5A5-0000-000000000000",
                 "SecretID": "00000000-A5A5-0000-0000-000000000000",
                 "Description": "some token!",
+            },
+            {
+                "AccessorID": "00000000-0000-DEAF-0000-000000000000",
+                "NodeIdentities": [
+                    {
+                        "NodeName": "deaf",
+                        "Datacenter": "dc1",
+                    },
+                ],
             },
         ]
         acl = c.acl.token.list(token=master_token)
@@ -155,17 +171,29 @@ class TestConsulAcl:
 
         assert len(c.acl.token.list(token=master_token)) == 2
         c.acl.token.create(
-            accessor_id="00000000-DEAD-BEEF-0000-000000000000", description="original", token=master_token
+            accessor_id="00000000-DEAD-BEEF-0000-000000000000",
+            description="original",
+            node_identities=["test01:dc1"],
+            token=master_token,
         )
         assert len(c.acl.token.list(token=master_token)) == 3
         c.acl.token.update(
-            accessor_id="00000000-DEAD-BEEF-0000-000000000000", description="updated", token=master_token
+            accessor_id="00000000-DEAD-BEEF-0000-000000000000",
+            description="updated",
+            node_identities=["test02:dc2"],
+            token=master_token,
         )
         assert len(c.acl.token.list(token=master_token)) == 3
 
         expected = {
             "AccessorID": "00000000-DEAD-BEEF-0000-000000000000",
             "Description": "updated",
+            "NodeIdentities": [
+                {
+                    "NodeName": "test02",
+                    "Datacenter": "dc2",
+                },
+            ],
         }
         acl = c.acl.token.read(accessor_id="00000000-DEAD-BEEF-0000-000000000000", token=master_token)
         assert find_recursive(acl, expected)

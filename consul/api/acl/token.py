@@ -10,6 +10,19 @@ if typing.TYPE_CHECKING:
     import builtins
 
 
+def parse_identities(node_identities: list[str] | None) -> dict[str, list[dict[str, str]]]:
+    identities: list[dict[str, str]] = []
+    if node_identities:
+        for identity in node_identities:
+            try:
+                name, datacenter = identity.split(":", 1)
+            except ValueError as e:
+                raise ValueError(f"Node identity must be 'node:datacenter', got {identity!r}") from e
+            identities.append({"NodeName": name, "Datacenter": datacenter})
+        return {"NodeIdentities": identities}
+    return {}
+
+
 class AclPolicyLink(TypedDict, total=False):
     ID: str
     Name: str
@@ -100,6 +113,7 @@ class Token:
         token: str | None = None,
         accessor_id: str | None = None,
         secret_id: str | None = None,
+        node_identities: builtins.list[str] | None = None,
         policies_id: builtins.list[str] | None = None,
         description: str = "",
         policies_name: builtins.list[str] | None = None,
@@ -113,6 +127,7 @@ class Token:
         :param token: token with acl:write capability
         :param accessor_id: The accessor ID of the token to create
         :param secret_id: The secret ID of the token to create
+        :param node_identities: Optional list of node identities (format: 'nodename:datacenter'), requires consul>=1.8.1
         :param description: Optional new token description
         :param policies_id: Optional list of policies id
         :param roles_id: Optional list of roles id
@@ -128,6 +143,8 @@ class Token:
             json_data["SecretID"] = secret_id
         if description:
             json_data["Description"] = description
+
+        json_data.update(parse_identities(node_identities))
 
         policies: list[dict[str, str]] = []
         if policies_id:
@@ -165,6 +182,7 @@ class Token:
         accessor_id: str,
         token: str | None = None,
         secret_id: str | None = None,
+        node_identities: builtins.list[str] | None = None,
         description: str = "",
         policies_id: builtins.list[str] | None = None,
         policies_name: builtins.list[str] | None = None,
@@ -178,6 +196,7 @@ class Token:
         :param accessor_id: The accessor ID of the token to update
         :param token: token with acl:write capability
         :param secret_id: Optional secret ID of the token to update
+        :param node_identities: Optional list of node identities (format: 'nodename:datacenter'), requires consul>=1.8.1
         :param description: Optional new token description
         :param policies_id: Optional list of policies id
         :param roles_id: Optional list of roles id
@@ -187,10 +206,13 @@ class Token:
         """
 
         json_data: dict[str, typing.Any] = {"AccessorID": accessor_id}
+
         if secret_id:
             json_data["SecretID"] = secret_id
         if description:
             json_data["Description"] = description
+
+        json_data.update(parse_identities(node_identities))
 
         policies: list[dict[str, str]] = []
         if policies_id:
