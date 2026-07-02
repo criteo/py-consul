@@ -28,5 +28,5 @@ repos:
       - id: mypy
         name: mypy
         language: system
-        entry: mypy --show-traceback
+        entry: mypy --show-traceback --no-sqlite-cache
         types: [python]
