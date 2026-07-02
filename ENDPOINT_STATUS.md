@@ -124,7 +124,11 @@ File: `consul/api/acl/*.py`
 | `GET /v1/acl/role/name/:name` | `Role.read_by_name` | ✅ | - |
 | `PUT /v1/acl/role/:id` | `Role.update` | ✅ | - |
 | `DELETE /v1/acl/role/:id` | `Role.delete` | ✅ | - |
-| `GET /v1/acl/auth-methods` | - | ❌ | - |
+| `GET /v1/acl/auth-methods` | `AuthMethod.list` | ✅ | - |
+| `PUT /v1/acl/auth-method` | `AuthMethod.create` | ✅ | - |
+| `GET /v1/acl/auth-method/:name` | `AuthMethod.read` | ✅ | - |
+| `PUT /v1/acl/auth-method/:name` | `AuthMethod.update` | ✅ | - |
+| `DELETE /v1/acl/auth-method/:name` | `AuthMethod.delete` | ✅ | - |
 | `GET /v1/acl/binding-rules` | - | ❌ | - |
 
 ## 7. Event (`/v1/event`)

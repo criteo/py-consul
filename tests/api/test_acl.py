@@ -3,6 +3,18 @@ import pytest
 import consul
 from tests.utils import find_recursive
 
+# Static RSA public key used to configure an offline "jwt" ACL auth method in tests,
+# so auth-method/binding-rule CRUD can be tested without a real OIDC/Kubernetes backend.
+JWT_PUBLIC_KEY = """-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0VPUoKqJMko3Snie9UX1
+AgDQcE0W13BdhFJn9ngzjq/ce2WJiIzww/sY1NVwVUkymdGYsFhoEorvGBwsOgWI
+FEOlpKgTWOjn+nXVYCH7AnyVdYkCfgDPItdv666ankphcv55QJOY16om2uSWV3iy
+IoScXHFVJtBhlwho33wH+AZLmaV2LSEYqQdqHhGKT6JO20QRGYQzxfXkGSbEUtNm
+f2Tgbr4nZPL/fKqhuY+rsU7LGVYKGf5Ddrm5+AjotDturj4GAc+R49MfsPXN9pZG
+BXOAq+NWy3W3IPz1DQ2wU1MYPm3X94FG7Og8b2qZ/5+oB/2RXwYTtW5vvOgZ6mSK
+KwIDAQAB
+-----END PUBLIC KEY-----"""
+
 
 class TestConsulAcl:
     def test_acl_token_permission_denied(self, acl_consul) -> None:
@@ -240,6 +252,36 @@ class TestConsulAcl:
 
         pytest.raises(consul.ACLPermissionDenied, c.acl.role.list)
         pytest.raises(consul.ACLPermissionDenied, c.acl.role.create, name="denied-role")
+
+    def test_acl_auth_method_crud(self, acl_consul) -> None:
+        c, master_token, _consul_version = acl_consul
+
+        method = c.acl.auth_method.create(
+            name="test-jwt",
+            method_type="jwt",
+            description="a test auth method",
+            config={"JWTValidationPubKeys": [JWT_PUBLIC_KEY], "BoundIssuer": "test-issuer"},
+            token=master_token,
+        )
+        assert method["Name"] == "test-jwt"
+        assert method["Type"] == "jwt"
+
+        read = c.acl.auth_method.read(name="test-jwt", token=master_token)
+        assert read["Config"]["BoundIssuer"] == "test-issuer"
+
+        assert find_recursive(c.acl.auth_method.list(token=master_token), {"Name": "test-jwt"})
+
+        updated = c.acl.auth_method.update(
+            name="test-jwt",
+            method_type="jwt",
+            description="updated",
+            config={"JWTValidationPubKeys": [JWT_PUBLIC_KEY], "BoundIssuer": "test-issuer"},
+            token=master_token,
+        )
+        assert updated["Description"] == "updated"
+
+        assert c.acl.auth_method.delete(name="test-jwt", token=master_token) is True
+        assert c.acl.auth_method.read(name="test-jwt", token=master_token) is None
 
     #
     # def test_acl_token_implicit_token_use(self, acl_consul):
