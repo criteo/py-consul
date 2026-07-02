@@ -14,6 +14,7 @@ from consul.api.catalog import Catalog
 from consul.api.config import Config
 from consul.api.connect import Connect
 from consul.api.coordinates import Coordinate
+from consul.api.discovery_chain import DiscoveryChain
 from consul.api.event import Event
 from consul.api.health import Health
 from consul.api.kv import KV
@@ -165,6 +166,7 @@ class Consul:
         self.operator = Operator(self)
         self.connect = Connect(self)
         self.config = Config(self)
+        self.discovery_chain = DiscoveryChain(self)
 
     def __enter__(self):
         return self
