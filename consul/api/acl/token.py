@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import typing
+from typing import Any, TypedDict
 
 from consul.callback import CB
 
@@ -9,11 +10,33 @@ if typing.TYPE_CHECKING:
     import builtins
 
 
+class AclPolicyLink(TypedDict, total=False):
+    ID: str
+    Name: str
+
+
+class AclToken(TypedDict, total=False):
+    AccessorID: str
+    SecretID: str
+    Description: str
+    Policies: builtins.list[AclPolicyLink]
+    Roles: builtins.list[AclPolicyLink]
+    ServiceIdentities: builtins.list[dict[str, Any]]
+    NodeIdentities: builtins.list[dict[str, Any]]
+    TemplatedPolicies: builtins.list[dict[str, Any]]
+    Local: bool
+    AuthMethod: str
+    CreateTime: str
+    Hash: str
+    CreateIndex: int
+    ModifyIndex: int
+
+
 class Token:
     def __init__(self, agent) -> None:
         self.agent = agent
 
-    def list(self, token: str | None = None):
+    def list(self, token: str | None = None) -> builtins.list[AclToken]:
         """
         Lists all the active ACL tokens. This is a privileged endpoint, and
         requires a management token. *token* will override this client's
@@ -23,7 +46,7 @@ class Token:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(), "/v1/acl/tokens", headers=headers)
 
-    def read(self, accessor_id: str, token: str | None = None):
+    def read(self, accessor_id: str, token: str | None = None) -> AclToken:
         """
         Returns the token information for *accessor_id*. Requires a token with acl:read capability.
         :param accessor_id: The accessor ID of the token to read
@@ -33,7 +56,18 @@ class Token:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(), f"/v1/acl/token/{accessor_id}", headers=headers)
 
-    def delete(self, accessor_id: str, token: str | None = None):
+    def read_self(self, token: str | None = None) -> AclToken:
+        """
+        Returns the token information for the token used to authenticate the request
+        (via *token*, or the client's default token). Requires no specific privileges
+        beyond possessing the token's own secret.
+        :param token: the token to introspect; defaults to the client's configured token
+        :return: the token information
+        """
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(), "/v1/acl/token/self", headers=headers)
+
+    def delete(self, accessor_id: str, token: str | None = None) -> bool:
         """
         Deletes the token with *accessor_id*. This is a privileged endpoint, and requires a token with acl:write.
         :param accessor_id: The accessor ID of the token to delete
@@ -43,7 +77,7 @@ class Token:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.delete(CB.boolean(), f"/v1/acl/token/{accessor_id}", headers=headers)
 
-    def clone(self, accessor_id: str, token: str | None = None, description: str = ""):
+    def clone(self, accessor_id: str, token: str | None = None, description: str = "") -> AclToken:
         """
         Clones the token identified by *accessor_id*. This is a privileged endpoint, and requires a token with acl:write.
         :param accessor_id: The accessor ID of the token to clone
@@ -72,7 +106,7 @@ class Token:
         roles_id: builtins.list[str] | None = None,
         roles_name: builtins.list[str] | None = None,
         templated_policies: builtins.list[builtins.dict[str, builtins.dict[str, str]]] | None = None,
-    ):
+    ) -> AclToken:
         """
         Create a token (optionally identified by *secret_id* and *accessor_id*).
         This is a privileged endpoint, and requires a token with acl:write.
@@ -137,7 +171,7 @@ class Token:
         roles_id: builtins.list[str] | None = None,
         roles_name: builtins.list[str] | None = None,
         templated_policies: builtins.list[builtins.dict[str, builtins.dict[str, str]]] | None = None,
-    ):
+    ) -> AclToken:
         """
         Update a token (optionally identified by *secret_id* and *accessor_id*).
         This is a privileged endpoint, and requires a token with acl:write.

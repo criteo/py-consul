@@ -223,6 +223,30 @@ class TestConsulAcl:
         token_read = c.acl.token.read(accessor_id=token_info["AccessorID"], token=master_token)
         assert find_recursive(token_read, expected)
 
+    def test_acl_token_read_self(self, acl_consul) -> None:
+        c, master_token, _consul_version = acl_consul
+
+        token_info = c.acl.token.read_self(token=master_token)
+        assert token_info["SecretID"] == master_token
+        assert token_info["Description"] == "Initial Management Token"
+
+    def test_acl_bootstrap_already_done(self, acl_consul) -> None:
+        c, _master_token, _consul_version = acl_consul
+
+        # acl_consul_instance already sets the initial management token via config,
+        # so the ACL system is already bootstrapped and a second bootstrap must fail.
+        pytest.raises(consul.ConsulException, c.acl.bootstrap)
+
+    def test_acl_login_unknown_auth_method(self, acl_consul) -> None:
+        c, _master_token, _consul_version = acl_consul
+
+        pytest.raises(consul.ConsulException, c.acl.login, auth_method="does-not-exist", bearer_token="fake-token")
+
+    def test_acl_logout_invalid_token(self, acl_consul) -> None:
+        c, _master_token, _consul_version = acl_consul
+
+        pytest.raises(consul.ConsulException, c.acl.logout, token="00000000-0000-0000-0000-0000000000ff")
+
     def test_acl_role_crud(self, acl_consul) -> None:
         c, master_token, _consul_version = acl_consul
 

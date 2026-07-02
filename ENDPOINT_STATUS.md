@@ -103,16 +103,16 @@ File: `consul/api/acl/*.py`
 
 | Endpoint | Python Method | Status | Missing Parameters |
 | :--- | :--- | :--- | :--- |
-| `PUT /v1/acl/bootstrap` | - | ❌ | - |
-| `PUT /v1/acl/login` | - | ❌ | - |
-| `PUT /v1/acl/logout` | - | ❌ | - |
+| `PUT /v1/acl/bootstrap` | `ACL.bootstrap` | ✅ | - |
+| `POST /v1/acl/login` | `ACL.login` | ✅ | - |
+| `POST /v1/acl/logout` | `ACL.logout` | ✅ | - |
 | `GET /v1/acl/tokens` | `Token.list` | ⚠️ | `policy`, `role`, `authmethod`, `secondary` (filters) |
 | `PUT /v1/acl/token` | `Token.create` | ⚠️ | `ServiceIdentities`, `NodeIdentities`, `ExpirationTime`, `ExpirationTTL`, `Local` |
 | `GET /v1/acl/token/:accessor` | `Token.read` | ✅ | - |
 | `PUT /v1/acl/token/:accessor` | `Token.update` | ⚠️ | `ServiceIdentities`, `NodeIdentities`, `ExpirationTime`, `ExpirationTTL`, `Local` |
 | `DELETE /v1/acl/token/:accessor` | `Token.delete` | ✅ | - |
 | `PUT /v1/acl/token/:accessor/clone` | `Token.clone` | ✅ | - |
-| `GET /v1/acl/token/self` | - | ❌ | - |
+| `GET /v1/acl/token/self` | `Token.read_self` | ✅ | - |
 | `GET /v1/acl/policies` | `Policy.list` | ✅ | - |
 | `PUT /v1/acl/policy` | `Policy.create` | ✅ | - |
 | `GET /v1/acl/policy/:id` | `Policy.read` | ✅ | - |
