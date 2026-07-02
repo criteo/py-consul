@@ -28,5 +28,5 @@ repos:
       - id: mypy
         name: mypy
         language: system
-        entry: mypy
+        entry: mypy --show-traceback
         types: [python]
