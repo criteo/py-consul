@@ -198,4 +198,11 @@ File: `consul/api/connect.py`
 | `GET /v1/connect/ca/roots` | `Connect.CA.roots` | ✅ | - |
 | `GET /v1/connect/ca/configuration` | `Connect.CA.configuration` | ✅ | - |
 | `PUT /v1/connect/ca/configuration` | - | ❌ | - |
-| `GET /v1/connect/intentions` | - | ❌ | - |
+| `PUT /v1/connect/intentions/exact` | `Connect.Intentions.upsert` | ✅ | - |
+| `GET /v1/connect/intentions/exact` | `Connect.Intentions.read` | ✅ | - |
+| `DELETE /v1/connect/intentions/exact` | `Connect.Intentions.delete` | ✅ | - |
+| `GET /v1/connect/intentions` | `Connect.Intentions.list` | ✅ | - |
+| `GET /v1/connect/intentions/check` | `Connect.Intentions.check` | ✅ | - |
+| `GET /v1/connect/intentions/match` | `Connect.Intentions.match` | ✅ | - |
+| `POST /v1/connect/intentions` (legacy, deprecated 1.9.0) | - | ❌ | Intentionally not implemented — use exact-match endpoints above |
+| `GET/PUT/DELETE /v1/connect/intentions/:uuid` (legacy, deprecated 1.9.0) | - | ❌ | Intentionally not implemented — use exact-match endpoints above |
