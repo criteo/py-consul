@@ -28,5 +28,5 @@ repos:
       - id: mypy
         name: mypy
         language: system
-        entry: mypy --non-interactive --install-types
+        entry: mypy
         types: [python]
