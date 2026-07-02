@@ -283,6 +283,44 @@ class TestConsulAcl:
         assert c.acl.auth_method.delete(name="test-jwt", token=master_token) is True
         assert c.acl.auth_method.read(name="test-jwt", token=master_token) is None
 
+    def test_acl_binding_rule_crud(self, acl_consul) -> None:
+        c, master_token, _consul_version = acl_consul
+
+        c.acl.auth_method.create(
+            name="test-jwt",
+            method_type="jwt",
+            config={"JWTValidationPubKeys": [JWT_PUBLIC_KEY]},
+            token=master_token,
+        )
+
+        rule = c.acl.binding_rule.create(
+            auth_method="test-jwt",
+            bind_type="service",
+            bind_name="jwt-bound-service",
+            description="a test binding rule",
+            selector='value.iss=="test-issuer"',
+            token=master_token,
+        )
+        assert rule["AuthMethod"] == "test-jwt"
+        rule_id = rule["ID"]
+
+        assert c.acl.binding_rule.read(binding_rule_id=rule_id, token=master_token)["BindName"] == "jwt-bound-service"
+        assert find_recursive(c.acl.binding_rule.list(token=master_token), {"ID": rule_id})
+        assert find_recursive(c.acl.binding_rule.list(auth_method="test-jwt", token=master_token), {"ID": rule_id})
+
+        updated = c.acl.binding_rule.update(
+            binding_rule_id=rule_id,
+            auth_method="test-jwt",
+            bind_type="service",
+            bind_name="jwt-bound-service",
+            description="updated",
+            token=master_token,
+        )
+        assert updated["Description"] == "updated"
+
+        assert c.acl.binding_rule.delete(binding_rule_id=rule_id, token=master_token) is True
+        assert c.acl.binding_rule.read(binding_rule_id=rule_id, token=master_token) is None
+
     #
     # def test_acl_token_implicit_token_use(self, acl_consul):
     #     # configure client to use the master token by default

@@ -129,7 +129,11 @@ File: `consul/api/acl/*.py`
 | `GET /v1/acl/auth-method/:name` | `AuthMethod.read` | ✅ | - |
 | `PUT /v1/acl/auth-method/:name` | `AuthMethod.update` | ✅ | - |
 | `DELETE /v1/acl/auth-method/:name` | `AuthMethod.delete` | ✅ | - |
-| `GET /v1/acl/binding-rules` | - | ❌ | - |
+| `GET /v1/acl/binding-rules` | `BindingRule.list` | ✅ | - |
+| `PUT /v1/acl/binding-rule` | `BindingRule.create` | ✅ | - |
+| `GET /v1/acl/binding-rule/:id` | `BindingRule.read` | ✅ | - |
+| `PUT /v1/acl/binding-rule/:id` | `BindingRule.update` | ✅ | - |
+| `DELETE /v1/acl/binding-rule/:id` | `BindingRule.delete` | ✅ | - |
 
 ## 7. Event (`/v1/event`)
 File: `consul/api/event.py`
