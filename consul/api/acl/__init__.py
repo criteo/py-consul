@@ -1,4 +1,5 @@
 from consul.api.acl.policy import Policy
+from consul.api.acl.role import Role
 from consul.api.acl.templated_policy import TemplatedPolicy
 from consul.api.acl.token import Token
 
@@ -10,3 +11,4 @@ class ACL:
         self.token = self.tokens = Token(agent)
         self.policy = self.policies = Policy(agent)
         self.templated_policy = self.templated_policies = TemplatedPolicy(agent)
+        self.role = self.roles = Role(agent)

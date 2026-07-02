@@ -211,6 +211,36 @@ class TestConsulAcl:
         token_read = c.acl.token.read(accessor_id=token_info["AccessorID"], token=master_token)
         assert find_recursive(token_read, expected)
 
+    def test_acl_role_crud(self, acl_consul) -> None:
+        c, master_token, _consul_version = acl_consul
+
+        role = c.acl.role.create(
+            name="test-role",
+            description="a test role",
+            service_identities=[{"ServiceName": "web"}],
+            node_identities=[{"NodeName": "node-1", "Datacenter": "dc1"}],
+            token=master_token,
+        )
+        assert role["Name"] == "test-role"
+        assert find_recursive(role, {"ServiceIdentities": [{"ServiceName": "web"}]})
+        role_id = role["ID"]
+
+        assert c.acl.role.read(role_id=role_id, token=master_token)["Name"] == "test-role"
+        assert c.acl.role.read_by_name(name="test-role", token=master_token)["ID"] == role_id
+        assert find_recursive(c.acl.role.list(token=master_token), {"ID": role_id})
+
+        updated = c.acl.role.update(role_id=role_id, name="test-role", description="updated", token=master_token)
+        assert updated["Description"] == "updated"
+
+        assert c.acl.role.delete(role_id=role_id, token=master_token) is True
+        assert c.acl.role.read(role_id=role_id, token=master_token) is None
+
+    def test_acl_role_permission_denied(self, acl_consul) -> None:
+        c, _master_token, _consul_version = acl_consul
+
+        pytest.raises(consul.ACLPermissionDenied, c.acl.role.list)
+        pytest.raises(consul.ACLPermissionDenied, c.acl.role.create, name="denied-role")
+
     #
     # def test_acl_token_implicit_token_use(self, acl_consul):
     #     # configure client to use the master token by default
