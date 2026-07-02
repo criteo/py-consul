@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 from consul.api.acl import ACL
 from consul.api.agent import Agent
 from consul.api.catalog import Catalog
+from consul.api.config import Config
 from consul.api.connect import Connect
 from consul.api.coordinates import Coordinate
 from consul.api.event import Event
@@ -163,6 +164,7 @@ class Consul:
         self.coordinate = Coordinate(self)
         self.operator = Operator(self)
         self.connect = Connect(self)
+        self.config = Config(self)
 
     def __enter__(self):
         return self
