@@ -44,6 +44,16 @@ class CB:
         return cb
 
     @classmethod
+    def binary(cls) -> Callable[[Response], bytes]:
+        # returns the raw response body, for binary payloads (e.g. GET /v1/snapshot)
+        # that a JSON/text-oriented callback would corrupt
+        def cb(response):
+            CB._status(response, allow_404=False)
+            return response.body
+
+        return cb
+
+    @classmethod
     def json(
         cls,
         postprocess=None,

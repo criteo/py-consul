@@ -13,15 +13,21 @@ class HTTPClient(base.HTTPClient):
         super().__init__(*args, **kwargs)
         self.session = requests.session()
 
-    def response(self, response: Response):
+    def response(self, response: Response, raw: bool = False):
+        if raw:
+            # e.g. the gzip archive returned by GET /v1/snapshot -- decoding it as
+            # UTF-8 text would corrupt it, so the raw bytes are kept as-is.
+            return base.Response(response.status_code, response.headers, response.content)
         response.encoding = "utf-8"
         return base.Response(response.status_code, response.headers, response.text)
 
-    def get(self, callback, path, params=None, headers: dict[str, str] | None = None):
+    def get(self, callback, path, params=None, headers: dict[str, str] | None = None, raw: bool = False):
         uri = self.uri(path, params)
-        return callback(self.response(self.session.get(uri, headers=headers, verify=self.verify, cert=self.cert)))
+        return callback(
+            self.response(self.session.get(uri, headers=headers, verify=self.verify, cert=self.cert), raw=raw)
+        )
 
-    def put(self, callback, path, params=None, data: str = "", headers: dict[str, str] | None = None):
+    def put(self, callback, path, params=None, data: str | bytes = "", headers: dict[str, str] | None = None):
         uri = self.uri(path, params)
         return callback(
             self.response(self.session.put(uri, headers=headers, data=data, verify=self.verify, cert=self.cert))

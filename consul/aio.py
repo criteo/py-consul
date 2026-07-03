@@ -34,29 +34,46 @@ class HTTPClient(base.HTTPClient):
         self._session = aiohttp.ClientSession(connector=connector, **session_kwargs)  # type: ignore
 
     async def _request(
-        self, callback, method, uri, headers: dict[str, str] | None, data=None, connections_timeout=None
+        self,
+        callback,
+        method,
+        uri,
+        headers: dict[str, str] | None,
+        data=None,
+        connections_timeout=None,
+        raw: bool = False,
     ):
         session_kwargs = {}
         if connections_timeout:
             timeout = aiohttp.ClientTimeout(total=connections_timeout)
             session_kwargs["timeout"] = timeout
         resp = await self._session.request(method, uri, headers=headers, data=data, **session_kwargs)  # type: ignore
-        body = await resp.text(encoding="utf-8")
+        # raw=True keeps the response as bytes (e.g. the gzip archive returned by
+        # GET /v1/snapshot) instead of decoding it as UTF-8 text, which would corrupt it.
+        body = await resp.read() if raw else await resp.text(encoding="utf-8")
         if resp.status == 599:
             raise Timeout
         r = base.Response(resp.status, resp.headers, body)
         return callback(r)
 
-    def get(self, callback, path, params=None, headers: dict[str, str] | None = None, connections_timeout=None):
+    def get(
+        self,
+        callback,
+        path,
+        params=None,
+        headers: dict[str, str] | None = None,
+        raw: bool = False,
+        connections_timeout=None,
+    ):
         uri = self.uri(path, params)
-        return self._request(callback, "GET", uri, headers=headers, connections_timeout=connections_timeout)
+        return self._request(callback, "GET", uri, headers=headers, connections_timeout=connections_timeout, raw=raw)
 
     def put(
         self,
         callback,
         path,
         params=None,
-        data: str = "",
+        data: str | bytes = "",
         headers: dict[str, str] | None = None,
         connections_timeout=None,
     ):
