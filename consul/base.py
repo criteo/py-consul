@@ -21,6 +21,7 @@ from consul.api.kv import KV
 from consul.api.operator import Operator
 from consul.api.query import Query
 from consul.api.session import Session
+from consul.api.snapshot import Snapshot
 from consul.api.status import Status
 from consul.api.txn import Txn
 from consul.exceptions import ConsulException
@@ -167,6 +168,7 @@ class Consul:
         self.connect = Connect(self)
         self.config = Config(self)
         self.discovery_chain = DiscoveryChain(self)
+        self.snapshot = Snapshot(self)
 
     def __enter__(self):
         return self

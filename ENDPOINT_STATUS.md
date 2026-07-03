@@ -206,3 +206,38 @@ File: `consul/api/connect.py`
 | `GET /v1/connect/intentions/match` | `Connect.Intentions.match` | ✅ | - |
 | `POST /v1/connect/intentions` (legacy, deprecated 1.9.0) | - | ❌ | Intentionally not implemented — use exact-match endpoints above |
 | `GET/PUT/DELETE /v1/connect/intentions/:uuid` (legacy, deprecated 1.9.0) | - | ❌ | Intentionally not implemented — use exact-match endpoints above |
+
+## 14. Config Entries (`/v1/config`)
+File: `consul/api/config.py`
+
+Generic CRUD covering all config entry kinds (service-defaults, service-router,
+service-splitter, service-resolver, service-intentions, ingress-gateway,
+terminating-gateway, proxy-defaults, mesh, exported-services, api-gateway,
+http-route, tcp-route, inline-certificate, file-system-certificate, and others)
+through a single Kind/Name-based implementation. Kind-specific body fields are
+not individually modeled — callers pass the kind-specific body as a dict.
+
+| Endpoint | Python Method | Status | Missing Parameters |
+| :--- | :--- | :--- | :--- |
+| `PUT /v1/config` | `Config.set` | ✅ | - |
+| `GET /v1/config/:kind/:name` | `Config.get` | ✅ | - |
+| `GET /v1/config/:kind` | `Config.list` | ✅ | - |
+| `DELETE /v1/config/:kind/:name` | `Config.delete` | ✅ | - |
+
+## 15. Discovery Chain (`/v1/discovery-chain`)
+File: `consul/api/discovery_chain.py`
+
+| Endpoint | Python Method | Status | Missing Parameters |
+| :--- | :--- | :--- | :--- |
+| `GET /v1/discovery-chain/:service` | `DiscoveryChain.get` | ✅ | - |
+| `POST /v1/discovery-chain/:service` | `DiscoveryChain.get` | ✅ | Uses POST automatically when any override is passed |
+
+## 16. Snapshot (`/v1/snapshot`)
+File: `consul/api/snapshot.py`
+
+Both endpoints require a management-level ACL token (not a granular ACL rule).
+
+| Endpoint | Python Method | Status | Missing Parameters |
+| :--- | :--- | :--- | :--- |
+| `GET /v1/snapshot` | `Snapshot.save` | ✅ | - |
+| `PUT /v1/snapshot` | `Snapshot.restore` | ✅ | - |
