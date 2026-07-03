@@ -8,6 +8,14 @@ class Health:
     def __init__(self, agent) -> None:
         self.agent = agent
 
+    @staticmethod
+    def _tag_params(tag: str | list[str] | None) -> list[tuple[str, str]]:
+        if tag is None:
+            return []
+        if not isinstance(tag, list):
+            tag = [tag]
+        return [("tag", tag_item) for tag_item in tag]
+
     def _service(
         self,
         internal_uri,
@@ -30,11 +38,7 @@ class Health:
                 params.append(("wait", wait))
         if passing:
             params.append(("passing", "1"))
-        if tag is not None:
-            if not isinstance(tag, list):
-                tag = [tag]
-            for tag_item in tag:
-                params.append(("tag", tag_item))
+        params.extend(self._tag_params(tag))
         dc = dc or self.agent.dc
         if dc:
             params.append(("dc", dc))
