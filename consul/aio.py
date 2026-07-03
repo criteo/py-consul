@@ -63,9 +63,19 @@ class HTTPClient(base.HTTPClient):
         uri = self.uri(path, params)
         return self._request(callback, "PUT", uri, headers=headers, data=data, connections_timeout=connections_timeout)
 
-    def delete(self, callback, path, params=None, headers: dict[str, str] | None = None, connections_timeout=None):
+    def delete(
+        self,
+        callback,
+        path,
+        params=None,
+        data: str | bytes = "",
+        headers: dict[str, str] | None = None,
+        connections_timeout=None,
+    ):
         uri = self.uri(path, params)
-        return self._request(callback, "DELETE", uri, headers=headers, connections_timeout=connections_timeout)
+        return self._request(
+            callback, "DELETE", uri, headers=headers, data=data, connections_timeout=connections_timeout
+        )
 
     def post(
         self,
