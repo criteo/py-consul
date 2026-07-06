@@ -49,6 +49,31 @@ class Connect:
             headers = self.agent.prepare_headers(token)
             return self.agent.http.get(CB.json(), "/v1/connect/ca/configuration", headers=headers)
 
+        def update_configuration(
+            self,
+            provider: str,
+            config: dict[str, Any],
+            force_without_cross_signing: bool = False,
+            token: str | None = None,
+        ) -> bool:
+            """
+            Updates the configuration for the CA provider. Requires a token with
+            operator:write capability.
+            :param provider: The CA provider type to use, e.g. "consul" or "vault".
+            :param config: The raw, provider-specific configuration.
+            :param force_without_cross_signing: If True, force a CA change without
+                cross-signing support from the old provider. Defaults to False.
+            :param token: token with operator:write capability
+            :return: True if the configuration was updated
+            """
+            json_data: dict[str, Any] = {"Provider": provider, "Config": config}
+            if force_without_cross_signing:
+                json_data["ForceWithoutCrossSigning"] = force_without_cross_signing
+            headers = self.agent.prepare_headers(token)
+            return self.agent.http.put(
+                CB.boolean(), "/v1/connect/ca/configuration", headers=headers, data=json.dumps(json_data)
+            )
+
     class Intentions:
         """
         Manages intentions using the exact-match model (Consul 1.9+). The legacy
