@@ -31,12 +31,16 @@ File: `consul/api/agent.py`
 | `GET /v1/agent/members` | `Agent.members` | ✅ | (`segment` is Ent) |
 | `PUT /v1/agent/maintenance` | `Agent.maintenance` | ✅ | - |
 | `PUT /v1/agent/join/:address` | `Agent.join` | ✅ | - |
-| `PUT /v1/agent/leave` | - | ❌ | - |
+| `PUT /v1/agent/leave` | `Agent.leave` | ✅ | - |
 | `PUT /v1/agent/force-leave/:node` | `Agent.force_leave` | ⚠️ | `prune` (added v1.13) |
-| `PUT /v1/agent/reload` | - | ❌ | - |
-| `GET /v1/agent/metrics` | - | ❌ | - |
-| `GET /v1/agent/monitor` | - | ❌ | - |
-| `PUT /v1/agent/token/:type` | - | ❌ | All token update endpoints |
+| `PUT /v1/agent/reload` | `Agent.reload` | ✅ | - |
+| `GET /v1/agent/metrics` | `Agent.metrics` | ✅ | - |
+| `GET /v1/agent/monitor` | `Agent.monitor` | ⚠️ | Not true streaming — single blocking read, see docstring |
+| `PUT /v1/agent/token/default` | `Agent.Token.set_default` | ✅ | - |
+| `PUT /v1/agent/token/agent` | `Agent.Token.set_agent` | ✅ | - |
+| `PUT /v1/agent/token/agent_recovery` | `Agent.Token.set_agent_recovery` | ✅ | - |
+| `PUT /v1/agent/token/replication` | `Agent.Token.set_replication` | ✅ | - |
+| `PUT /v1/agent/token/config_file_service_registration` | `Agent.Token.set_config_file_service_registration` | ✅ | - |
 
 ### Agent Services
 | Endpoint | Python Method | Status | Missing Parameters |
@@ -66,25 +70,27 @@ File: `consul/api/catalog.py`
 
 | Endpoint | Python Method | Status | Missing Parameters |
 | :--- | :--- | :--- | :--- |
-| `PUT /v1/catalog/register` | `Catalog.register` | ⚠️ | `SkipNodeUpdate`, `TaggedAddresses` (in args) |
+| `PUT /v1/catalog/register` | `Catalog.register` | ✅ | - |
 | `PUT /v1/catalog/deregister` | `Catalog.deregister` | ✅ | - |
 | `GET /v1/catalog/datacenters` | `Catalog.datacenters` | ✅ | - |
-| `GET /v1/catalog/nodes` | `Catalog.nodes` | ⚠️ | `filter` |
-| `GET /v1/catalog/services` | `Catalog.services` | ⚠️ | `filter` |
-| `GET /v1/catalog/service/:service` | `Catalog.service` | ⚠️ | `filter` |
-| `GET /v1/catalog/connect/:service` | `Catalog.connect` | ⚠️ | `filter` |
-| `GET /v1/catalog/node/:node` | `Catalog.node` | ⚠️ | `filter` |
+| `GET /v1/catalog/nodes` | `Catalog.nodes` | ✅ | - |
+| `GET /v1/catalog/services` | `Catalog.services` | ✅ | - |
+| `GET /v1/catalog/service/:service` | `Catalog.service` | ✅ | - |
+| `GET /v1/catalog/connect/:service` | `Catalog.connect` | ✅ | - |
+| `GET /v1/catalog/node/:node` | `Catalog.node` | ✅ | - |
+| `GET /v1/catalog/gateway-services/:gateway` | `Catalog.gateway_services` | ✅ | - |
 
 ## 4. Health (`/v1/health`)
 File: `consul/api/health.py`
 
 | Endpoint | Python Method | Status | Missing Parameters |
 | :--- | :--- | :--- | :--- |
-| `GET /v1/health/node/:node` | `Health.node` | ⚠️ | `filter` |
-| `GET /v1/health/checks/:service` | `Health.checks` | ⚠️ | `filter` |
-| `GET /v1/health/service/:service` | `Health.service` | ⚠️ | `filter` |
-| `GET /v1/health/connect/:service` | `Health.connect` | ⚠️ | `filter` |
-| `GET /v1/health/state/:state` | `Health.state` | ⚠️ | `filter` |
+| `GET /v1/health/node/:node` | `Health.node` | ✅ | - |
+| `GET /v1/health/checks/:service` | `Health.checks` | ✅ | - |
+| `GET /v1/health/service/:service` | `Health.service` | ✅ | - |
+| `GET /v1/health/connect/:service` | `Health.connect` | ✅ | - |
+| `GET /v1/health/state/:state` | `Health.state` | ✅ | - |
+| `GET /v1/health/ingress/:service` | `Health.ingress` | ✅ | - |
 
 ## 5. Session (`/v1/session`)
 File: `consul/api/session.py`
@@ -140,8 +146,8 @@ File: `consul/api/event.py`
 
 | Endpoint | Python Method | Status | Missing Parameters |
 | :--- | :--- | :--- | :--- |
-| `PUT /v1/event/fire/:name` | `Event.fire` | ⚠️ | `dc` |
-| `GET /v1/event/list` | `Event.list` | ⚠️ | `node`, `service`, `tag` (filters) |
+| `PUT /v1/event/fire/:name` | `Event.fire` | ✅ | - |
+| `GET /v1/event/list` | `Event.list` | ✅ | `node`/`service`/`tag` accepted but observed to have no effect at list-time — see docstring |
 
 ## 8. Coordinate (`/v1/coordinate`)
 File: `consul/api/coordinates.py`
@@ -150,8 +156,8 @@ File: `consul/api/coordinates.py`
 | :--- | :--- | :--- | :--- |
 | `GET /v1/coordinate/datacenters` | `Coordinate.datacenters` | ✅ | - |
 | `GET /v1/coordinate/nodes` | `Coordinate.nodes` | ✅ | - |
-| `GET /v1/coordinate/node/:node` | - | ❌ | - |
-| `PUT /v1/coordinate/update` | - | ❌ | - |
+| `GET /v1/coordinate/node/:node` | `Coordinate.node` | ✅ | - |
+| `PUT /v1/coordinate/update` | `Coordinate.update` | ✅ | - |
 
 ## 9. Operator (`/v1/operator`)
 File: `consul/api/operator.py`
@@ -159,8 +165,16 @@ File: `consul/api/operator.py`
 | Endpoint | Python Method | Status | Missing Parameters |
 | :--- | :--- | :--- | :--- |
 | `GET /v1/operator/raft/configuration` | `Operator.raft_config` | ✅ | - |
-| `DELETE /v1/operator/raft/peer` | - | ❌ | - |
-| `GET /v1/operator/keyring` | - | ❌ | - |
+| `DELETE /v1/operator/raft/peer` | `Operator.raft_remove_peer` | ✅ | - |
+| `POST /v1/operator/raft/transfer-leader` | `Operator.raft_transfer_leader` | ✅ | - |
+| `GET /v1/operator/autopilot/configuration` | `Operator.autopilot_configuration` | ✅ | - |
+| `PUT /v1/operator/autopilot/configuration` | `Operator.update_autopilot_configuration` | ✅ | - |
+| `GET /v1/operator/autopilot/health` | `Operator.autopilot_health` | ✅ | - |
+| `GET /v1/operator/keyring` | `Operator.keyring_list` | ✅ | - |
+| `POST /v1/operator/keyring` | `Operator.keyring_install` | ✅ | - |
+| `PUT /v1/operator/keyring` | `Operator.keyring_use` | ✅ | - |
+| `DELETE /v1/operator/keyring` | `Operator.keyring_remove` | ✅ | - |
+| `GET /v1/operator/usage` | `Operator.usage` | ✅ | - |
 
 ## 10. Query (`/v1/query`)
 File: `consul/api/query.py`

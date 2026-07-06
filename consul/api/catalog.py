@@ -9,7 +9,18 @@ class Catalog:
     def __init__(self, agent) -> None:
         self.agent = agent
 
-    def register(self, node, address, service=None, check=None, dc=None, token: str | None = None, node_meta=None):
+    def register(
+        self,
+        node,
+        address,
+        service=None,
+        check=None,
+        dc=None,
+        token: str | None = None,
+        node_meta=None,
+        skip_node_update: bool | None = None,
+        tagged_addresses=None,
+    ):
         """
         A low level mechanism for directly registering or updating entries
         in the catalog. It is usually recommended to use
@@ -62,6 +73,12 @@ class Catalog:
         *node_meta* is an optional meta data used for filtering, a
         dictionary formatted as {k1:v1, k2:v2}.
 
+        *skip_node_update* is an optional boolean which, if set to True,
+        skips updating the node's information in the registration.
+
+        *tagged_addresses* is an optional dictionary of tagged addresses
+        for the node, formatted as {k1:v1, k2:v2}.
+
         This manipulates the health check entry, but does not setup a
         script or TTL to actually update the status. The full documentation
         is `here <https://developer.hashicorp.com/consul/api-docs/catalog>`_.
@@ -84,6 +101,10 @@ class Catalog:
         if node_meta:
             for nodemeta_name, nodemeta_value in node_meta.items():
                 params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
+        if skip_node_update is not None:
+            data["SkipNodeUpdate"] = skip_node_update
+        if tagged_addresses:
+            data["TaggedAddresses"] = tagged_addresses
 
         headers = self.agent.prepare_headers(token)
         return self.agent.http.put(
@@ -128,7 +149,15 @@ class Catalog:
         return self.agent.http.get(CB.json(), "/v1/catalog/datacenters")
 
     def nodes(
-        self, index=None, wait=None, consistency=None, dc=None, near=None, token: str | None = None, node_meta=None
+        self,
+        index=None,
+        wait=None,
+        consistency=None,
+        dc=None,
+        near=None,
+        token: str | None = None,
+        node_meta=None,
+        filter_expr: str | None = None,
     ):
         """
         Returns a tuple of (*index*, *nodes*) of all nodes known
@@ -153,6 +182,9 @@ class Catalog:
 
         *node_meta* is an optional meta data used for filtering, a
         dictionary formatted as {k1:v1, k2:v2}.
+
+        *filter_expr* is an optional bexpr filter expression to filter the
+        results.
 
         The response looks like this::
 
@@ -184,10 +216,21 @@ class Catalog:
         if node_meta:
             for nodemeta_name, nodemeta_value in node_meta.items():
                 params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
+        if filter_expr:
+            params.append(("filter", filter_expr))
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(index=True), "/v1/catalog/nodes", params=params, headers=headers)
 
-    def services(self, index=None, wait=None, consistency=None, dc=None, token: str | None = None, node_meta=None):
+    def services(
+        self,
+        index=None,
+        wait=None,
+        consistency=None,
+        dc=None,
+        token: str | None = None,
+        node_meta=None,
+        filter_expr: str | None = None,
+    ):
         """
         Returns a tuple of (*index*, *services*) of all services known
         about in the *dc* datacenter. *dc* defaults to the current
@@ -208,6 +251,9 @@ class Catalog:
 
         *node_meta* is an optional meta data used for filtering, a
         dictionary formatted as {k1:v1, k2:v2}.
+
+        *filter_expr* is an optional bexpr filter expression to filter the
+        results.
 
         The response looks like this::
 
@@ -237,10 +283,21 @@ class Catalog:
         if node_meta:
             for nodemeta_name, nodemeta_value in node_meta.items():
                 params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
+        if filter_expr:
+            params.append(("filter", filter_expr))
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(index=True), "/v1/catalog/services", params=params, headers=headers)
 
-    def node(self, node, index=None, wait=None, consistency=None, dc=None, token: str | None = None):
+    def node(
+        self,
+        node,
+        index=None,
+        wait=None,
+        consistency=None,
+        dc=None,
+        token: str | None = None,
+        filter_expr: str | None = None,
+    ):
         """
         Returns a tuple of (*index*, *services*) of all services provided
         by *node*.
@@ -260,6 +317,9 @@ class Catalog:
         datacenter.
 
         *token* is an optional `ACL token`_ to apply to this request.
+
+        *filter_expr* is an optional bexpr filter expression to filter the
+        results.
 
         The response looks like this::
 
@@ -297,6 +357,8 @@ class Catalog:
         consistency = consistency or self.agent.consistency
         if consistency in ("consistent", "stale"):
             params.append((consistency, "1"))
+        if filter_expr:
+            params.append(("filter", filter_expr))
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(index=True), f"/v1/catalog/node/{node}", params=params, headers=headers)
 
@@ -311,6 +373,9 @@ class Catalog:
         near=None,
         token: str | None = None,
         node_meta=None,
+        filter_expr: str | None = None,
+        peer: str | None = None,
+        merge_central_config: bool | None = None,
     ):
         params = []
         dc = dc or self.agent.dc
@@ -330,6 +395,12 @@ class Catalog:
         if node_meta:
             for nodemeta_name, nodemeta_value in node_meta.items():
                 params.append(("node-meta", f"{nodemeta_name}:{nodemeta_value}"))
+        if filter_expr:
+            params.append(("filter", filter_expr))
+        if peer:
+            params.append(("peer", peer))
+        if merge_central_config:
+            params.append(("merge-central-config", "1"))
         headers = self.agent.prepare_headers(token)
         return self.agent.http.get(CB.json(index=True), internal_uri, params=params, headers=headers)
 
@@ -361,6 +432,15 @@ class Catalog:
         *node_meta* is an optional meta data used for filtering, a
         dictionary formatted as {k1:v1, k2:v2}.
 
+        *filter_expr* is an optional bexpr filter expression to filter the
+        results.
+
+        *peer* is an optional name of the peer that exported the service.
+
+        *merge_central_config* is an optional boolean which, if set to
+        True, merges the service's central configuration (proxy-defaults
+        and service-defaults) into the response.
+
         The response looks like this::
 
             (index, [
@@ -387,3 +467,74 @@ class Catalog:
         """
         internal_uri = f"/v1/catalog/connect/{service}"
         return self._service(internal_uri=internal_uri, **kwargs)
+
+    def gateway_services(self, gateway: str, dc=None, token: str | None = None):
+        """
+        Returns the services associated with an ingress or terminating
+        gateway.
+
+        *gateway* is the name of the gateway to list services for.
+
+        *dc* is the datacenter of the gateway and defaults to this agents
+        datacenter.
+
+        *token* is an optional `ACL token`_ to apply to this request.
+
+        The response looks like this for an ingress gateway::
+
+            [
+                {
+                    "Gateway": {
+                        "Name": "ingress-gateway",
+                        "Namespace": "default"
+                    },
+                    "Service": {
+                        "Name": "web",
+                        "Namespace": "default"
+                    },
+                    "GatewayKind": "ingress-gateway",
+                    "Port": 8080,
+                    "Protocol": "tcp",
+                    "Hosts": [],
+                    "CAFile": "",
+                    "CertFile": "",
+                    "KeyFile": "",
+                    "SNI": "",
+                    "FromWildcard": false,
+                    "CreateIndex": 16,
+                    "ModifyIndex": 16
+                }
+            ]
+
+        and like this for a terminating gateway::
+
+            [
+                {
+                    "Gateway": {
+                        "Name": "terminating-gateway",
+                        "Namespace": "default"
+                    },
+                    "Service": {
+                        "Name": "api",
+                        "Namespace": "default"
+                    },
+                    "GatewayKind": "terminating-gateway",
+                    "Port": 0,
+                    "Protocol": "",
+                    "Hosts": null,
+                    "CAFile": "/etc/certs/ca.pem",
+                    "CertFile": "/etc/certs/api/client.pem",
+                    "KeyFile": "/etc/certs/api/client.key",
+                    "SNI": "api.my-domain",
+                    "FromWildcard": false,
+                    "CreateIndex": 16,
+                    "ModifyIndex": 16
+                }
+            ]
+        """
+        params = []
+        dc = dc or self.agent.dc
+        if dc:
+            params.append(("dc", dc))
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(), f"/v1/catalog/gateway-services/{gateway}", params=params, headers=headers)

@@ -65,7 +65,7 @@ class HTTPClient(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def delete(self, callback, path, params=None, headers: dict[str, str] | None = None):
+    def delete(self, callback, path, params=None, data: str | bytes = "", headers: dict[str, str] | None = None):
         raise NotImplementedError
 
     @abc.abstractmethod

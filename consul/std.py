@@ -33,9 +33,11 @@ class HTTPClient(base.HTTPClient):
             self.response(self.session.put(uri, headers=headers, data=data, verify=self.verify, cert=self.cert))
         )
 
-    def delete(self, callback, path, params=None, headers: dict[str, str] | None = None):
+    def delete(self, callback, path, params=None, data: str | bytes = "", headers: dict[str, str] | None = None):
         uri = self.uri(path, params)
-        return callback(self.response(self.session.delete(uri, headers=headers, verify=self.verify, cert=self.cert)))
+        return callback(
+            self.response(self.session.delete(uri, headers=headers, data=data, verify=self.verify, cert=self.cert))
+        )
 
     def post(self, callback, path, params=None, data: str = "", headers: dict[str, str] | None = None):
         uri = self.uri(path, params)

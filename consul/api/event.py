@@ -21,7 +21,7 @@ class Event:
     def __init__(self, agent) -> None:
         self.agent = agent
 
-    def fire(self, name: str, body: str = "", node=None, service=None, tag=None, token: str | None = None):
+    def fire(self, name: str, body: str = "", node=None, service=None, tag=None, dc=None, token: str | None = None):
         """
         Sends an event to Consul's gossip protocol.
 
@@ -40,12 +40,18 @@ class Event:
         agents will filter against to determine if they should store the
         event
 
+        *dc* is the datacenter to fire the event in. This will default to
+        the datacenter of the agent being queried.
+
         *token* is an optional `ACL token`_ to apply to this request. If
         the token's policy is not allowed to fire an event of this *name*
         an *ACLPermissionDenied* exception will be raised.
         """
         assert not name.startswith("/"), "keys should not start with a forward slash"
         params = []
+        dc = dc or self.agent.dc
+        if dc:
+            params.append(("dc", dc))
         if node is not None:
             params.append(("node", node))
         if service is not None:
@@ -56,7 +62,7 @@ class Event:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.put(CB.json(), f"/v1/event/fire/{name}", params=params, headers=headers, data=body)
 
-    def list(self, name: str | None = None, index=None, wait=None):
+    def list(self, name: str | None = None, index=None, wait=None, node=None, service=None, tag=None):
         """
         Returns a tuple of (*index*, *events*)
             Note: Since Consul's event protocol uses gossip, there is no
@@ -73,6 +79,9 @@ class Event:
         *wait* the maximum duration to wait (e.g. '10s') to retrieve
         a given index. This parameter is only applied if *index* is also
         specified. the wait time by default is 5 minutes.
+
+        *node*, *service*, and *tag* are regular expressions to filter the
+        returned events by node name, service name, and tag respectively.
 
         Consul agents only buffer the most recent entries. The current
         buffer size is 256, but this value could change in the future.
@@ -99,4 +108,10 @@ class Event:
             params.append(("index", index))
             if wait:
                 params.append(("wait", wait))
+        if node is not None:
+            params.append(("node", node))
+        if service is not None:
+            params.append(("service", service))
+        if tag is not None:
+            params.append(("tag", tag))
         return self.agent.http.get(CB.json(index=True, decode="Payload"), "/v1/event/list", params=params)

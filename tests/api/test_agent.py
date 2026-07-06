@@ -1,8 +1,10 @@
 import time
 
 import pytest
+import requests
 
 import consul.check
+import consul.exceptions
 from tests.utils import should_skip
 
 Check = consul.check.Check
@@ -285,3 +287,87 @@ class TestAgent:
         assert "foo_connect-sidecar-proxy" in services
 
         assert c.agent.service.deregister("foo_connect") is True
+
+    def test_agent_reload(self, consul_obj) -> None:
+        c, _consul_version = consul_obj
+        assert c.agent.reload() is True
+
+    def test_agent_metrics(self, consul_obj) -> None:
+        c, _consul_version = consul_obj
+
+        metrics = c.agent.metrics()
+        assert "Timestamp" in metrics
+        assert "Gauges" in metrics
+
+        # Without `telemetry.prometheus_retention_time` configured on the
+        # agent, Consul returns a 200 with an empty body instead of an
+        # error (see X-Consul-Reason header), so we can only assert that
+        # the call succeeds and returns a string, not that it looks like
+        # real Prometheus exposition text.
+        prometheus_metrics = c.agent.metrics(format_prometheus=True)
+        assert isinstance(prometheus_metrics, str)
+
+    def test_agent_monitor_rejects_invalid_loglevel(self, consul_obj) -> None:
+        c, _consul_version = consul_obj
+
+        # Only the fast-fail path is safely testable here: an invalid loglevel
+        # is rejected by Consul with a 400 before any streaming begins. The
+        # success path genuinely never closes the connection (see the warning
+        # on Agent.monitor's docstring), and neither the sync nor async HTTP
+        # clients in this library expose a per-call socket timeout, so there
+        # is no way to bound a real call from a test without either leaking a
+        # thread that blocks interpreter shutdown (concurrent.futures.
+        # ThreadPoolExecutor's own atexit handler joins worker threads
+        # unconditionally, even after shutdown(wait=False)) or adding timeout
+        # support to the transport layer, which is out of scope here.
+        with pytest.raises(consul.exceptions.BadRequest):
+            c.agent.monitor(loglevel="not-a-real-level")
+
+    def test_agent_token_permission_denied(self, consul_obj) -> None:
+        c, _consul_version = consul_obj
+
+        # ACLs are disabled on this instance, so Consul rejects all token
+        # updates with ACLDisabled ("ACL support disabled").
+        with pytest.raises(consul.exceptions.ACLDisabled):
+            c.agent.token.set_default("some-secret")
+
+    def test_agent_token_invalid_type(self, consul_obj) -> None:
+        c, _consul_version = consul_obj
+
+        with pytest.raises(ValueError, match="token_type must be one of"):
+            c.agent.token.set("not-a-real-token-type", "some-secret")
+
+    def test_agent_token_set(self, acl_consul) -> None:
+        c, master_token, _consul_version = acl_consul
+
+        assert c.agent.token.set_default("default-secret", token=master_token) is True
+        assert c.agent.token.set_agent("agent-secret", token=master_token) is True
+        assert c.agent.token.set_agent_recovery("agent-recovery-secret", token=master_token) is True
+        assert c.agent.token.set_replication("replication-secret", token=master_token) is True
+        assert c.agent.token.set_config_file_service_registration("config-file-secret", token=master_token) is True
+
+        # Generic set() should behave the same as the convenience wrappers.
+        assert c.agent.token.set("default", "default-secret-2", token=master_token) is True
+
+    def test_agent_leave(self, consul_instance) -> None:
+        # PUT /v1/agent/leave triggers a graceful shutdown of the agent
+        # process itself, so this must run against a dedicated instance
+        # and not one shared with other tests.
+        c = consul.Consul(port=consul_instance.port)
+
+        assert c.agent.leave() is True
+
+        # Give the agent a moment to actually exit, then confirm it is no
+        # longer reachable.
+        deadline = time.time() + 5
+        last_error = None
+        while time.time() < deadline:
+            try:
+                requests.get(f"http://127.0.0.1:{consul_instance.port}/v1/status/leader", timeout=1)
+                time.sleep(0.2)
+            except requests.exceptions.RequestException as e:
+                last_error = e
+                break
+        else:
+            pytest.fail("agent was still reachable after leave()")
+        assert last_error is not None
