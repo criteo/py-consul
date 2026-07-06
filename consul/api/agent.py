@@ -28,7 +28,7 @@ class Agent:
         """
         return self.agent.http.get(CB.json(), "/v1/agent/self")
 
-    def services(self) -> Any:
+    def services(self, filter_expr: str | None = None, token: str | None = None) -> Any:
         """
         Returns all the services that are registered with the local agent.
         These services were either provided through configuration files, or
@@ -38,8 +38,14 @@ class Agent:
         while there is no leader elected. The agent performs active
         anti-entropy, so in most situations everything will be in sync
         within a few seconds.
+        :param filter_expr: Optional bexpr filter expression.
+        :param token: token with node:read,service:read capability
         """
-        return self.agent.http.get(CB.json(), "/v1/agent/services")
+        params: list[tuple[str, Any]] = []
+        if filter_expr:
+            params.append(("filter", filter_expr))
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(), "/v1/agent/services", params=params, headers=headers)
 
     def service_definition(self, service_id):
         """
@@ -48,7 +54,7 @@ class Agent:
         """
         return self.agent.http.get(CB.json(), f"/v1/agent/service/{service_id}")
 
-    def checks(self) -> Any:
+    def checks(self, filter_expr: str | None = None, token: str | None = None) -> Any:
         """
         Returns all the checks that are registered with the local agent.
         These checks were either provided through configuration files, or
@@ -58,8 +64,14 @@ class Agent:
         while there is no leader elected. The agent performs active
         anti-entropy, so in most situations everything will be in sync
         within a few seconds.
+        :param filter_expr: Optional bexpr filter expression.
+        :param token: token with node:read,service:read capability
         """
-        return self.agent.http.get(CB.json(), "/v1/agent/checks")
+        params: list[tuple[str, Any]] = []
+        if filter_expr:
+            params.append(("filter", filter_expr))
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.get(CB.json(), "/v1/agent/checks", params=params, headers=headers)
 
     def members(self, wan: bool = False):
         """
@@ -116,7 +128,7 @@ class Agent:
         headers = self.agent.prepare_headers(token)
         return self.agent.http.put(CB.boolean(), f"/v1/agent/join/{address}", params=params, headers=headers)
 
-    def force_leave(self, node: str, token: str | None = None):
+    def force_leave(self, node: str, prune: bool = False, token: str | None = None):
         """
         This endpoint instructs the agent to force a node into the left
         state. If a node fails unexpectedly, then it will be in a failed
@@ -126,10 +138,17 @@ class Agent:
         entries to be removed.
 
         *node* is the node to change state for.
+
+        *prune* if set to *True* removes the node from the list of members
+        entirely, instead of leaving it in the "left" state. Added in
+        Consul 1.13.
         """
 
+        params: list[tuple[str, Any]] = []
+        if prune:
+            params.append(("prune", "1"))
         headers = self.agent.prepare_headers(token)
-        return self.agent.http.put(CB.boolean(), f"/v1/agent/force-leave/{node}", headers=headers)
+        return self.agent.http.put(CB.boolean(), f"/v1/agent/force-leave/{node}", params=params, headers=headers)
 
     def leave(self, token: str | None = None):
         """
@@ -239,6 +258,24 @@ class Agent:
         def __init__(self, agent) -> None:
             self.agent = agent
 
+        @staticmethod
+        def _gateway_proxy_fields(
+            kind: str | None,
+            proxy: dict[str, Any] | None,
+            socket_path: str | None,
+            locality: dict[str, str] | None,
+        ) -> dict[str, Any]:
+            fields: dict[str, Any] = {}
+            if kind:
+                fields["Kind"] = kind
+            if proxy:
+                fields["Proxy"] = proxy
+            if socket_path:
+                fields["SocketPath"] = socket_path
+            if locality:
+                fields["Locality"] = locality
+            return fields
+
         # pylint: disable=too-many-branches
         def register(
             self,
@@ -262,6 +299,10 @@ class Agent:
             replace_existing_checks=False,
             tagged_addresses: dict | None = None,
             connect: dict[str, Any] | None = None,
+            kind: str | None = None,
+            proxy: dict[str, Any] | None = None,
+            socket_path: str | None = None,
+            locality: dict[str, str] | None = None,
         ):
             """
             Add a new service to the local agent. There is more
@@ -295,6 +336,19 @@ class Agent:
             e.g. for use with Connect. Formatted as { "lan": "<address>", "wan": "<address>" }.
 
             *connect* specifies configuration for Connect. Formatted as { "sidecar_service": {} }.
+
+            *kind* identifies this as a proxy/gateway instance rather than a plain
+            service, e.g. "connect-proxy", "mesh-gateway", "terminating-gateway" or
+            "ingress-gateway".
+
+            *proxy* specifies the connect proxy configuration when *kind* is
+            "connect-proxy", e.g. {"DestinationServiceName": "web", "LocalServicePort": 8080}.
+
+            *socket_path* specifies a Unix domain socket path the service listens on,
+            as an alternative to *address*/*port*.
+
+            *locality* specifies the region/zone this service instance is deployed to,
+            e.g. {"Region": "us-west-1", "Zone": "us-west-1a"}.
 
             *script*, *interval*, *ttl*, *http*, and *timeout* arguments
             are deprecated. use *check* instead.
@@ -344,6 +398,7 @@ class Agent:
                 payload["tagged_addresses"] = tagged_addresses
             if connect:
                 payload["connect"] = connect
+            payload.update(self._gateway_proxy_fields(kind, proxy, socket_path, locality))
             params = []
             if replace_existing_checks:
                 params.append(("replace-existing-checks", "true"))
