@@ -52,3 +52,38 @@ class Policy:
             headers=headers,
             data=json.dumps(json_data),
         )
+
+    def update(self, uuid: str, name: str, token: str | None = None, description: str | None = None, rules=None):
+        """
+        Update the policy identified by *uuid*. This is a privileged endpoint, and
+        requires a token with acl:write.
+        :param uuid: Specifies the UUID of the policy to update.
+        :param name: Specifies a name for the ACL policy.
+        :param token: token with acl:write capability
+        :param description: Free form human-readable description of the policy.
+        :param rules: Specifies rules for the ACL policy.
+        :return: The updated policy information
+        """
+        json_data = {"ID": uuid, "Name": name}
+        if rules:
+            json_data["Rules"] = json.dumps(rules)
+        if description:
+            json_data["Description"] = description
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.put(
+            CB.json(),
+            f"/v1/acl/policy/{uuid}",
+            headers=headers,
+            data=json.dumps(json_data),
+        )
+
+    def delete(self, uuid: str, token: str | None = None) -> bool:
+        """
+        Deletes the policy with *uuid*. This is a privileged endpoint, and requires a
+        token with acl:write.
+        :param uuid: Specifies the UUID of the policy to delete.
+        :param token: token with acl:write capability
+        :return: True if the policy was deleted
+        """
+        headers = self.agent.prepare_headers(token)
+        return self.agent.http.delete(CB.boolean(), f"/v1/acl/policy/{uuid}", headers=headers)

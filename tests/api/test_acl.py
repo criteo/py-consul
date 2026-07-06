@@ -232,6 +232,78 @@ class TestConsulAcl:
         policy = c.acl.policy.read(uuid="00000000-0000-0000-0000-000000000001", token=master_token)
         assert find_recursive(policy, {"ID": "00000000-0000-0000-0000-000000000001", "Name": "global-management"})
 
+    def test_acl_policy_update(self, acl_consul) -> None:
+        c, master_token, _consul_version = acl_consul
+
+        created = c.acl.policy.create(name="test-policy", description="original", token=master_token)
+        policy_id = created["ID"]
+
+        updated = c.acl.policy.update(
+            uuid=policy_id,
+            name="test-policy",
+            description="updated",
+            rules={"key_prefix": {"": {"policy": "read"}}},
+            token=master_token,
+        )
+        assert updated["Description"] == "updated"
+
+        read_back = c.acl.policy.read(uuid=policy_id, token=master_token)
+        assert read_back["Description"] == "updated"
+        assert "read" in read_back["Rules"]
+
+    def test_acl_policy_delete(self, acl_consul) -> None:
+        c, master_token, _consul_version = acl_consul
+
+        created = c.acl.policy.create(name="delete-me-policy", token=master_token)
+        policy_id = created["ID"]
+
+        assert c.acl.policy.delete(uuid=policy_id, token=master_token) is True
+        assert c.acl.policy.read(uuid=policy_id, token=master_token) is None
+
+    def test_acl_token_list_filters(self, acl_consul) -> None:
+        c, master_token, _consul_version = acl_consul
+
+        policy = c.acl.policy.create(name="filter-test-policy", token=master_token)
+        c.acl.token.create(
+            accessor_id="00000000-F17E-0000-0000-000000000000",
+            policies_id=[policy["ID"]],
+            token=master_token,
+        )
+
+        filtered = c.acl.token.list(policy=policy["ID"], token=master_token)
+        assert {t["AccessorID"] for t in filtered} == {"00000000-F17E-0000-0000-000000000000"}
+
+        assert c.acl.token.list(policy="00000000-0000-0000-0000-000000000099", token=master_token) == []
+
+    def test_acl_token_service_identities(self, acl_consul) -> None:
+        c, master_token, _consul_version = acl_consul
+
+        token_info = c.acl.token.create(
+            description="service identity token",
+            service_identities=[{"ServiceName": "web", "Datacenters": ["dc1"]}],
+            token=master_token,
+        )
+        # find_recursive doesn't handle a list-of-strings leaf value (Datacenters), only
+        # lists of dicts, so this is asserted directly rather than via find_recursive.
+        assert len(token_info["ServiceIdentities"]) == 1
+        assert token_info["ServiceIdentities"][0]["ServiceName"] == "web"
+        assert token_info["ServiceIdentities"][0]["Datacenters"] == ["dc1"]
+
+    def test_acl_token_local(self, acl_consul) -> None:
+        c, master_token, _consul_version = acl_consul
+
+        # Consul rejects combining a service identity's Datacenters scoping
+        # with Local=true ("cannot specify a list of datacenters on a local
+        # token"), so this is exercised separately from service_identities.
+        token_info = c.acl.token.create(description="local token", local=True, token=master_token)
+        assert find_recursive(token_info, {"Local": True})
+
+    def test_acl_token_expiration_ttl(self, acl_consul) -> None:
+        c, master_token, _consul_version = acl_consul
+
+        token_info = c.acl.token.create(description="expiring token", expiration_ttl="10m", token=master_token)
+        assert "ExpirationTime" in token_info
+
     def test_acl_token_create_templated(self, acl_consul) -> None:
         c, master_token, _consul_version = acl_consul
 

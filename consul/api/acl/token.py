@@ -23,6 +23,35 @@ def parse_identities(node_identities: list[str] | None) -> dict[str, list[dict[s
     return {}
 
 
+def _policy_links(policies_id: list[str] | None, policies_name: list[str] | None) -> list[dict[str, str]]:
+    links: list[dict[str, str]] = []
+    if policies_id:
+        links.extend({"ID": policy} for policy in policies_id)
+    if policies_name:
+        links.extend({"Name": policy} for policy in policies_name)
+    return links
+
+
+def _role_links(roles_id: list[str] | None, roles_name: list[str] | None) -> list[dict[str, str]]:
+    links: list[dict[str, str]] = []
+    if roles_id:
+        links.extend({"ID": role} for role in roles_id)
+    if roles_name:
+        links.extend({"Name": role} for role in roles_name)
+    return links
+
+
+def _templated_policy_entries(
+    templated_policies: list[dict[str, dict[str, str]]] | None,
+) -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    if templated_policies is not None:
+        for templated_policy in templated_policies:
+            for name, variables in templated_policy.items():
+                entries.append({"TemplateName": name, "TemplateVariables": variables})
+    return entries
+
+
 class AclPolicyLink(TypedDict, total=False):
     ID: str
     Name: str
@@ -49,15 +78,36 @@ class Token:
     def __init__(self, agent) -> None:
         self.agent = agent
 
-    def list(self, token: str | None = None) -> builtins.list[AclToken]:
+    def list(
+        self,
+        policy: str | None = None,
+        role: str | None = None,
+        authmethod: str | None = None,
+        servicename: str | None = None,
+        token: str | None = None,
+    ) -> builtins.list[AclToken]:
         """
         Lists all the active ACL tokens. This is a privileged endpoint, and
         requires a management token. *token* will override this client's
         default token.
         Requires a token with acl:read capability. ACLPermissionDenied raised otherwise
+        :param policy: Optional policy ID to filter the results by.
+        :param role: Optional role ID to filter the results by.
+        :param authmethod: Optional auth method name to filter the results by.
+        :param servicename: Optional service name to filter the results by
+            (matches tokens with a ServiceIdentity for this service).
         """
+        params: list[tuple[str, Any]] = []
+        if policy:
+            params.append(("policy", policy))
+        if role:
+            params.append(("role", role))
+        if authmethod:
+            params.append(("authmethod", authmethod))
+        if servicename:
+            params.append(("servicename", servicename))
         headers = self.agent.prepare_headers(token)
-        return self.agent.http.get(CB.json(), "/v1/acl/tokens", headers=headers)
+        return self.agent.http.get(CB.json(), "/v1/acl/tokens", params=params, headers=headers)
 
     def read(self, accessor_id: str, token: str | None = None) -> AclToken:
         """
@@ -114,12 +164,16 @@ class Token:
         accessor_id: str | None = None,
         secret_id: str | None = None,
         node_identities: builtins.list[str] | None = None,
+        service_identities: builtins.list[builtins.dict[str, Any]] | None = None,
         policies_id: builtins.list[str] | None = None,
         description: str = "",
         policies_name: builtins.list[str] | None = None,
         roles_id: builtins.list[str] | None = None,
         roles_name: builtins.list[str] | None = None,
         templated_policies: builtins.list[builtins.dict[str, builtins.dict[str, str]]] | None = None,
+        expiration_time: str | None = None,
+        expiration_ttl: str | None = None,
+        local: bool | None = None,
     ) -> AclToken:
         """
         Create a token (optionally identified by *secret_id* and *accessor_id*).
@@ -128,11 +182,19 @@ class Token:
         :param accessor_id: The accessor ID of the token to create
         :param secret_id: The secret ID of the token to create
         :param node_identities: Optional list of node identities (format: 'nodename:datacenter'), requires consul>=1.8.1
+        :param service_identities: Optional list of service identities, e.g.
+            [{"ServiceName": "web", "Datacenters": ["dc1"]}] ("Datacenters" is optional)
         :param description: Optional new token description
         :param policies_id: Optional list of policies id
         :param roles_id: Optional list of roles id
         :param roles_name: Optional list of roles name
         :param templated_policies: Optional list of templated policies,
+        :param expiration_time: Optional absolute expiration timestamp (RFC3339), 1 minute
+            to 24 hours in the future. Mutually exclusive with expiration_ttl.
+        :param expiration_ttl: Optional expiration duration (e.g. "1h") relative to the
+            token's creation time, 1 minute to 24 hours. Mutually exclusive with expiration_time.
+        :param local: Optional, if True the token is local to this datacenter and not
+            replicated globally.
         :return: The cloned token information
         """
 
@@ -143,31 +205,28 @@ class Token:
             json_data["SecretID"] = secret_id
         if description:
             json_data["Description"] = description
+        if service_identities is not None:
+            json_data["ServiceIdentities"] = service_identities
+        if expiration_time:
+            json_data["ExpirationTime"] = expiration_time
+        if expiration_ttl:
+            json_data["ExpirationTTL"] = expiration_ttl
+        if local is not None:
+            json_data["Local"] = local
 
         json_data.update(parse_identities(node_identities))
 
-        policies: list[dict[str, str]] = []
-        if policies_id:
-            policies.extend({"ID": policy} for policy in policies_id)
-        if policies_name:
-            policies.extend({"Name": policy} for policy in policies_name)
+        policies = _policy_links(policies_id, policies_name)
         if policies:
             json_data["Policies"] = policies
 
-        roles: list[dict[str, str]] = []
-        if roles_id:
-            roles.extend({"ID": role} for role in roles_id)
-        if roles_name:
-            roles.extend({"Name": role} for role in roles_name)
+        roles = _role_links(roles_id, roles_name)
         if roles:
             json_data["Roles"] = roles
 
-        if templated_policies is not None:
-            json_data["TemplatedPolicies"] = []
-            for templated_policy in templated_policies:
-                for name, variables in templated_policy.items():
-                    policy_dict = {"TemplateName": name, "TemplateVariables": variables}
-                    json_data["TemplatedPolicies"].append(policy_dict)
+        templated_policy_entries = _templated_policy_entries(templated_policies)
+        if templated_policy_entries:
+            json_data["TemplatedPolicies"] = templated_policy_entries
 
         headers = self.agent.prepare_headers(token)
         return self.agent.http.put(
@@ -183,12 +242,16 @@ class Token:
         token: str | None = None,
         secret_id: str | None = None,
         node_identities: builtins.list[str] | None = None,
+        service_identities: builtins.list[builtins.dict[str, Any]] | None = None,
         description: str = "",
         policies_id: builtins.list[str] | None = None,
         policies_name: builtins.list[str] | None = None,
         roles_id: builtins.list[str] | None = None,
         roles_name: builtins.list[str] | None = None,
         templated_policies: builtins.list[builtins.dict[str, builtins.dict[str, str]]] | None = None,
+        expiration_time: str | None = None,
+        expiration_ttl: str | None = None,
+        local: bool | None = None,
     ) -> AclToken:
         """
         Update a token (optionally identified by *secret_id* and *accessor_id*).
@@ -197,11 +260,18 @@ class Token:
         :param token: token with acl:write capability
         :param secret_id: Optional secret ID of the token to update
         :param node_identities: Optional list of node identities (format: 'nodename:datacenter'), requires consul>=1.8.1
+        :param service_identities: Optional list of service identities, e.g.
+            [{"ServiceName": "web", "Datacenters": ["dc1"]}] ("Datacenters" is optional)
         :param description: Optional new token description
         :param policies_id: Optional list of policies id
         :param roles_id: Optional list of roles id
         :param roles_name: Optional list of roles name
         :param templated_policies: Optional list of templated policies
+        :param expiration_time: Optional absolute expiration timestamp (RFC3339). Note
+            Consul does not allow extending a token's expiration once set.
+        :param expiration_ttl: Optional expiration duration (e.g. "1h") relative to the
+            token's creation time. Mutually exclusive with expiration_time.
+        :param local: Optional, if True the token is local to this datacenter.
         :return: The updated token information
         """
 
@@ -211,31 +281,28 @@ class Token:
             json_data["SecretID"] = secret_id
         if description:
             json_data["Description"] = description
+        if service_identities is not None:
+            json_data["ServiceIdentities"] = service_identities
+        if expiration_time:
+            json_data["ExpirationTime"] = expiration_time
+        if expiration_ttl:
+            json_data["ExpirationTTL"] = expiration_ttl
+        if local is not None:
+            json_data["Local"] = local
 
         json_data.update(parse_identities(node_identities))
 
-        policies: list[dict[str, str]] = []
-        if policies_id:
-            policies.extend({"ID": policy} for policy in policies_id)
-        if policies_name:
-            policies.extend({"Name": policy} for policy in policies_name)
+        policies = _policy_links(policies_id, policies_name)
         if policies:
             json_data["Policies"] = policies
 
-        roles: list[dict[str, str]] = []
-        if roles_id:
-            roles.extend({"ID": role} for role in roles_id)
-        if roles_name:
-            roles.extend({"Name": role} for role in roles_name)
+        roles = _role_links(roles_id, roles_name)
         if roles:
             json_data["Roles"] = roles
 
-        if templated_policies is not None:
-            json_data["TemplatedPolicies"] = []
-            for templated_policy in templated_policies:
-                for name, variables in templated_policy.items():
-                    policy_dict = {"TemplateName": name, "TemplateVariables": variables}
-                    json_data["TemplatedPolicies"].append(policy_dict)
+        templated_policy_entries = _templated_policy_entries(templated_policies)
+        if templated_policy_entries:
+            json_data["TemplatedPolicies"] = templated_policy_entries
 
         headers = self.agent.prepare_headers(token)
         return self.agent.http.put(
