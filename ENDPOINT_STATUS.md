@@ -25,14 +25,14 @@ File: `consul/api/agent.py`
 | Endpoint | Python Method | Status | Missing Parameters |
 | :--- | :--- | :--- | :--- |
 | `GET /v1/agent/self` | `Agent.self` | ✅ | - |
-| `GET /v1/agent/services` | `Agent.services` | ⚠️ | `filter` |
+| `GET /v1/agent/services` | `Agent.services` | ✅ | - |
 | `GET /v1/agent/service/:service_id` | `Agent.service_definition` | ✅ | - |
-| `GET /v1/agent/checks` | `Agent.checks` | ⚠️ | `filter` |
+| `GET /v1/agent/checks` | `Agent.checks` | ✅ | - |
 | `GET /v1/agent/members` | `Agent.members` | ✅ | (`segment` is Ent) |
 | `PUT /v1/agent/maintenance` | `Agent.maintenance` | ✅ | - |
 | `PUT /v1/agent/join/:address` | `Agent.join` | ✅ | - |
 | `PUT /v1/agent/leave` | `Agent.leave` | ✅ | - |
-| `PUT /v1/agent/force-leave/:node` | `Agent.force_leave` | ⚠️ | `prune` (added v1.13) |
+| `PUT /v1/agent/force-leave/:node` | `Agent.force_leave` | ✅ | - |
 | `PUT /v1/agent/reload` | `Agent.reload` | ✅ | - |
 | `GET /v1/agent/metrics` | `Agent.metrics` | ✅ | - |
 | `GET /v1/agent/monitor` | `Agent.monitor` | ⚠️ | Not true streaming — single blocking read, see docstring |
@@ -45,7 +45,7 @@ File: `consul/api/agent.py`
 ### Agent Services
 | Endpoint | Python Method | Status | Missing Parameters |
 | :--- | :--- | :--- | :--- |
-| `PUT /v1/agent/service/register` | `Agent.Service.register` | ⚠️ | Body: `Kind`, `Proxy`, `SocketPath`, `Locality` |
+| `PUT /v1/agent/service/register` | `Agent.Service.register` | ✅ | - |
 | `PUT /v1/agent/service/deregister/:id` | `Agent.Service.deregister` | ✅ | - |
 | `PUT /v1/agent/service/maintenance/:id` | `Agent.Service.maintenance` | ✅ | - |
 
@@ -112,18 +112,18 @@ File: `consul/api/acl/*.py`
 | `PUT /v1/acl/bootstrap` | `ACL.bootstrap` | ✅ | - |
 | `POST /v1/acl/login` | `ACL.login` | ✅ | - |
 | `POST /v1/acl/logout` | `ACL.logout` | ✅ | - |
-| `GET /v1/acl/tokens` | `Token.list` | ⚠️ | `policy`, `role`, `authmethod`, `secondary` (filters) |
-| `PUT /v1/acl/token` | `Token.create` | ⚠️ | `ServiceIdentities`, `NodeIdentities`, `ExpirationTime`, `ExpirationTTL`, `Local` |
+| `GET /v1/acl/tokens` | `Token.list` | ✅ | - |
+| `PUT /v1/acl/token` | `Token.create` | ✅ | - |
 | `GET /v1/acl/token/:accessor` | `Token.read` | ✅ | - |
-| `PUT /v1/acl/token/:accessor` | `Token.update` | ⚠️ | `ServiceIdentities`, `NodeIdentities`, `ExpirationTime`, `ExpirationTTL`, `Local` |
+| `PUT /v1/acl/token/:accessor` | `Token.update` | ✅ | - |
 | `DELETE /v1/acl/token/:accessor` | `Token.delete` | ✅ | - |
 | `PUT /v1/acl/token/:accessor/clone` | `Token.clone` | ✅ | - |
 | `GET /v1/acl/token/self` | `Token.read_self` | ✅ | - |
 | `GET /v1/acl/policies` | `Policy.list` | ✅ | - |
 | `PUT /v1/acl/policy` | `Policy.create` | ✅ | - |
 | `GET /v1/acl/policy/:id` | `Policy.read` | ✅ | - |
-| `PUT /v1/acl/policy/:id` | - | ❌ | - |
-| `DELETE /v1/acl/policy/:id` | - | ❌ | - |
+| `PUT /v1/acl/policy/:id` | `Policy.update` | ✅ | - |
+| `DELETE /v1/acl/policy/:id` | `Policy.delete` | ✅ | - |
 | `GET /v1/acl/roles` | `Role.list` | ✅ | - |
 | `PUT /v1/acl/role` | `Role.create` | ✅ | - |
 | `GET /v1/acl/role/:id` | `Role.read` | ✅ | - |
@@ -211,7 +211,7 @@ File: `consul/api/connect.py`
 | :--- | :--- | :--- | :--- |
 | `GET /v1/connect/ca/roots` | `Connect.CA.roots` | ✅ | - |
 | `GET /v1/connect/ca/configuration` | `Connect.CA.configuration` | ✅ | - |
-| `PUT /v1/connect/ca/configuration` | - | ❌ | - |
+| `PUT /v1/connect/ca/configuration` | `Connect.CA.update_configuration` | ✅ | - |
 | `PUT /v1/connect/intentions/exact` | `Connect.Intentions.upsert` | ✅ | - |
 | `GET /v1/connect/intentions/exact` | `Connect.Intentions.read` | ✅ | - |
 | `DELETE /v1/connect/intentions/exact` | `Connect.Intentions.delete` | ✅ | - |
