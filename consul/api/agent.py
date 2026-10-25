@@ -209,9 +209,10 @@ class Agent:
             own. This client implementation is a first pass and does
             **not** provide true streaming: it makes a single blocking GET
             request and returns whatever text body has accumulated once
-            the connection ends. Neither the underlying sync nor async
-            HTTP clients in this library currently expose a per-call
-            socket/read timeout, so calling this method against a live,
+            the connection ends. The sync client raises a read timeout
+            once no log line has arrived for its *connections_timeout*,
+            but as long as lines keep arriving, and with the async client
+            by default, calling this method against a live,
             long-running agent can block forever unless the connection is
             closed by some other means (e.g. the agent shutting down, or a
             timeout enforced by the caller, such as running this call in a
