@@ -29,7 +29,10 @@ setup(
     name="py-consul",
     author="Criteo",
     author_email="github@criteo.com",
-    url="https://github.com/criteo-forks/py-consul",
+    url="https://github.com/criteo/py-consul",
+    project_urls={
+        "Changelog": "https://github.com/criteo/py-consul/releases",
+    },
     license="MIT",
     description=description,
     description_content_type="text/markdown",
