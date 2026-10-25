@@ -1,12 +1,8 @@
 import glob
 import os
-import re
 
 from setuptools import find_packages, setup
 from setuptools.command.install import install
-
-with open("consul/__init__.py", encoding="utf-8") as f:
-    metadata = dict(re.findall('__([a-z]+)__ = "([^"]+)"', f.read()))
 
 
 def _read_reqs(relpath: str):
@@ -31,7 +27,6 @@ with open("README.md", encoding="utf-8") as f1, open("CHANGELOG.md", encoding="u
 
 setup(
     name="py-consul",
-    version=metadata["version"],
     author="Criteo",
     author_email="github@criteo.com",
     url="https://github.com/criteo-forks/py-consul",

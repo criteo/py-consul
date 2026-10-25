@@ -16,12 +16,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check the tag
+      - name: Check the tag is on master
         run: |
           git merge-base --is-ancestor "$GITHUB_SHA" origin/master || {
             echo "::error::$GITHUB_REF_NAME is not on master"; exit 1; }
-          grep -qx "__version__ = \"${GITHUB_REF_NAME#v}\"" consul/__init__.py || {
-            echo "::error::$GITHUB_REF_NAME does not match __version__ in consul/__init__.py"; exit 1; }
 
       - uses: actions/setup-python@v5
         with:
