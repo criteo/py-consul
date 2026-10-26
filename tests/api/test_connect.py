@@ -32,3 +32,21 @@ class TestConsulConnectIntentions:
 
         c.connect.intentions.upsert(source="web", destination="db", action="deny", token=master_token)
         assert c.connect.intentions.check(source="web", destination="db", token=master_token) is False
+
+
+class TestConsulConnectCA:
+    def test_ca_update_configuration(self, acl_consul) -> None:
+        c, master_token, _consul_version = acl_consul
+
+        original = c.connect.ca.configuration(token=master_token)
+
+        assert (
+            c.connect.ca.update_configuration(provider="consul", config={"LeafCertTTL": "72h"}, token=master_token)
+            is True
+        )
+
+        updated = c.connect.ca.configuration(token=master_token)
+        assert updated["Config"]["LeafCertTTL"] == "72h"
+
+        # restore original config so this test doesn't leak state
+        c.connect.ca.update_configuration(provider=original["Provider"], config=original["Config"], token=master_token)

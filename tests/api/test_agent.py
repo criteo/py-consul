@@ -271,7 +271,53 @@ class TestAgent:
         assert "foo_tagged" in services
         assert services["foo_tagged"]["TaggedAddresses"] == expected_tagged_addresses
 
-        assert c.agent.service.deregister("foo_tagged") is True
+    def test_agent_services_and_checks_filter(self, consul_obj) -> None:
+        c, _consul_version = consul_obj
+
+        assert c.agent.service.register("filtered-foo", tags=["keep-me"]) is True
+        assert c.agent.service.register("filtered-bar", tags=["skip-me"]) is True
+
+        filtered = c.agent.services(filter_expr='"keep-me" in Tags')
+        assert set(filtered.keys()) == {"filtered-foo"}
+
+        assert isinstance(c.agent.checks(filter_expr="Status == `passing`"), dict)
+
+        c.agent.service.deregister("filtered-foo")
+        c.agent.service.deregister("filtered-bar")
+
+    def test_agent_service_register_kind_proxy_locality(self, consul_obj) -> None:
+        c, _consul_version = consul_obj
+
+        assert c.agent.service.register("web") is True
+        assert (
+            c.agent.service.register(
+                "web-sidecar-proxy",
+                port=21000,
+                kind="connect-proxy",
+                proxy={"DestinationServiceName": "web", "LocalServicePort": 8080},
+                locality={"Region": "us-west-1", "Zone": "us-west-1a"},
+            )
+            is True
+        )
+
+        services = c.agent.services()
+        assert services["web-sidecar-proxy"]["Kind"] == "connect-proxy"
+        assert services["web-sidecar-proxy"]["Proxy"]["DestinationServiceName"] == "web"
+        assert services["web-sidecar-proxy"]["Locality"] == {"Region": "us-west-1", "Zone": "us-west-1a"}
+
+        c.agent.service.deregister("web")
+        c.agent.service.deregister("web-sidecar-proxy")
+
+    def test_agent_force_leave_prune(self, consul_obj) -> None:
+        c, _consul_version = consul_obj
+
+        # There's no other node to actually force-leave in a single-node dev
+        # setup, and Consul rejects force-leave for a node name it has never
+        # seen ("No node found with name ...") rather than treating it as a
+        # no-op success -- this just verifies the prune param is forwarded
+        # and reaches Consul (a real, server-side error), not swallowed or
+        # rejected client-side.
+        pytest.raises(consul.ConsulException, c.agent.force_leave, "nonexistent-node", prune=True)
 
     def test_agent_service_connect(self, consul_obj) -> None:
         c, _consul_version = consul_obj
