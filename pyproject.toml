@@ -1,3 +1,9 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+
 [tool.pytest.ini_options]
 addopts = "--cov=. --cov-context=test --durations=0 --durations-min=3.0"
 asyncio_mode = "auto"
